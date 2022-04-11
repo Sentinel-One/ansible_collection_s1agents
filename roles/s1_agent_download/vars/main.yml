@@ -1,0 +1,19 @@
+---
+# vars file for s1_agent_download
+# Default values for SentinelOne role. Do change variable values in this file, instead copy them to your inventory and apply changes there.
+s1_workdir: /tmp/s1_install
+# s1_site_key_regex: Site-Key\s+(\w*)
+s1_supported_os_family:
+  - RedHat
+  - Debian
+  - Windows
+  # - Suse
+
+rpm_distribution:
+  - RedHat
+  - Suse
+
+apt_distribution:
+  - Debian
+
+s1_api_limit: 20

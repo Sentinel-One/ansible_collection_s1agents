@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: Include s1_agent_download
+      include_role:
+        name: s1_agent_download
+
+    - name: Show downloaded agent path
+      debug:
+        var: s1_agent_src

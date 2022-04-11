@@ -1,0 +1,147 @@
+---
+# tasks file for s1_agent_download
+
+- name: Assert that Management Console is defined
+  ansible.builtin.assert:
+    that:
+      - s1_management_console is defined
+      - s1_management_console is not none
+      - s1_management_console | length > 0
+    fail_msg: s1_management_console is not set
+    success_msg: s1_management_console is set
+  tags:
+    - always
+
+- name: Assert that API token is defined
+  ansible.builtin.assert:
+    that:
+      - s1_api_token is defined
+      - s1_api_token is not none
+      - s1_api_token | length > 0
+    fail_msg: s1_api_token is not set
+    success_msg: s1_api_token is set
+  tags:
+    - always
+
+- name: Show URL
+  ansible.builtin.debug:
+    msg: '{{ lookup("template", "packages_url.j2") }}'
+  tags:
+    - never
+    - debug
+
+- name: Get available SentinelOne agent packages
+  ansible.builtin.uri:
+    url: '{{ lookup("template", "packages_url.j2") }}'
+    return_content: false
+    headers:
+      Authorization: 'ApiToken {{ s1_api_token }}'
+  environment:
+    http_proxy: '{{ s1_agent_management_proxy | default(omit) }}'
+    https_proxy: '{{ s1_agent_management_proxy | default(omit) }}'
+  register: s1_available_packages
+  until: s1_available_packages is not failed
+  retries: 10
+  delay: 10
+  delegate_to: localhost
+  run_once: true
+  become: no
+
+- block:
+    - name: Set RPM SentinelOne agent source | Specific release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed') | list | first }}"
+      when: ansible_os_family is in rpm_distribution
+
+    - name: Set DEB SentinelOne agent source | Specific release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.deb') | list | first }}"
+      when: ansible_os_family is in apt_distribution
+
+    - name: Set MSI SentinelOne agent source | Specific release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.msi') | selectattr('osArch', 'equalto', (ansible_facts.architecture == '64-bit') | ternary('64 bit', '32 bit')) | list | first }}"
+      when: ansible_os_family == 'Windows'
+  when:
+    - s1_agent_version is defined
+    - s1_agent_version is not none
+    - s1_agent_version | length > 0
+
+- block:
+    - name: Set RPM SentinelOne agent source | Latest release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed') | list | first }}"
+      when: ansible_os_family is in rpm_distribution
+
+    - name: Set DEB SentinelOne agent source | Latest release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | list | first }}"
+      when: ansible_os_family is in apt_distribution
+
+    - name: Set MSI SentinelOne agent source | Latest release
+      ansible.builtin.set_fact:
+        s1_download_src: "{{ s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.msi') | selectattr('osArch', 'equalto', (ansible_facts.architecture == '64-bit') | ternary('64 bit', '32 bit')) | list | first }}"
+      when: ansible_os_family == 'Windows'
+  when: (s1_agent_version is undefined) or (s1_agent_version is none) or (s1_agent_version | length == 0)
+
+- name: Set download variables
+  ansible.builtin.set_fact:
+    s1_agent_package_link: '{{ s1_download_src.link }}'
+    s1_agent_package_sha1: '{{ s1_download_src.sha1 }}'
+    s1_agent_package_name: '{{ s1_download_src.fileName }}'
+
+- name: Set SentinelOne agent variables
+  ansible.builtin.set_fact:
+    s1_agent_src: '{{ s1_workdir }}/{{ s1_agent_package_name }}'
+    s1_agent_version: '{{ s1_download_src.version }}'
+
+- block:
+    - name: Show s1_agent_package_link
+      ansible.builtin.debug:
+        var: s1_agent_package_link
+
+    - name: Show s1_agent_package_sha1
+      ansible.builtin.debug:
+        var: s1_agent_package_sha1
+
+    - name: Show s1_agent_package_name
+      ansible.builtin.debug:
+        var: s1_agent_package_name
+
+    - name: Show s1_agent_src
+      ansible.builtin.debug:
+        var: s1_agent_src
+
+    - name: Show s1_agent_version
+      ansible.builtin.debug:
+        var: s1_agent_version
+  tags:
+    - debug
+    - never
+
+- name: Create working directory
+  ansible.builtin.file:
+    path: '{{ s1_workdir }}'
+    state: directory
+    mode: '0755'
+  delegate_to: localhost
+  run_once: true
+  become: no
+
+- name: Download SentinelOne agent
+  ansible.builtin.get_url:
+    url: '{{ s1_agent_package_link }}'
+    checksum: 'sha1:{{ s1_agent_package_sha1 }}'
+    dest: '{{ s1_agent_src }}'
+    mode: 440
+    headers:
+      Authorization: 'ApiToken {{ s1_api_token }}'
+  environment:
+    http_proxy: '{{ s1_agent_management_proxy | default(omit) }}'
+    https_proxy: '{{ s1_agent_management_proxy | default(omit) }}'
+  register: url_result
+  until: url_result is not failed
+  retries: 10
+  delay: 10
+  delegate_to: localhost
+  become: no

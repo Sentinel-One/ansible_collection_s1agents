@@ -1,0 +1,16 @@
+---
+- name: Prepare
+  hosts: all
+  handlers:
+    - name: yum-clean-metadata
+      command: yum clean metadata
+      args:
+        warn: false
+  tasks:
+    - name: Clean up deprecated repo files
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/CentOS-Base.repo
+        state: absent
+      notify: yum-clean-metadata
+      become: yes
+      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '6'
