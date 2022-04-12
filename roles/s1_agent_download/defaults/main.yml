@@ -7,7 +7,7 @@
 # List of platforms to download agent for
 s1_platform_type:
   - Linux
-  - Linux_k8s
+  # - Linux_k8s
   # - Macos
   # - Sdk
   - Windows
