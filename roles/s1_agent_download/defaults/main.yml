@@ -1,0 +1,33 @@
+---
+# defaults file for s1_agent_download
+
+# URL to your SentinelOne management console
+# s1_management_console:
+
+# List of platforms to download agent for
+s1_platform_type:
+  - Linux
+  # - Linux_k8s
+  # - Macos
+  # - Sdk
+  - Windows
+  # - Windows_legacy
+
+# Package status to download, choose EA or GA
+s1_package_status:
+  # - Beta
+  # - Ea
+  - Ga
+  # - Other
+
+# Agent version to install
+# Must be assigned at the ansible_os_family (RedHat, Suse, Debian, Windows, Darwin, etc.) or a narrower scope
+# s1_agent_version: 21.7.3.6
+
+# If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
+# By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
+s1_agent_management_proxy: '{{ default_proxy | default(None) }}'
+# s1_agent_management_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
+# s1_agent_management_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
+
+# s1_agent_validate_certs: '{{ default_validate_certs | default(true) }}' # NOT IMPLEMENTED

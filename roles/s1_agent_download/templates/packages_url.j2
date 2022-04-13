@@ -1,0 +1,16 @@
+{{ s1_management_console }}/web/api/v2.1/update/agent/packages?limit={{ s1_api_limit }}&sortBy=version&sortOrder=desc
+{%- if s1_platform_type and s1_platform_type|length -%}
+&platformTypes=
+{%- for platform in s1_platform_type -%}
+{{- platform|lower + "," if not loop.last else platform|lower -}}
+{%- endfor -%}
+{%- endif -%}
+{%- if s1_package_status and s1_package_status|length -%}
+&status=
+{%- for status in s1_package_status -%}
+{{- status|lower + "," if not loop.last else status|lower -}}
+{%- endfor -%}
+{%- endif -%}
+{%- if s1_agent_version is defined and s1_agent_version|length -%}
+&version={{ s1_agent_version }}
+{%- endif -%}

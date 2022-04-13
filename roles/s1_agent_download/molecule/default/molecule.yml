@@ -1,0 +1,150 @@
+---
+ansible:
+  host_key_checking: false
+  raw_env_vars:
+    ANSIBLE_FORCE_COLOR: true
+  ansiblecfg_defaults:
+    retry_files_enabled: false
+
+dependency:
+  name: galaxy
+  enabled: false
+
+driver:
+  name: vagrant
+  provider:
+    name: '${VAGRANT_DEFAULT_PROVIDER}'
+  provision: false
+
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+  flake8
+
+platforms:
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-el-6'
+    groups:
+      - Linux
+    children:
+      - RedHat
+    box: bento/centos-6
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
+
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-rocky-8'
+    groups:
+      - Linux
+    children:
+      - RedHat
+    box: bento/rockylinux-8
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
+
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-ubnt-2004'
+    groups:
+      - Linux
+    children:
+      - Debian
+    box: roboxes/ubuntu2004
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
+
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-win-2019'
+    groups:
+      - Windows
+    children:
+      - Server
+    box: gusztavvargadr/windows-server
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+      vm.communicator: winrm
+    provider_options:
+      linked_clone: true
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_install
+      fact_caching_timeout: 7200
+  inventory:
+    group_vars:
+      all:
+        s1_management_console: "{{ lookup('env', 's1_management_console') }}"
+        s1_agent_management_token: "{{ lookup('env', 's1_agent_management_token') }}"
+        s1_api_token: "{{ lookup('env', 's1_api_token') }}"
+        s1_agent_customer_id: ansible_collection_dev
+        s1_agent_version: "{{ lookup('env', 's1_agent_version') }}"
+        s1_package_status:
+          - Ga
+      Linux:
+        # s1_agent_version: "{{ lookup('env', 's1_agent_version_linux') }}"
+      Debian:
+        # s1_agent_version: 21.6.4.9
+      RedHat:
+      Windows:
+        ansible_become_method: runas
+        ansible_become_user: vagrant
+        ansible_become_password: vagrant
+        ansible_user: vagrant
+        ansible_connection: ssh
+        ansible_shell_type: cmd
+      # Darwin:
+
+verifier:
+  name: ansible
+  # scenario:
+  #   create_sequence:
+  #     - dependency
+  #     - create
+  #     - prepare
+  #   check_sequence:
+  #     - dependency
+  #     - cleanup
+  #     - destroy
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - check
+  #     - destroy
+  #   converge_sequence:
+  #     - dependency
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - verify
+  #   destroy_sequence:
+  #     - dependency
+  #     - cleanup
+  #     - destroy
+  #   test_sequence:
+  #     - dependency
+  #     - lint
+  #     - cleanup
+  #     - destroy
+  #     - syntax
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - idempotence
+  #     - side_effect
+  #     - verify
+  #     - cleanup
+  #     - destroy
