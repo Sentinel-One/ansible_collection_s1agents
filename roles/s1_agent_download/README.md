@@ -24,7 +24,7 @@ Role Variables
 * **s1_agent_management_proxy**: Set if the endpoint needs a proxy to access the management console.
 * **s1_agent_version**: Version of the agent to download. As agent versions very by platform it should be set at the host or group level. This can be found in the `Build Number` column on Sentinels > Packages pages. If omitted the latest agent version will be downloaded.
 * **s1_package_status**: Package release status to download. Acceptable values are `Beta`, `Ea`, `Ga` and `other`.
-* **s1_platform_type**: Provide a list of platforms to download the agent packages for. Acceptable values are `Linux`, `Linux_k8s`, `Macos`, `Sdk`, `Windows` and `Windows_legacy`
+* **s1_platform_type**: Provide a list of platforms to download the agent packages for. Acceptable values are `Linux`, `Linux_k8s`, `Macos`, `Sdk`, `Windows` and `Windows_legacy`, but only `Linux` and `Windows` are implemented.
 
 Dependencies
 ------------

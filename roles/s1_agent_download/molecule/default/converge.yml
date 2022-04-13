@@ -6,6 +6,11 @@
       include_role:
         name: s1_agent_download
 
+    - name: Cache facts for molecule
+      ansible.builtin.set_fact:
+        cacheable: yes
+        s1_agent_src: '{{ s1_agent_src }}'
+
     - name: Show downloaded agent path
       debug:
         var: s1_agent_src

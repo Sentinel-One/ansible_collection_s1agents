@@ -23,64 +23,53 @@ lint: |
   flake8
 
 platforms:
-  # - name: 's1da-${MOLECULE_SCENARIO_NAME}-cent-8'
-  #   groups:
-  #     - Linux
-  #   children:
-  #     - RedHat
-  #   box: bento/centos-8
-  #   memory: 2048
-  #   cpus: 1
-  #   config_options:
-  #     synced_folder: false
-  #   provider_options:
-  #     linked_clone: true
-  #   # provision: false
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-el-6'
+    groups:
+      - Linux
+    children:
+      - RedHat
+    box: bento/centos-6
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
 
-  # - name: 's1da-${MOLECULE_SCENARIO_NAME}-cent-6'
-  #   groups:
-  #     - Linux
-  #   children:
-  #     - RedHat
-  #   box: bento/centos-6.7
-  #   memory: 2048
-  #   cpus: 1
-  #   config_options:
-  #     synced_folder: false
-  #   provider_options:
-  #     linked_clone: true
-  #   # provision: false
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-rocky-8'
+    groups:
+      - Linux
+    children:
+      - RedHat
+    box: bento/rockylinux-8
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
 
-  # - name: 's1da-${MOLECULE_SCENARIO_NAME}-ubnt-2010'
-  #   groups:
-  #     - Linux
-  #   children:
-  #     - Debian
-  #   box: roboxes/ubuntu2010
-  #   memory: 2048
-  #   cpus: 1
-  #   config_options:
-  #     synced_folder: false
-  #   provider_options:
-  #     linked_clone: true
-  #   # provision: false
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-ubnt-2004'
+    groups:
+      - Linux
+    children:
+      - Debian
+    box: roboxes/ubuntu2004
+    memory: 2048
+    cpus: 1
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
 
-  - name: 's1da-${MOLECULE_SCENARIO_NAME}-win-2019'
+  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-win-2019'
     groups:
       - Windows
     children:
       - Server
-    box: StefanScherer/windows_2019
+    box: gusztavvargadr/windows-server
     memory: 2048
     cpus: 1
-    instance_raw_config_args:
-      - 'vm.boot_timeout = 600'
-      - 'winrm.max_tries = 40'
-      - "winrm.username = 'vagrant'"
-      - "winrm.password = 'vagrant'"
-      - "vm.communicator = 'winrm'"
-      - "vm.guest = 'windows'"
-      - 'vm.network :forwarded_port, guest: 5985, host: 15985, auto_correct:false'
     config_options:
       synced_folder: false
       vm.communicator: winrm
@@ -89,10 +78,13 @@ platforms:
 
 provisioner:
   name: ansible
+  config_options:
+    defaults:
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_install
+      fact_caching_timeout: 7200
   inventory:
-    host_vars:
-      s1da-${MOLECULE_SCENARIO_NAME}-win-2019:
-        ansible_port: 15985
     group_vars:
       all:
         s1_management_console: "{{ lookup('env', 's1_management_console') }}"
@@ -106,18 +98,14 @@ provisioner:
         # s1_agent_version: "{{ lookup('env', 's1_agent_version_linux') }}"
       Debian:
         # s1_agent_version: 21.6.4.9
-        # s1_agent_src: "{{ lookup('env', 's1_agent_src_deb') }}"
       RedHat:
-        # s1_agent_src: "{{ lookup('env', 's1_agent_src_rpm') }}"
       Windows:
         ansible_become_method: runas
         ansible_become_user: vagrant
-        ansible_connection: winrm
-        ansible_password: vagrant
+        ansible_become_password: vagrant
         ansible_user: vagrant
-        ansible_winrm_scheme: http
-        ansible_winrm_transport: basic
-        # s1_agent_src: "{{ lookup('env', 's1_agent_src_msi') }}"
+        ansible_connection: ssh
+        ansible_shell_type: cmd
       # Darwin:
 
 verifier:

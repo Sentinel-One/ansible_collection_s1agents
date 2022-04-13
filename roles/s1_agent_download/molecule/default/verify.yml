@@ -5,6 +5,22 @@
   hosts: all
   gather_facts: false
   tasks:
-  - name: Example assertion
-    assert:
-      that: true
+    - block:
+        - name: Assert that s1_agent_src is defined
+          ansible.builtin.assert:
+            that:
+              - s1_agent_src is defined
+              - s1_agent_src is not none
+              - s1_agent_src | length > 0
+
+        - name: Get SentinelOne Agent
+          stat:
+            path: '{{ s1_agent_src }}'
+          register: s1_agent_stat
+
+        - name: Assert that SentinelOne Agent was downloaded
+          ansible.builtin.assert:
+            that: s1_agent_stat.stat.exists
+
+      delegate_to: localhost
+      become: no
