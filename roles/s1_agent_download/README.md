@@ -1,10 +1,8 @@
-S1 Agent Download
-=========
+# S1 Agent Download
 
 Downloads SentinelOne Agents from the management console.
 
-Requirements
-------------
+## Requirements
 
 A valid SentinelOne license, access to the SentinelOne Management Console and an account with permission to download packages and an API Token are required to use this role.
 
@@ -16,8 +14,7 @@ A valid SentinelOne license, access to the SentinelOne Management Console and an
 * Roles View
 * Sites View
 
-Role Variables
---------------
+## Role Variables
 
 * **s1_management_console**: URL for the Management Console.
 * **s1_api_token**: Token used to access the API.
@@ -26,13 +23,11 @@ Role Variables
 * **s1_package_status**: Package release status to download. Acceptable values are `Beta`, `Ea`, `Ga` and `other`.
 * **s1_platform_type**: Provide a list of platforms to download the agent packages for. Acceptable values are `Linux`, `Linux_k8s`, `Macos`, `Sdk`, `Windows` and `Windows_legacy`, but only `Linux` and `Windows` are implemented.
 
-Dependencies
-------------
+## Dependencies
 
 None
 
-Example Playbook
-----------------
+## Example Playbook
 
 Download the SentinelOne Agent. Only the `s1_management_console` and `s1_api_token` variables are required.
 
@@ -55,12 +50,10 @@ Download the SentinelOne Agent. Only the `s1_management_console` and `s1_api_tok
         var: s1_agent_src
 ```
 
-License
--------
+## License
 
 GPL-3.0-or-later
 
-Author Information
-------------------
+## Author Information
 
 Nathan Gerhart / SentinelOne
