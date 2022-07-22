@@ -16,7 +16,7 @@ rules:
     max-spaces-after: -1
     level: error
   comments: disable
-  comments-indentation: enable
+  comments-indentation: disable
   document-start: enable
   empty-lines:
     max: 3
@@ -29,8 +29,7 @@ rules:
     check-multi-line-strings: true
   key-duplicates: enable
   line-length: disable
-  new-line-at-end-of-file:
-    type: unix
+  new-line-at-end-of-file: enable
   new-lines:
     type: unix
   trailing-spaces: disable

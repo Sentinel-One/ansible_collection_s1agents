@@ -1,0 +1,11 @@
+---
+# defaults file for s1_mgmt_get_passphrase
+
+# URL to the SentinelOne management console
+# s1_management_console:
+
+# API token with permissions to access the Packages tab and download agent packages
+# s1_api_token:
+
+# Full path to a CSV report where agent passphrases will be saved. Optional.
+# s1_agent_uuid_report:

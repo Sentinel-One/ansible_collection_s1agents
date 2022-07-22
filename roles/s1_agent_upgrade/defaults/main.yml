@@ -1,0 +1,15 @@
+---
+# defaults file for s1_agent_upgrade
+
+# URL to the SentinelOne management console
+# s1_management_console:
+
+# API token with permissions to access the Packages tab and download agent packages
+# s1_api_token:
+
+# Path to agent installation package (msi, exe, rpm, deb or pkg) on the Ansible Controller
+# Must be assigned at the ansible_os_family (RedHat, Suse, Debian, Windows, Darwin, etc.) or a narrower scope
+# s1_agent_src:
+
+# Version of the agent package defined by s1_agent_src.
+# s1_agent_version:

@@ -5,9 +5,9 @@
 {{- platform|lower + "," if not loop.last else platform|lower -}}
 {%- endfor -%}
 {%- endif -%}
-{%- if s1_package_status and s1_package_status|length -%}
+{%- if s1_package_availability and s1_package_availability|length -%}
 &status=
-{%- for status in s1_package_status -%}
+{%- for status in s1_package_availability -%}
 {{- status|lower + "," if not loop.last else status|lower -}}
 {%- endfor -%}
 {%- endif -%}

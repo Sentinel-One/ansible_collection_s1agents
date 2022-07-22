@@ -1,0 +1,6 @@
+---
+# tasks file for s1_agent_install
+
+- name: Endpoint unsupported
+  fail:
+    msg: '{{ ansible_distribution }} is not currently supported by the {{ role_name }} Ansible Role.'

@@ -1,0 +1,4 @@
+inventory_hostname,uuid,passphrase,ansible_fqdn,ansible_default_ipv4,ansible_all_ipv4_addresses
+{% for host in (ansible_play_hosts | sort) %}
+  "{{ hostvars[host].inventory_hostname }}","{{ hostvars[host].s1_agent_uuid }}","{{ hostvars[host].s1_agent_passphrase }}","{{ hostvars[host].ansible_fqdn }}","{{ hostvars[host].ansible_default_ipv4.address }}","{{ hostvars[host].ansible_all_ipv4_addresses }}"
+{% endfor %}

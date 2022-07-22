@@ -1,0 +1,34 @@
+---
+# verify tasks file for s1_agent_install
+- name: Gather package facts | Linux
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Gather service facts | Linux
+  ansible.builtin.service_facts:
+
+- name: Assert existing SentinelOne Agent was installed from unsigned package | Linux
+  ansible.builtin.assert:
+    that:
+      - s1_molecule_prior_package is defined
+      - s1_molecule_prior_package is regex('^Sentinel.*')
+
+- name: Assert upgraded SentinelOne Agent was installed from signed package | Linux
+  ansible.builtin.assert:
+    that:
+      - s1_molecule_upgrade_package is defined
+      - s1_molecule_upgrade_package is regex('^Signed.*')
+
+- name: Assert SentinelOne Agent is upgraded | Linux
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.packages[s1_package_name] is defined
+      - ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first == s1_molecule_upgraded_version
+      - ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first > s1_molecule_prior_version
+
+- name: Assert SentinelOne service is running | Linux
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.services[s1_service_name] is defined
+      - ansible_facts.services[s1_service_name]['state'] == 'running'
+      - ansible_facts.services[s1_service_name]['status'] == 'enabled'

@@ -1,0 +1,5 @@
+---
+# vars file for s1_agent_install
+
+# OS package manager name for the SentinelOne package
+s1_package_name: SentinelAgent

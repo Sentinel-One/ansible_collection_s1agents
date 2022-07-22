@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: Include s1_agent_uninstall
+      include_role:
+        name: s1_agent_uninstall

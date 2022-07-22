@@ -1,0 +1,5 @@
+---
+# vars file for s1_agent_uuid
+
+# Directory to be used as a temporary work directory. This path will be used by both the controller and inventory nodes.
+s1_workdir: /tmp/s1_workdir

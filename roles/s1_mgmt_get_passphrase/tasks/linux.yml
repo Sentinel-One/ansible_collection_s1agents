@@ -1,0 +1,35 @@
+---
+# tasks file for s1_mgmt_get_passphrase
+
+- name: Show URL
+  ansible.builtin.debug:
+    msg: '{{ lookup("template", "passphrase_url.j2") }}'
+  tags:
+    - never
+    - debug
+
+- name: Get agent passphrase
+  ansible.builtin.uri:
+    url: '{{ lookup("template", "passphrase_url.j2") }}'
+    return_content: false
+    headers:
+      Authorization: 'ApiToken {{ s1_api_token }}'
+  register: s1_passphrase_result
+  until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length
+  retries: 10
+  delay: 10
+  become: no
+  check_mode: no
+  no_log: '{{ ansible_verbosity < 3 }}'
+
+- name: Show API results
+  ansible.builtin.debug:
+    var: s1_passphrase_result
+  tags:
+    - never
+    - debug
+
+- name: Set agent passphrase
+  ansible.builtin.set_fact:
+    s1_agent_passphrase: '{{ (s1_passphrase_result.json.data | list | first).passphrase }}'
+  no_log: '{{ ansible_verbosity < 3 }}'

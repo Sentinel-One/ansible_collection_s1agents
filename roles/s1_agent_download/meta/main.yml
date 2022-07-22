@@ -1,7 +1,7 @@
 ---
 galaxy_info:
   role_name: s1_agent_download
-  namespace: sentinelone
+  namespace: s1community
   author: Nate Gerhart
   description: Ansible role to download the SentinelOne agent from the management console
   company: SentinelOne
@@ -19,7 +19,7 @@ galaxy_info:
   # - CC-BY-4.0
   license: 'license (GPL-3.0-or-later)'
 
-  min_ansible_version: 2.9
+  min_ansible_version: '2.9'
 
   # If this a Container Enabled role, provide the minimum Ansible Container version.
   # min_ansible_container_version:

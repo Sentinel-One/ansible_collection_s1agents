@@ -1,0 +1,24 @@
+---
+# verify tasks file for s1_agent_install
+- name: Gather package facts | RedHat 6
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Get service facts | RedHat 6
+  ansible.builtin.command: service {{ s1_service_name }} status # noqa command-instead-of-module
+  register: s1_rhel6_agent_status
+  changed_when: no
+  become: yes
+
+- name: Assert SentinelOne Agent is upgraded | RedHat 6
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.packages[s1_package_name] is defined
+      - ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first == s1_molecule_upgraded_version
+      - ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first > s1_molecule_prior_version
+
+- name: Assert SentinelOne service is running | RedHat 6
+  ansible.builtin.assert:
+    that:
+      - "'Agent must be running in order to execute this command' not in s1_rhel6_agent_status.stdout"
+      - "'Agent state      Enabled' in s1_rhel6_agent_status.stdout"

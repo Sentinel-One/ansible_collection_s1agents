@@ -1,16 +1,33 @@
 ---
 - name: Prepare
   hosts: all
-  handlers:
-    - name: yum-clean-metadata
-      command: yum clean metadata
-      args:
-        warn: false
   tasks:
-    - name: Clean up deprecated repo files
-      ansible.builtin.file:
-        path: /etc/yum.repos.d/CentOS-Base.repo
-        state: absent
-      notify: yum-clean-metadata
+    - name: Update RPM cache on RedHat
+      block:
+        - name: Clean up deprecated repo files
+          ansible.builtin.file:
+            path: /etc/yum.repos.d/CentOS-Base.repo
+            state: absent
+          become: yes
+          when: ansible_distribution_major_version == '6'
+
+        - name: Clean yum metadata
+          ansible.builtin.command: yum clean metadata # noqa no-changed-when
+          args:
+            warn: false
+      when: ansible_os_family == "RedHat"
+
+    - name: Update apt cache on Debian.
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
       become: yes
-      when: ansible_os_family == "RedHat" and ansible_distribution_major_version == '6'
+      when: ansible_os_family == 'Debian'
+
+    - name: Install python3-dnf on Suse
+      ansible.builtin.command: 'zypper --non-interactive install python3-xml python3-dnf' # noqa command-instead-of-module
+      become: yes
+      when: ansible_os_family == "Suse"
+
+    - name: Clear cached facts
+      ansible.builtin.meta: clear_facts

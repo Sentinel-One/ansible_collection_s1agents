@@ -1,0 +1,17 @@
+---
+- name: Gather facts
+  ansible.builtin.setup:
+
+- name: Create passhprase CSV report
+  ansible.builtin.template:
+    src: passphrase_report.csv.j2
+    dest: '{{ s1_agent_passphrase_report }}'
+    mode: 0644
+  delegate_to: localhost
+  run_once: yes
+
+- name: Agent passphrase report path
+  ansible.builtin.debug:
+    var: s1_agent_passphrase_report
+  delegate_to: localhost
+  run_once: yes

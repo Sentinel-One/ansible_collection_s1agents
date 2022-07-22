@@ -3,6 +3,8 @@ ansible:
   host_key_checking: false
   raw_env_vars:
     ANSIBLE_FORCE_COLOR: true
+    # Resolves an issue on MacOS with ansible connecting to Windows
+    OBJC_DISABLE_INITIALIZE_FORK_SAFETY: 'YES'
   ansiblecfg_defaults:
     retry_files_enabled: false
 
@@ -13,8 +15,7 @@ dependency:
 driver:
   name: vagrant
   provider:
-    name: '${VAGRANT_DEFAULT_PROVIDER}'
-  provision: false
+    name: '${VAGRANT_DEFAULT_PROVIDER:-virtualbox}'
 
 lint: |
   set -e
@@ -23,56 +24,17 @@ lint: |
   flake8
 
 platforms:
-  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-el-6'
+  - name: '${S1_MOLECULE_HOSTNAME}-${S1_VAGRANT_DISTRO:-rocky8}'
     groups:
-      - Linux
+      - all
     children:
-      - RedHat
-    box: bento/centos-6
-    memory: 2048
-    cpus: 1
+      - '${S1_VAGRANT_GROUP:-Linux}'
+    box: '${S1_VAGRANT_REPO:-roboxes}/${S1_VAGRANT_DISTRO:-rocky8}'
+    memory: 3076
+    cpus: 2
     config_options:
       synced_folder: false
-    provider_options:
-      linked_clone: true
-
-  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-rocky-8'
-    groups:
-      - Linux
-    children:
-      - RedHat
-    box: bento/rockylinux-8
-    memory: 2048
-    cpus: 1
-    config_options:
-      synced_folder: false
-    provider_options:
-      linked_clone: true
-
-  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-ubnt-2004'
-    groups:
-      - Linux
-    children:
-      - Debian
-    box: roboxes/ubuntu2004
-    memory: 2048
-    cpus: 1
-    config_options:
-      synced_folder: false
-    provider_options:
-      linked_clone: true
-
-  - name: 's1ad-${MOLECULE_SCENARIO_NAME}-win-2019'
-    groups:
-      - Windows
-    children:
-      - Server
-    box: gusztavvargadr/windows-server
-    memory: 2048
-    cpus: 1
-    config_options:
-      synced_folder: false
-      vm.communicator: winrm
+      vm.communicator: '${S1_VAGRANT_COMMUNICATOR:-ssh}'
     provider_options:
       linked_clone: true
 
@@ -82,23 +44,21 @@ provisioner:
     defaults:
       gathering: smart
       fact_caching: jsonfile
-      fact_caching_connection: /tmp/s1_install
-      fact_caching_timeout: 7200
+      fact_caching_connection: '${S1_WORKDIR:-/tmp/s1_workdir}'
+      fact_caching_timeout: 3600
+  # connection_options:
+  # env:
   inventory:
     group_vars:
       all:
-        s1_management_console: "{{ lookup('env', 's1_management_console') }}"
-        s1_agent_management_token: "{{ lookup('env', 's1_agent_management_token') }}"
-        s1_api_token: "{{ lookup('env', 's1_api_token') }}"
+        s1_management_console: '${S1_MANAGEMENT_CONSOLE}'
+        s1_agent_site_token: '${S1_AGENT_SITE_TOKEN}'
+        s1_api_token: '${S1_API_TOKEN}'
         s1_agent_customer_id: ansible_collection_dev
-        s1_agent_version: "{{ lookup('env', 's1_agent_version') }}"
-        s1_package_status:
-          - Ga
+        s1_workdir: '${S1_WORKDIR:-/tmp/s1_workdir}'
+        s1_forced_remove: false
       Linux:
-        # s1_agent_version: "{{ lookup('env', 's1_agent_version_linux') }}"
-      Debian:
-        # s1_agent_version: 21.6.4.9
-      RedHat:
+        # s1_agent_version: "${S1_AGENT_VERSION_LINUX}"
       Windows:
         ansible_become_method: runas
         ansible_become_user: vagrant
@@ -106,6 +66,7 @@ provisioner:
         ansible_user: vagrant
         ansible_connection: ssh
         ansible_shell_type: cmd
+        # s1_agent_version: "${S1_AGENT_VERSION_WINDOWS}"
       # Darwin:
 
 verifier:

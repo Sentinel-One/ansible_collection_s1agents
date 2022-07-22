@@ -1,0 +1,119 @@
+---
+# tasks file for s1_agent_install
+- name: Gather dmesg output | Linux
+  ansible.builtin.command: dmesg
+  register: s1_dmesg_raw
+  changed_when: false
+  check_mode: no
+  become: yes
+
+- name: Gather CPU Flags | Linux
+  command: >
+    awk -F: '/^flags/ {print $2; exit}' /proc/cpuinfo
+  register: s1_cpu_flags_raw
+  changed_when: false
+  check_mode: no
+
+- name: Set CPU Flags | Linux
+  set_fact:
+    s1_cpu_flags: '{{ s1_cpu_flags_raw.stdout.split() }}'
+
+- name: Assert processor meets minimum requirements | Linux
+  ansible.builtin.assert:
+    that:
+      - ansible_processor_vcpus >= 2
+      - "'sse4_2' in s1_cpu_flags"
+      - "'popcnt' in s1_cpu_flags"
+      - ansible_facts.architecture == 'x86_64'
+    fail_msg: 'The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.'
+  when: "'container' not in ansible_facts.virtualization_tech_guest"
+
+- name: Assert disk free space meets minimum requirements | Linux
+  ansible.builtin.assert:
+    that:
+      - ((ansible_mounts | selectattr('mount', 'in', s1_agent_custom_install_path|default('/opt/sentinelone')) | list | sort(attribute='mount'))[-1]['size_available']) >= 2147483648
+    fail_msg: "The SentinelOne Agent requires 2GB of free space on the {{ s1_agent_custom_install_path|default('/opt') }} partition. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543."
+  when: "'container' not in ansible_facts.virtualization_tech_guest"
+
+- name: Assert free memory meets minimum requirements | Linux
+  ansible.builtin.assert:
+    that:
+      - ansible_memfree_mb >= 800
+    fail_msg: 'The SentinelOne Agent requires at least 800MB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.'
+  when:
+    - "'container' not in ansible_facts.virtualization_tech_guest"
+
+- name: Assert host is stable | Linux
+  ansible.builtin.assert:
+    that:
+      - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
+    fail_msg: 'System Instability Detected'
+
+- name: Set SentinelOne agent path | Linux
+  set_fact:
+    s1_agent_path: '{{ s1_workdir }}/{{ s1_agent_src | basename }}'
+
+- name: Create working directory | Linux
+  ansible.builtin.file:
+    path: '{{ s1_workdir }}'
+    state: directory
+    mode: '0755'
+
+- name: Copy SentinelOne agent | Linux
+  ansible.builtin.copy:
+    src: '{{ s1_agent_src }}'
+    dest: '{{ s1_agent_path }}'
+    mode: '0755'
+
+- name: Create configuration file | Linux
+  ansible.builtin.template:
+    src: linux_agent_config.cfg.j2
+    dest: '{{ s1_workdir }}/s1_config.cfg'
+    mode: '0744'
+
+- name: Import the SentinelOne RPM Key | Linux
+  include_role:
+    name: s1_import_rpm_key
+  when:
+    - ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
+    - not s1_install_unsigned_rpm | default('no') | bool
+
+- name: Install SentinelOne signed RPM package | Linux
+  ansible.builtin.yum:
+    name: '{{ s1_agent_path }}'
+    state: present
+    use_backend: '{{ (ansible_pkg_mgr == "zypper") | ternary("yum4", "auto") }}'
+  environment:
+    S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_workdir }}/s1_config.cfg'
+  become: yes
+  notify: '{{ s1_handler_name }}'
+  when:
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - not s1_install_unsigned_rpm | default('no') | bool
+
+- name: Install SentinelOne unsigned RPM package | Linux
+  ansible.builtin.command: rpm -i --nodigest '{{ s1_agent_path }}' # noqa command-instead-of-module
+  environment:
+    S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_workdir }}/s1_config.cfg'
+  become: yes
+  notify: '{{ s1_handler_name }}'
+  when:
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - s1_install_unsigned_rpm | default('no') | bool
+
+- name: Install SentinelOne DEB package | Linux
+  ansible.builtin.apt:
+    deb: '{{ s1_agent_path }}'
+    state: present
+  environment:
+    S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_workdir }}/s1_config.cfg'
+  become: yes
+  notify: '{{ s1_handler_name }}'
+  when: ansible_pkg_mgr in apt_pkg_mgrs
+
+- name: Remove working directory | Linux
+  ansible.builtin.file:
+    path: '{{ s1_workdir }}'
+    state: absent
+  tags:
+    - molecule-notest

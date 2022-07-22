@@ -1,0 +1,51 @@
+{
+  "folders": [
+    {
+      "path": ".."
+    }
+  ],
+  "settings": {
+    "editor.tabSize": 2,
+    "editor.wordWrap": "on",
+    "editor.renderWhitespace": "all",
+    "editor.renderControlCharacters": true,
+    "editor.formatOnSave": true,
+    "editor.insertSpaces": true,
+    "files.trimTrailingWhitespace": true,
+    "files.associations": {
+      "*.yml": "yaml",
+      "*.yaml": "yaml",
+      "*.sh.j2": "shellscript",
+      "*.conf.j2": "properties"
+    },
+    "[markdown]": {
+      "editor.tabSize": 4,
+      "editor.insertSpaces": true,
+      "files.trimTrailingWhitespace": true
+    },
+    "[shellscript]": {
+      "editor.insertSpaces": false,
+      "editor.tabSize": 4,
+    },
+    "[yaml]": {
+      "editor.tabSize": 2,
+      "editor.wordWrap": "on",
+      "editor.renderWhitespace": "all",
+      "editor.renderControlCharacters": true,
+      "editor.formatOnSave": true,
+      "editor.insertSpaces": true,
+    },
+    "yaml.customTags": [
+      "!vault"
+    ],
+    "yaml.format.singleQuote": true,
+  },
+  "extensions": {
+    "recommendations": [
+      "redhat.vscode-yaml",
+      "wholroyd.jinja",
+      "vector-of-bool.gitflow",
+      "streetsidesoftware.code-spell-checker"
+    ]
+  }
+}

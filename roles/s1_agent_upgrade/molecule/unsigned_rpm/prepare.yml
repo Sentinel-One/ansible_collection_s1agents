@@ -1,0 +1,86 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - block:
+        - name: Clean up deprecated repo files
+          ansible.builtin.file:
+            path: /etc/yum.repos.d/CentOS-Base.repo
+            state: absent
+          become: yes
+          when: ansible_distribution_major_version == '6'
+
+        - name: Clean yum metadata
+          command: yum clean metadata
+          args:
+            warn: false
+      when: ansible_os_family == "RedHat"
+
+    - name: Update apt cache on Debian.
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      become: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install python3-dnf on Suse
+      ansible.builtin.command: 'zypper --non-interactive install python3-xml python3-dnf' # noqa command-instead-of-module
+      become: yes
+      when: ansible_os_family == "Suse"
+
+    - name: Install older SentinelOne Agent
+      include_role:
+        name: s1_agent_install
+      vars:
+        s1_release_n_minus: 1
+        s1_install_unsigned_rpm: true
+
+    - name: Flush handlers
+      meta: flush_handlers
+
+    - name: Clear cached facts
+      meta: clear_facts
+
+    - name: Gather facts
+      setup:
+
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+        manager: auto
+
+    - name: Persist facts for verify step
+      set_fact:
+        s1_molecule_prior_version: "{{ ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first }}"
+        s1_molecule_prior_package: '{{ s1_agent_path | basename }}'
+        cacheable: yes
+
+    - name: Assert SentinelOne Agent was installed from unsigned package
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_prior_package is defined
+          - s1_molecule_prior_package is regex('^Sentinel.*')
+
+    - name: Get the agent's uuid
+      include_role:
+        name: s1_agent_uuid
+
+    - name: Wait for agent to register with Management Console
+      ansible.builtin.uri:
+        url: '{{ s1_management_console }}/web/api/v2.1/agents?uuid={{ s1_agent_uuid }}&isActive=true'
+        return_content: false
+        headers:
+          Authorization: 'ApiToken {{ s1_api_token }}'
+      environment:
+        http_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
+        https_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
+      register: s1_agent_registered
+      until:
+        - s1_agent_registered is not failed
+        - s1_agent_registered.json.pagination.totalItems == 1
+      retries: 10
+      delay: 10
+      become: no
+
+    - name: Show installer path
+      ansible.builtin.debug:
+        var: s1_molecule_prior_package

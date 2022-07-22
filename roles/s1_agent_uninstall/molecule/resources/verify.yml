@@ -1,0 +1,39 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include OS specific variables
+      ansible.builtin.include_vars: '{{ loop_vars }}'
+      with_first_found:
+        - files:
+            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+            - '{{ ansible_distribution | lower }}.yml'
+            - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
+            - '{{ ansible_os_family | lower }}.yml'
+            - '{{ ansible_system | lower }}.yml'
+          paths:
+            - "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/vars"
+      loop_control:
+        loop_var: loop_vars
+        label: '{{ loop_vars | basename }}'
+
+    - name: Include OS specific verify tasks
+      ansible.builtin.include_tasks:
+        file: '{{ loop_family }}'
+      with_first_found:
+        - files:
+            - 'verify_{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+            - 'verify_{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+            - 'verify_{{ ansible_distribution | lower }}.yml'
+            - 'verify_{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
+            - 'verify_{{ ansible_os_family | lower }}.yml'
+            - 'verify_{{ ansible_system | lower }}.yml'
+          paths:
+            - "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/../resources/tasks"
+      loop_control:
+        loop_var: loop_family
+        label: '{{ loop_family | basename }}'

@@ -1,0 +1,100 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Cleanup
+  hosts: all
+  gather_facts: false
+  tasks:
+    # # - block:
+    # #     - name: Check molecule instance
+    # #       ansible.builtin.wait_for_connection:
+    # #         timeout: 10
+    # #       register: s1_molecule_instance_active
+
+    # #     - name: Gather facts
+    # #       ansible.builtin.setup:
+    # #         gather_subset:
+    # #           - '!all'
+    # #           - os_family
+    # #           - platform
+
+    # #     - name: Include s1_agent_uninstall
+    # #       ansible.builtin.include_role:
+    # #         name: s1_agent_uninstall
+
+    # #   rescue:
+    # #     # This task intentionally does nothing
+    # #     - name: Assert molecule instance offline
+    # #       ansible.builtin.assert:
+    # #         that: '"timed out waiting for ping module test" in s1_molecule_instance_active.msg'
+
+    # #   always:
+    # #     - name: Remove S1 work directory
+    # #       ansible.builtin.file:
+    # #         path: '{{ s1_workdir }}'
+    # #         state: absent
+    # #       run_once: true
+    # #       delegate_to: localhost
+    # #       become: no
+
+    - name: Remove S1 work directory
+      ansible.builtin.file:
+        path: '{{ s1_workdir }}'
+        state: absent
+      run_once: true
+      delegate_to: localhost
+      become: no
+
+    # # - name: Set agent uuids
+    # #   set_fact:
+    # #     s1_molecule_play_uuids: |
+    # #       {% set uuids_list = [] -%}
+    # #       {%- for item in ansible_play_hosts_all -%}
+    # #         {%- if hostvars[item]['s1_molecule_agent_uuid'] is defined -%}
+    # #           {%- set _ = uuids_list.extend([hostvars[item]['s1_molecule_agent_uuid']]) -%}
+    # #         {%- endif -%}
+    # #       {%- endfor %}
+    # #       {{ uuids_list }}
+    # #   delegate_to: localhost
+    # #   run_once: yes
+
+    # - name: Set request body
+    #   ansible.builtin.set_fact:
+    #     request_body: |
+    #       {
+    #         "filter": {
+    #           "computerName": "{{ inventory_hostname_short }}",
+    #           "filterId":  "1281916108527938499"
+    #         }
+    #       }
+
+    # # - name: Show play uuids
+    # #   ansible.builtin.debug:
+    # #     var: s1_molecule_play_uuids | to_json
+
+    # - name: show body
+    #   ansible.builtin.debug:
+    #     var: request_body
+
+    # - name: Decommission agents in management console
+    #   ansible.builtin.uri:
+    #     url: '{{ s1_management_console }}/web/api/v2.1/agents/actions/decommission'
+    #     headers:
+    #       Authorization: 'ApiToken {{ s1_api_token }}'
+    #     method: POST
+    #     # body: '{{ request_body | to_json }}'
+    #     body:
+    #       filter:
+    #         computerName: '{{ inventory_hostname_short }}'
+    #         filterId: '1281916108527938499'
+    #     # status_code: 201
+    #     body_format: json
+    #   register: decom_result
+    #   # until: decom_result is not failed
+    #   # retries: 10
+    #   # delay: 10
+    #   delegate_to: localhost
+    #   become: no
+
+    # - ansible.builtin.debug:
+    #     var: decom_result

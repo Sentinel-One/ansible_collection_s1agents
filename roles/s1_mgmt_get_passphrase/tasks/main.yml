@@ -1,0 +1,56 @@
+---
+# tasks file for s1_mgmt_get_passphrase
+
+- name: Check Assertions
+  block:
+    - name: Assert that s1_agent_uuid is defined
+      ansible.builtin.assert:
+        that:
+          - s1_agent_uuid is defined
+          - s1_agent_uuid is not none
+          - s1_agent_uuid | length > 0
+        fail_msg: s1_agent_uuid is not set
+        success_msg: s1_agent_uuid is set
+
+    - name: Assert that Management Console is defined
+      ansible.builtin.assert:
+        that:
+          - s1_management_console is defined
+          - s1_management_console is not none
+          - s1_management_console | length > 0
+        fail_msg: s1_management_console is not set
+        success_msg: s1_management_console is set
+
+    - name: Assert that API token is defined
+      ansible.builtin.assert:
+        that:
+          - s1_api_token is defined
+          - s1_api_token is not none
+          - s1_api_token | length > 0
+        fail_msg: s1_api_token is not set
+        success_msg: s1_api_token is set
+  tags:
+    - always
+
+- name: Include tasks to lookup the agent passphrase
+  ansible.builtin.include_tasks:
+    file: '{{ loop_family_passphrase }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - 'unsupported.yml'
+  loop_control:
+    loop_var: loop_family_passphrase
+    label: '{{ loop_family_passphrase | basename }}'
+
+- name: Include tasks to write passphrases to CSV
+  ansible.builtin.include_tasks:
+    file: passphrase_report.yml
+  when:
+    - s1_agent_passphrase_report is defined
+    - s1_agent_passphrase_report is not none
+    - s1_agent_passphrase_report | length > 0

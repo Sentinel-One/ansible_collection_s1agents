@@ -1,0 +1,5 @@
+---
+# defaults file for s1_agent_uuid
+
+# Full path to a CSV report where agent UUIDs will be saved. Optional.
+# s1_agent_uuid_report:

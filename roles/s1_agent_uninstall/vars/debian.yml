@@ -1,0 +1,7 @@
+---
+# vars file for s1_agent_upgrade
+
+# OS package manager name for the SentinelOne package
+s1_package_name: sentinelagent
+# OS service manager name for the SentinelOne service
+s1_service_name: sentinelone.service

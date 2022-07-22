@@ -1,0 +1,24 @@
+---
+# handlers file for s1_agent_install
+
+- name: Start SentinelOne service | Linux
+  ansible.builtin.service:
+    name: '{{ s1_service_name }}'
+    state: started
+    enabled: yes
+  become: yes
+  when:
+    - (s1_agent_auto_start is undefined) or (s1_agent_auto_start is none) or (s1_agent_auto_start | length == 0) or (s1_agent_auto_start != 'false')
+
+- name: Start SentinelOne service | RedHat 6
+  command: >
+    /opt/sentinelone/bin/sentinelctl control start
+  register: s1_ctl_control
+  changed_when: "'molecule-idempotence-notest' not in ansible_skip_tags"
+  # check_mode: no
+  until: "'Error: receive failed: Connection reset by peer' not in s1_ctl_control.stdout"
+  retries: 15
+  delay: 5
+  become: yes
+  when:
+    - (s1_agent_auto_start is undefined) or (s1_agent_auto_start is none) or (s1_agent_auto_start | length == 0) or (s1_agent_auto_start != 'false')

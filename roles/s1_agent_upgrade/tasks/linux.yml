@@ -1,0 +1,53 @@
+---
+# tasks file for s1_agent_install
+
+- name: Gather package facts | Linux
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Assert that SentinelOne agent is installed
+  ansible.builtin.assert:
+    that: ansible_facts.packages[s1_package_name] is defined
+    fail_msg: The SentinelOne agent is not installed
+    success_msg: SentinelOne agent is installed
+
+- name: Set s1_prior_version | Linux
+  set_fact:
+    s1_prior_version: "{{ ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first }}"
+  when: ansible_facts.packages[s1_package_name] is defined
+
+- name: Set SentinelOne agent path | Linux
+  set_fact:
+    s1_agent_path: '{{ s1_workdir }}/{{ s1_agent_src | basename }}'
+
+- block:
+    - name: Create working directory | Linux
+      ansible.builtin.file:
+        path: '{{ s1_workdir }}'
+        state: directory
+        mode: '0755'
+
+    - name: Import the SentinelOne RPM Key | Linux
+      include_role:
+        name: s1_import_rpm_key
+      when: ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
+
+    - name: Copy SentinelOne agent | Linux
+      ansible.builtin.copy:
+        src: '{{ s1_agent_src }}'
+        dest: '{{ s1_agent_path }}'
+        mode: '0755'
+
+    - name: Upgrade SentinelOne agent | Linux
+      ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"'
+      notify: '{{ s1_handler_name }}'
+      become: yes
+  when:
+    - s1_prior_version|default('0') is version(s1_agent_version, '<')
+
+- name: Remove working directory | Linux
+  ansible.builtin.file:
+    path: '{{ s1_workdir }}'
+    state: absent
+  tags:
+    - molecule-notest

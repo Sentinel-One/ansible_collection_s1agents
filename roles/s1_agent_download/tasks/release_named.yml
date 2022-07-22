@@ -1,0 +1,26 @@
+---
+# tasks file for s1_agent_download
+
+- name: Set signed RPM SentinelOne agent source | Specific release
+  ansible.builtin.set_fact:
+    s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed') | list | first }}"
+  when:
+    - ansible_os_family is in rpm_distribution
+    - not s1_install_unsigned_rpm | default('no') | bool
+
+- name: Set unsigned RPM SentinelOne agent source | Specific release
+  ansible.builtin.set_fact:
+    s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Sentinel') | list | first }}"
+  when:
+    - ansible_os_family is in rpm_distribution
+    - s1_install_unsigned_rpm | default('no') | bool
+
+- name: Set DEB SentinelOne agent source | Specific release
+  ansible.builtin.set_fact:
+    s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.deb') | list | first }}"
+  when: ansible_os_family is in apt_distribution
+
+- name: Set MSI SentinelOne agent source | Specific release
+  ansible.builtin.set_fact:
+    s1_download_src: "{{ s1_available_packages.json.data | selectattr('version', 'equalto', s1_agent_version) | selectattr('fileExtension', 'equalto', '.msi') | selectattr('osArch', 'equalto', (ansible_facts.architecture == '64-bit') | ternary('64 bit', '32 bit')) | list | first }}"
+  when: ansible_os_family == 'Windows'

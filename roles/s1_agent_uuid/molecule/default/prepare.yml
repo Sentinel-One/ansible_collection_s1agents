@@ -1,0 +1,36 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - block:
+        - name: Clean up deprecated repo files
+          ansible.builtin.file:
+            path: /etc/yum.repos.d/CentOS-Base.repo
+            state: absent
+          become: yes
+          when: ansible_distribution_major_version == '6'
+
+        - name: Clean yum metadata
+          command: yum clean metadata
+          args:
+            warn: false
+      when: ansible_os_family == "RedHat"
+
+    - name: Update apt cache on Debian.
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+      become: yes
+      when: ansible_os_family == 'Debian'
+
+    - name: Install python3-dnf on Suse
+      ansible.builtin.command: 'zypper --non-interactive install python3-xml python3-dnf' # noqa command-instead-of-module
+      become: yes
+      when: ansible_os_family == "Suse"
+
+    - name: Install the SentinelOne Agent
+      include_role:
+        name: s1_agent_install
+
+    - name: Flush handlers
+      meta: flush_handlers

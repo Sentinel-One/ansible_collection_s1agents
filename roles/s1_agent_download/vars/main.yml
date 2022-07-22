@@ -1,13 +1,16 @@
 ---
 # vars file for s1_agent_download
 # Default values for SentinelOne role. Do change variable values in this file, instead copy them to your inventory and apply changes there.
-s1_workdir: /tmp/s1_install
+
+# Directory to be used as a temporary work directory. This path will be used by both the controller and inventory nodes.
+s1_workdir: /tmp/s1_workdir
+
 # s1_site_key_regex: Site-Key\s+(\w*)
-s1_supported_os_family:
-  - RedHat
-  - Debian
-  - Windows
-  # - Suse
+# s1_supported_os_family:
+#   - RedHat
+#   - Debian
+#   - Windows
+#   # - Suse
 
 rpm_distribution:
   - RedHat
@@ -16,4 +19,21 @@ rpm_distribution:
 apt_distribution:
   - Debian
 
-s1_api_limit: 20
+s1_api_limit: 30
+
+# Platforms, used to query the API for available packages
+# Note: only Linux and Windows are currently supported by this role
+s1_platform_type:
+  - Linux
+  # - Linux_k8s
+  # - Macos
+  # - Sdk
+  - Windows
+  # - Windows_legacy
+
+# Package Availability, used to query the API for available packages
+s1_package_availability:
+  # - Beta
+  # - Ea
+  - Ga
+  # - Other

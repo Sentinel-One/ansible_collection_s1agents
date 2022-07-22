@@ -1,0 +1,36 @@
+---
+# tasks file for s1_mgmt_get_passphrase
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Assert SentinelOne Agent is installed
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.packages[s1_package_name] is defined
+
+- name: Get agent status
+  ansible.builtin.command: >
+    /opt/sentinelone/bin/sentinelctl management status
+  register: s1_ctl_mgmt_status
+  changed_when: no
+  failed_when: s1_ctl_mgmt_status.stdout | regex_search("UUID\s+undefined")
+  check_mode: no
+  become: yes
+  until: "'Error: receive failed: Connection reset by peer' not in s1_ctl_mgmt_status.stdout"
+  retries: 3
+  delay: 10
+
+- name: Show agent status
+  ansible.builtin.debug:
+    var: s1_ctl_mgmt_status
+  tags:
+    - never
+    - debug
+
+- name: Extract agent UUID
+  ansible.builtin.set_fact:
+    s1_agent_uuid: "{{ s1_ctl_mgmt_status.stdout | regex_search(regexp,'\\1') | first }}"
+  vars:
+    regexp: 'UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})'

@@ -1,0 +1,112 @@
+---
+ansible:
+  host_key_checking: false
+  raw_env_vars:
+    ANSIBLE_FORCE_COLOR: true
+    # Resolves an issue on MacOS with ansible connecting to Windows
+    OBJC_DISABLE_INITIALIZE_FORK_SAFETY: 'YES'
+  ansiblecfg_defaults:
+    retry_files_enabled: false
+
+dependency:
+  name: galaxy
+  enabled: false
+
+driver:
+  name: vagrant
+  provider:
+    name: '${VAGRANT_DEFAULT_PROVIDER:-virtualbox}'
+
+lint: |
+  set -e
+  yamllint .
+  ansible-lint
+  flake8
+
+platforms:
+  - name: '${S1_MOLECULE_HOSTNAME}-${S1_VAGRANT_DISTRO:-rocky8}'
+    groups:
+      - all
+    children:
+      - '${S1_VAGRANT_GROUP:-Linux}'
+    box: '${S1_VAGRANT_REPO:-roboxes}/${S1_VAGRANT_DISTRO:-rocky8}'
+    memory: 3076
+    cpus: 2
+    config_options:
+      synced_folder: false
+      vm.communicator: '${S1_VAGRANT_COMMUNICATOR:-ssh}'
+    provider_options:
+      linked_clone: true
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: smart
+      fact_caching: jsonfile
+      fact_caching_connection: '${S1_WORKDIR:-/tmp/s1_workdir}'
+      fact_caching_timeout: 3600
+  # env:
+  #   ANSIBLE_VERBOSITY: 3
+  inventory:
+    group_vars:
+      all:
+        s1_management_console: '${S1_MANAGEMENT_CONSOLE}'
+        s1_agent_site_token: '${S1_AGENT_SITE_TOKEN}'
+        s1_api_token: '${S1_API_TOKEN}'
+        s1_agent_customer_id: ansible_collection_dev
+        s1_workdir: '${S1_WORKDIR:-/tmp/s1_workdir}'
+        s1_forced_remove: false
+        s1_agent_uuid_report: '{{ s1_workdir }}/uuid_report.csv'
+      Linux:
+        # s1_agent_version: "${S1_AGENT_VERSION_LINUX}"
+      Windows:
+        ansible_become_method: runas
+        ansible_become_user: vagrant
+        ansible_become_password: vagrant
+        ansible_user: vagrant
+        ansible_connection: ssh
+        ansible_shell_type: cmd
+        # s1_agent_version: "${S1_AGENT_VERSION_WINDOWS}"
+      # Darwin:
+
+verifier:
+  name: ansible
+  # scenario:
+  #   create_sequence:
+  #     - dependency
+  #     - create
+  #     - prepare
+  #   check_sequence:
+  #     - dependency
+  #     - cleanup
+  #     - destroy
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - check
+  #     - destroy
+  #   converge_sequence:
+  #     - dependency
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - verify
+  #   destroy_sequence:
+  #     - dependency
+  #     - cleanup
+  #     - destroy
+  #   test_sequence:
+  #     - dependency
+  #     - lint
+  #     - cleanup
+  #     - destroy
+  #     - syntax
+  #     - create
+  #     - prepare
+  #     - converge
+  #     - idempotence
+  #     - side_effect
+  #     - verify
+  #     - cleanup
+  #     - destroy

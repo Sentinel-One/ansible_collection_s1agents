@@ -1,33 +1,21 @@
 ---
 # defaults file for s1_agent_download
 
-# URL to your SentinelOne management console
+# URL to the SentinelOne management console
 # s1_management_console:
 
-# List of platforms to download agent for
-s1_platform_type:
-  - Linux
-  # - Linux_k8s
-  # - Macos
-  # - Sdk
-  - Windows
-  # - Windows_legacy
+# API token with permissions to access the Packages tab and download agent packages
+# s1_api_token:
 
-# Package status to download, choose EA or GA
-s1_package_status:
-  # - Beta
-  # - Ea
-  - Ga
-  # - Other
-
-# Agent version to install
-# Must be assigned at the ansible_os_family (RedHat, Suse, Debian, Windows, Darwin, etc.) or a narrower scope
+# Download a specific version of agent
+# Because agent versions vary by platform, this must be assigned at the ansible_os_family or a narrower scope
+# This the Build Number on Sentinels > Packages pages.
 # s1_agent_version: 21.7.3.6
 
-# If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
-# By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
-s1_agent_management_proxy: '{{ default_proxy | default(None) }}'
-# s1_agent_management_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
-# s1_agent_management_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
+# Download an agent package this many releases behind the latest
+# When both s1_agent_version and s1_release_n_minus are unset, the latest release will be downloaded
+# s1_release_n_minus: 1
 
-# s1_agent_validate_certs: '{{ default_validate_certs | default(true) }}' # NOT IMPLEMENTED
+# Download unsigned RPM packages. Do not change this unless you know what you are doing.
+# The s1_import_rpm_key role can be used to install the SentinelOne GPG key on endpoints.
+# s1_install_unsigned_rpm: yes

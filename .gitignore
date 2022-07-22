@@ -1,6 +1,7 @@
 /tests/output/
 /changelogs/.plugin-cache.yaml
 *.env
+*.env.yml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

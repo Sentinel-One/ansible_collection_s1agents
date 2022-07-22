@@ -1,0 +1,50 @@
+---
+# defaults file for s1_agent_install
+
+# URL to the SentinelOne management console
+# s1_management_console:
+
+# API token with permissions to access the Packages tab and download agent packages
+# s1_api_token:
+
+# The Site or Group Token to use when associating the agent with the Management Console
+# s1_agent_site_token:
+
+# Path to agent installation package (msi, exe, rpm, deb or pkg) on the Ansible Controller
+# Must be assigned at the ansible_os_family (RedHat, Suse, Debian, Windows, Darwin, etc.) or a narrower scope
+# s1_agent_src:
+
+# Download and install unsigned RPM packages, signed packages are used by default
+# s1_install_unsigned_rpm: false
+
+# If true (default), the agent starts automatically during the install task
+# If false the agent will not be started by this role
+# s1_agent_auto_start: true
+
+# Set a customer specific identifier for the host, AKA Customer ID or External ID
+# s1_agent_customer_id:
+
+# If true (default), the Agent creates the sentinelone user and group when it is installed.
+# If false, the sentinelone user and group must be created manually, see documentation for specifics
+# s1_agent_create_user: true
+
+# Change the installation directory (and all recursive paths, such as logs) location
+# The Agent will create a symlink from the custom path to /opt/sentinelone.
+# s1_agent_custom_install_path:
+
+# Define the endpoint as a server or desktop.
+# s1_agent_device_type: server
+
+# If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
+# By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
+s1_agent_management_proxy: '{{ default_proxy | default(None) }}'
+# s1_agent_management_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
+# s1_agent_management_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
+
+# If there is a proxy server between the Agent and the Deep Visibility service, enter the proxy URL (or IP address) and the port.
+# By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
+s1_agent_dv_proxy: '{{ default_proxy | default(None) }}'
+# s1_agent_dv_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
+# s1_agent_dv_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
+
+# s1_agent_validate_certs: '{{ default_validate_certs | default(true) }}' # NOT IMPLEMENTED

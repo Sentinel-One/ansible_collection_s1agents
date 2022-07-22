@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Run setup
+      setup:
+
+    - name: Include s1_agent_uuid
+      include_role:
+        name: s1_agent_uuid
+
+    - name: Show agent uuid
+      ansible.builtin.debug:
+        var: s1_agent_uuid
+
+    - name: Persist facts
+      ansible.builtin.set_fact:
+        s1_molecule_agent_uuid: '{{ s1_agent_uuid }}'
+        cacheable: yes

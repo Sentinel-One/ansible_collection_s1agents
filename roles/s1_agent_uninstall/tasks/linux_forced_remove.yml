@@ -1,0 +1,73 @@
+---
+# tasks file for s1_agent_uninstall
+- name: Gather service facts | Linux
+  ansible.builtin.service_facts:
+  become: true
+
+- name: Stop and disable the SentinelOne service | Linux
+  ansible.builtin.service:
+    name: '{{ s1_service_name }}'
+    state: stopped
+    enabled: no
+  become: yes
+  when: ansible_facts.services[s1_service_name] is defined
+
+- name: Show service manager | Linux
+  debug:
+    var: ansible_service_mgr
+
+- name: Remove the SentinelOne service files | Linux
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  become: yes
+  with_items:
+    - /usr/lib/systemd/system/sentinelone.service
+    - /lib/systemd/system/sentinelone.service
+    - /etc/init.d/sentineld
+
+- name: Unmount SentinelOne directories | Linux
+  ansible.posix.mount:
+    path: '{{ item }}'
+    state: unmounted
+  become: yes
+  with_items:
+    - '{{ s1_agent_default_install_path }}/mount'
+    - '{{ s1_agent_default_install_path }}/cgroups/memory'
+
+- name: Remove SentinelOne directory | Linux
+  ansible.builtin.file:
+    path: '{{ item }}'
+    state: absent
+  become: yes
+  with_items:
+    - '{{ s1_agent_custom_install_path | default(s1_agent_default_install_path) }}'
+    - '{{ s1_agent_default_install_path }}/'
+
+- name: Remove the sentinelone user | Linux
+  ansible.builtin.user:
+    name: sentinelone
+    state: absent
+    remove: yes
+  become: yes
+
+- name: Remove SentinelOne apt package | Linux
+  ansible.builtin.file:
+    path: /var/lib/dpkg/info/sentinelagent.*
+    state: absent
+  become: yes
+  when: ansible_pkg_mgr in apt_pkg_mgrs
+
+- name: Remove the SentinelOne package from dpkg | Linux
+  ansible.builtin.command: dpkg --purge --force-all sentinelagent # noqa command-instead-of-module
+  become: yes
+  when:
+    - ansible_pkg_mgr in apt_pkg_mgrs
+    - ansible_facts.packages[s1_package_name] is defined
+
+- name: Remove the SentinelOne package from rpm | Linux
+  ansible.builtin.command: rpm -ev --noscripts SentinelAgent # noqa command-instead-of-module
+  become: yes
+  when:
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - ansible_facts.packages[s1_package_name] is defined

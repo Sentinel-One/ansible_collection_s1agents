@@ -1,0 +1,73 @@
+---
+# tasks file for s1_agent_upgrade
+
+- name: Assert that the operating system is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family in s1_supported_os_family or ansible_distribution in s1_supported_linux_distribution
+    fail_msg: 'The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base to confirm compatibility.'
+
+- name: Import OS specific variables
+  ansible.builtin.include_vars: '{{ loop_vars }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+      skip: yes
+      paths:
+        - 'vars'
+  loop_control:
+    loop_var: loop_vars
+    label: '{{ loop_vars | basename }}'
+
+- name: Download Agent from Management Console
+  include_role:
+    name: s1_agent_download
+  when: s1_agent_src is undefined
+
+- name: Assert that s1_agent_version is set
+  ansible.builtin.assert:
+    that:
+      - s1_agent_version is defined
+      - s1_agent_version is not none
+      - s1_agent_version | length > 0
+    fail_msg: s1_agent_version is not set
+    success_msg: s1_agent_version is set
+
+- name: Get the endpoints passphrase
+  include_role:
+    name: s1_mgmt_get_passphrase
+  when: s1_agent_passphrase is undefined
+
+- name: Assert that s1_agent_passphrase is set
+  ansible.builtin.assert:
+    that:
+      - s1_agent_passphrase is defined
+      - s1_agent_passphrase is not none
+      - s1_agent_passphrase | length > 0
+    fail_msg: s1_agent_passphrase is not set
+    success_msg: s1_agent_passphrase is set
+
+- name: Include OS specific tasks
+  ansible.builtin.include_tasks:
+    file: '{{ loop_family }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
+        - 'unsupported.yml'
+  loop_control:
+    loop_var: loop_family
+    label: '{{ loop_family | basename }}'
+
+- name: SentinelOne agent version installed
+  ansible.builtin.debug:
+    var: s1_agent_version
