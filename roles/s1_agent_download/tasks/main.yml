@@ -121,6 +121,6 @@
   register: url_result
   until: url_result is not failed
   retries: 10
-  delay: 10
+  delay: 60 # Mgmt Console API is limited to 2 pkg downloads / 60 seconds
   delegate_to: localhost
   become: no
