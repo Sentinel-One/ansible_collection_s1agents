@@ -1,12 +1,12 @@
 # Ansible Collection - s1community.singularity
 
-[![s1_agent_download](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_download.yml)
-[![s1_agent_install](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_install.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_install.yml)
-[![s1_agent_uninstall](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_uninstall.yml)
-[![s1_agent_upgrade](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_upgrade.yml)
-[![s1_agent_uuid](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_uuid.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_agent_uuid.yml)
-[![s1_import_rpm_key](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_import_rpm_key.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_import_rpm_key.yml)
-[![s1_mgmt_get_passphrase](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_mgmt_get_passphrase.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_mgmt_get_passphrase.yml)
+[![s1_agent_download](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml)
+[![s1_agent_install](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_install.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_install.yml)
+[![s1_agent_uninstall](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml)
+[![s1_agent_upgrade](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml)
+[![s1_agent_uuid](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml)
+[![s1_import_rpm_key](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_rpm_key.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_rpm_key.yml)
+[![s1_mgmt_get_passphrase](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml)
 
 The s1community.singularity Ansible Collection is a collection of roles for working with the SentinelOne Singularity platform.
 

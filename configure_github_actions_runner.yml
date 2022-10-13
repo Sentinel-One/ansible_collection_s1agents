@@ -1,0 +1,99 @@
+---
+- name: Configure GitHub Actions Self-Hosted Runner
+  hosts: github_runner
+  gather_facts: true
+  become: yes
+  vars:
+    github_account: s1-nathangerhart
+    github_repo: ansible_collection_s1agent
+    github_service_account: sa-github-runner
+    runner_user: '{{ github_service_account }}'
+    hide_sensitive_logs: no
+    ansible_common_remote_group: vagrant
+    # ansible_become_pass: '{{ vault_service_account_password }}'
+  roles:
+    - role: monolithprojects.github_actions_runner
+  pre_tasks:
+    - name: Update all packages to their latest version
+      ansible.builtin.apt:
+        name: '*'
+        state: latest
+
+    - name: Install required software
+      ansible.builtin.apt:
+        name:
+          - bash
+          - build-essential
+          - software-properties-common
+          - git
+          - git-lfs
+          - jq
+          - libssl-dev
+          - python3
+          - python3-pip
+          - python3-venv
+          - wget
+          - yamllint
+          - dkms
+          - build-essential
+          - liblttng-ust1
+          - libkrb5-3
+          - zlib1g
+          # - virt-manager
+          # - bridge-utils
+          # - cpu-checker
+          # - libvirt-clients
+          # - libvirt-daemon
+          # - qemu
+          # - qemu-kvm
+          # - libvirt-daemon-driver-qemu
+          # - vagrant-libvirt
+          - virtualbox
+          - virtualbox-dkms
+          - vagrant
+          - 'linux-headers-{{ ansible_kernel }}'
+          - linux-headers-generic
+        update_cache: yes
+
+    - name: Create account for GitHub self-hosted runner
+      user:
+        name: '{{ github_service_account }}'
+        groups:
+          - users
+          - vboxusers
+          - sudo
+          - vagrant
+          # - libvirt
+          # - libvirt-qemu
+          # - libvirt-dnsmasq
+        shell: /bin/bash
+        append: yes
+        create_home: true
+        expires: -1
+        comment: Service Account for GitHub self-hosted runner
+
+    - name: Add users to vboxusers group
+      user:
+        name: '{{ ansible_user }}'
+        groups:
+          - vboxusers
+          # - libvirt
+          # - libvirt-qemu
+          # - libvirt-dnsmasq
+        append: yes
+
+    - name: Add the GitHub self-hosted runner account to sudo without a password
+      community.general.sudoers:
+        name: '{{ github_service_account }}'
+        state: present
+        user: '{{ github_service_account }}'
+        commands: ALL
+
+    - name: Create cache folder
+      ansible.builtin.file:
+        path: /opt/hostedtoolcache/
+        state: directory
+        owner: '{{ github_service_account }}'
+        group: sudo
+        mode: '0775'
+      become: yes

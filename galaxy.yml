@@ -3,10 +3,10 @@
 # The namespace of the collection. This can be a company/brand/organization or product namespace under which all
 # content lives. May only contain alphanumeric lowercase characters and underscores. Namespaces cannot start with
 # underscores or numbers and cannot contain consecutive underscores
-namespace: s1community
+namespace: sentinelone
 
 # The name of the collection. Has the same character restrictions as 'namespace'
-name: singularity
+name: s1agent
 
 # The version of the collection. Must be compatible with semantic versioning
 version: 1.0.0
@@ -21,7 +21,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Collection of roles to install the SentinelOne Singularity agent
+description: Collection of roles to install the SentinelOne agent
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'

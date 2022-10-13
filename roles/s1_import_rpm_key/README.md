@@ -1,7 +1,7 @@
 # S1 Import RPM Key
 
-[![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible-collection-s1singularity)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/blob/main/LICENSE)
-[![Molecule CI](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_import_rpm_key.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible-collection-s1singularity/actions/workflows/s1_import_rpm_key.yml)
+[![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
+[![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_rpm_key.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_rpm_key.yml)
 
 Imports the SentinelOne GPG Key in the RPM database, allowing packages signed by SentinelOne to be installed.
 This role is called automatically by the [s1_agent_install](../s1_agent_install/) and [s1_agent_upgrade](../s1_agent_upgrade/) roles to ensure the S1 RPM Key is available on each host in the play.
