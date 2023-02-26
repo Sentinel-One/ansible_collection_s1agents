@@ -1,5 +1,5 @@
 ---
 # vars file for s1_mgmt_get_passphrase
-# Default values for SentinelOne role. Do change variable values in this file, instead copy them to your inventory and apply changes there.
+# Default values for SentinelOne role. Do not change variable values in this file, instead copy them to your inventory and apply changes there.
 
 s1_api_limit: 1000

@@ -1,6 +1,5 @@
 ---
 # tasks file for s1_agent_download
-
 - name: Assert that Management Console is defined
   ansible.builtin.assert:
     that:
@@ -22,6 +21,20 @@
     success_msg: s1_api_token is set
   tags:
     - always
+
+- name: Show release
+  ansible.builtin.debug:
+    var: s1_release_n_minus
+  tags:
+    - never
+    - debug
+
+- name: Show architecture
+  ansible.builtin.debug:
+    var: ansible_architecture
+  tags:
+    - never
+    - debug
 
 - name: Show URL
   ansible.builtin.debug:
@@ -51,6 +64,11 @@
     - never
     - debug
 
+- name: Include tasks for the latest agent release
+  ansible.builtin.include_tasks:
+    file: release_n_minus.yml
+  when: (s1_agent_version is undefined) or (s1_agent_version is none) or (s1_agent_version | length == 0)
+
 - name: Include tasks for a named agent release
   ansible.builtin.include_tasks:
     file: release_named.yml
@@ -58,11 +76,6 @@
     - s1_agent_version is defined
     - s1_agent_version is not none
     - s1_agent_version | length > 0
-
-- name: Include tasks for the latest agent release
-  ansible.builtin.include_tasks:
-    file: release_n_minus.yml
-  when: (s1_agent_version is undefined) or (s1_agent_version is none) or (s1_agent_version | length == 0)
 
 - name: Set download variables
   ansible.builtin.set_fact:
@@ -72,11 +85,13 @@
 
 - name: Set SentinelOne agent variables
   ansible.builtin.set_fact:
-    s1_agent_src: '{{ s1_workdir }}/{{ s1_agent_package_name }}'
+    s1_agent_src: '{{ s1_download_path }}/{{ s1_agent_package_name }}'
     s1_agent_version: '{{ s1_download_src.version }}'
-    # cacheable: yes
 
 - name: Show package details
+  tags:
+    - debug
+    - never
   block:
     - name: Show s1_agent_package_link
       ansible.builtin.debug:
@@ -97,13 +112,10 @@
     - name: Show s1_agent_version
       ansible.builtin.debug:
         var: s1_agent_version
-  tags:
-    - debug
-    - never
 
 - name: Create working directory
   ansible.builtin.file:
-    path: '{{ s1_workdir }}'
+    path: '{{ s1_download_path }}'
     state: directory
     mode: '0755'
   delegate_to: localhost

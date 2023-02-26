@@ -1,12 +1,11 @@
 ---
-- name: Gather facts
-  ansible.builtin.setup:
-
 - name: Create passhprase CSV report
   ansible.builtin.template:
     src: passphrase_report.csv.j2
     dest: '{{ s1_agent_passphrase_report }}'
     mode: 0644
+  vars:
+    regexp: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$'
   delegate_to: localhost
   run_once: yes
 

@@ -1,35 +1,18 @@
 ---
-# tasks file for s1_agent_forced_remove
-
-- name: Gather package facts | Linux
-  ansible.builtin.package_facts:
-    manager: auto
-  # when:
-  #   - not s1_forced_remove | default('false') | bool
+# tasks file for s1_agent_uninstall
 
 - name: Uninstall SentinelOne Agent using sentinelctl commands
+  when:
+    - not s1_forced_remove | default('false') | bool
   block:
-    - name: Get the endpoints passphrase | Linux
-      include_role:
-        name: s1_mgmt_get_passphrase
-      when: s1_agent_passphrase is undefined
-
-    - name: Assert that s1_agent_passphrase is set | Linux
-      ansible.builtin.assert:
-        that:
-          - s1_agent_passphrase is defined
-          - s1_agent_passphrase is not none
-          - s1_agent_passphrase | length > 0
-        fail_msg: s1_agent_passphrase is not set
-        success_msg: s1_agent_passphrase is set
-
     - name: Uninstall SentinelOne agent | Linux
       ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control uninstall --passphrase "{{ s1_agent_passphrase }}"'
       become: yes
-      register: s1_sentinectl_uninstall
+      register: s1_sentinelctl_uninstall
       retries: 3
       delay: 30
-      until: s1_sentinectl_uninstall.rc == 0
+      until: s1_sentinelctl_uninstall.rc == 0
+      changed_when: "'Successfully uninstalled agent' in s1_sentinelctl_uninstall.stdout"
   rescue:
     - name: Include tasks to clean up a failed uninstall | Linux
       ansible.builtin.include_tasks:
@@ -45,9 +28,6 @@
       loop_control:
         loop_var: loop_cleanup_failed
         label: '{{ loop_cleanup_failed | basename }}'
-  when:
-    - ansible_facts.packages[s1_package_name] is defined
-    - not s1_forced_remove | default('false') | bool
 
 - name: Include tasks to forcibly remove the SeintinelOne agent | Linux
   ansible.builtin.include_tasks:

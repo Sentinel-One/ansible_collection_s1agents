@@ -1,0 +1,42 @@
+---
+- name: Gather package facts | Windows
+  ansible.windows.win_powershell:
+    script: |
+      Get-ChildItem -Force -Recurse HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | Where-Object {$_.DisplayName -eq '{{ s1_package_name }}'} | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate, @{Name='ProductId'; Expression={$('{0}' -f $_.PSChildName)}}
+      Get-ChildItem -Force -Recurse HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | Where-Object {$_.DisplayName -eq '{{ s1_package_name }}'} | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate, @{Name='ProductId'; Expression={$('{0}' -f $_.PSChildName)}}
+  register: s1_windows_software
+  become: yes
+  changed_when: no
+  tags:
+    - skip_ansible_lint
+
+- name: Gather service facts | Windows
+  ansible.windows.win_service_info:
+    name: '{{ s1_service_name }}'
+  register: s1_windows_service
+
+- name: Get agent status | Windows
+  ansible.windows.win_powershell:
+    script: |
+      $helper = New-Object -ComObject "SentinelHelper.1"
+      $helper.GetAgentStatusJSON()
+  register: s1_com_status
+  changed_when: no
+  check_mode: no
+  become: no
+  until: s1_com_status.output != ""
+  retries: 3
+  delay: 10
+
+- name: Set package facts | Windows
+  ansible.builtin.set_fact:
+    s1_agent_info:
+      installed: "{{ s1_windows_software.output | map(attribute='DisplayVersion') | list | first | default(None) | ternary(true, false, false) }}"
+      version: "{{ s1_windows_software.output | map(attribute='DisplayVersion') | list | first | default(None) }}"
+      service_status: "{{ (s1_windows_service.services | selectattr('name', 'equalto', s1_service_name) | first)['state'] | default(None) }}"
+      product_id: "{{ s1_windows_software.output | map(attribute='ProductId') | list | first | default(None) }}"
+      uuid: "{{ (s1_com_status.output | last | from_json)['agent-id'] if (s1_com_status.output | length) else none }}"
+      reboot_required: "{{ (s1_com_status.output | last | from_json)['reboot-reasons'] | length | bool if (s1_com_status.output | length) else none }}"
+      mgmt_url: "{{ (s1_com_status.output | last | from_json)['mgmt-url'] if (s1_com_status.output | length) else none }}"
+      anti_tamper_enabled: "{{ (s1_com_status.output | last | from_json)['self-protection-enabled'] | bool if (s1_com_status.output | length) else none }}"
+      agent_enabled: "{{ (s1_com_status.output | last | from_json)['enforcing-security'] | bool if (s1_com_status.output | length) else none }}"

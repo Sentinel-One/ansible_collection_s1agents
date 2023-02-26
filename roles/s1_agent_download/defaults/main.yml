@@ -1,11 +1,18 @@
 ---
 # defaults file for s1_agent_download
 
-# URL to the SentinelOne management console
-# s1_management_console:
+# # Directory to be used as a temporary work directory. This path will be used by both the controller and inventory nodes.
+# s1_download_path: /tmp/s1_agent_cache
 
+# URL to the SentinelOne management console
+s1_management_console: "{{ undef(hint='You must specify your SentinelOne Management Console') }}"
 # API token with permissions to access the Packages tab and download agent packages
-# s1_api_token:
+s1_api_token: "{{ undef(hint='You must specify your SentinelOne API Token') }}"
+# Package Availability, used to query the API for available packages
+# s1_package_availability:
+#   - Beta
+#   - Ea
+#   - Ga
 
 # Download a specific version of agent
 # Because agent versions vary by platform, this must be assigned at the ansible_os_family or a narrower scope
@@ -16,6 +23,9 @@
 # When both s1_agent_version and s1_release_n_minus are unset, the latest release will be downloaded
 # s1_release_n_minus: 1
 
-# Download unsigned RPM packages. Do not change this unless you know what you are doing.
-# The s1_import_rpm_key role can be used to install the SentinelOne GPG key on endpoints.
-# s1_install_unsigned_rpm: yes
+# Download GPG signed RPM packages. Do not change this unless you know what you are doing.
+# The s1_import_gpg_key role can be used to install the SentinelOne GPG key on endpoints.
+# s1_install_gpg_signed_rpm: no
+
+# Download msi packages instead of SentinelOneInstaller packages. Do not change this unless you know what you are doing.
+# s1_install_msi: no

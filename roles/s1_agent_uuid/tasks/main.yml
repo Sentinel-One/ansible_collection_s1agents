@@ -1,46 +1,26 @@
 ---
 # tasks file for s1_agent_uuid
 
-- name: Include distribution variables
-  ansible.builtin.include_vars: '{{ loop_vars }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-      skip: yes
-      paths:
-        - 'vars'
-  loop_control:
-    loop_var: loop_vars
-    label: '{{ loop_vars | basename }}'
-  tags:
-    - always
+- name: Set the agent's UUID
+  ansible.builtin.set_fact:
+    s1_agent_uuid: '{{ s1_agent_info.uuid }}'
 
-- name: Include tasks to get the agent UUID
-  ansible.builtin.include_tasks:
-    file: '{{ loop_family_uuid }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-        - 'unsupported.yml'
-  loop_control:
-    loop_var: loop_family_uuid
-    label: '{{ loop_family_uuid | basename }}'
-  tags:
-    - always
-
-- name: Include tasks to write UUIDs to CSV
-  ansible.builtin.include_tasks:
-    file: uuid_report.yml
+- name: Gather network facts
   when:
     - s1_agent_uuid_report is defined
     - s1_agent_uuid_report is not none
     - s1_agent_uuid_report | length > 0
+  block:
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - dns
+          - all_ipv4_addresses
+      tags:
+        - s1_gather_facts
+
+    - name: Include tasks to write UUIDs to CSV
+      ansible.builtin.include_tasks:
+        file: uuid_report.yml

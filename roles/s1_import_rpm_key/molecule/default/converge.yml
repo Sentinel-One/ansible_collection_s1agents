@@ -1,7 +1,0 @@
----
-- name: Converge
-  hosts: all
-  tasks:
-    - name: Include s1_import_rpm_key
-      include_role:
-        name: s1_import_rpm_key

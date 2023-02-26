@@ -1,0 +1,52 @@
+---
+# handlers file for s1_agent_common
+
+- name: Start SentinelOne service | Linux
+  ansible.builtin.service:
+    name: '{{ s1_service_name }}'
+    state: started
+    enabled: yes
+  become: yes
+  when:
+    - (s1_agent_auto_start | default("yes")) | bool
+
+- name: Start SentinelOne service | RedHat 6
+  ansible.builtin.command: >
+    /opt/sentinelone/bin/sentinelctl control start
+  register: s1_ctl_control
+  changed_when: "'molecule-idempotence-notest' not in ansible_skip_tags"
+  # check_mode: no
+  until: "'Error: receive failed: Connection reset by peer' not in s1_ctl_control.stdout"
+  retries: 15
+  delay: 5
+  become: yes
+  when:
+    - (s1_agent_auto_start | default("yes")) | bool
+
+- name: Reboot Endpoint | Windows
+  ansible.windows.win_reboot:
+    reboot_timeout: 3600
+  become: yes
+  listen: Reboot Node | Windows
+  when:
+    - s1_force_reboot is defined
+    - s1_force_reboot | bool
+
+- name: Reboot Endpoint | Windows | Development Environment
+  ansible.windows.win_shell: Start-Sleep -Seconds 5 ; Restart-Computer -Force
+  async: 1
+  poll: 0
+  changed_when: yes
+  listen: Reboot Node | Windows | Unit Testing
+  when:
+    - s1_force_reboot is defined
+    - s1_force_reboot | bool
+
+- name: Wait for Endpoint to Reboot | Windows | Development Environment
+  ansible.builtin.wait_for_connection:
+    timeout: 180
+    delay: 20
+  listen: Reboot Node | Windows | Unit Testing
+  when:
+    - s1_force_reboot is defined
+    - s1_force_reboot | bool

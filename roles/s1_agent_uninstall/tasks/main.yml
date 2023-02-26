@@ -1,24 +1,12 @@
 ---
 # tasks file for s1_agent_uninstall
 
-- name: Import OS specific variables
-  ansible.builtin.include_vars: '{{ loop_vars }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-      skip: yes
-      paths:
-        - 'vars'
-  loop_control:
-    loop_var: loop_vars
-    label: '{{ loop_vars | basename }}'
-  tags:
-    - always
+- name: Get the endpoints passphrase
+  ansible.builtin.include_role:
+    name: s1_mgmt_get_passphrase
+  when:
+    - s1_agent_info.installed
+    - s1_agent_passphrase is undefined or (ansible_system == 'Linux' and not s1_forced_remove | default('false') | bool)
 
 - name: Include OS specific tasks
   ansible.builtin.include_tasks:
@@ -35,5 +23,6 @@
   loop_control:
     loop_var: loop_family
     label: '{{ loop_family | basename }}'
-  tags:
-    - always
+  when:
+    - s1_agent_info.installed
+    - (s1_agent_passphrase is defined) or (s1_forced_remove | default('false') | bool)

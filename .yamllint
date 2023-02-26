@@ -15,8 +15,8 @@ rules:
   commas:
     max-spaces-after: -1
     level: error
-  comments: disable
-  comments-indentation: disable
+  comments:
+    min-spaces-from-content: 1
   document-start: enable
   empty-lines:
     max: 3
@@ -28,10 +28,13 @@ rules:
     indent-sequences: true
     check-multi-line-strings: true
   key-duplicates: enable
-  line-length: disable
+  line-length:
+    max: 160
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
   new-line-at-end-of-file: enable
   new-lines:
     type: unix
-  trailing-spaces: disable
   truthy:
     allowed-values: ['true', 'false', 'yes', 'no']

@@ -1,0 +1,29 @@
+
+{#- Do not add --rebopt_on_need - Ansible will loose access to the host and mark it as failed -#}
+{%- set install_arguments = [] -%}
+{#- set silent install -#}
+{{- install_arguments.append( '-q' ) -}}
+{#- set the site / group token -#}
+{{- install_arguments.append( '-t' ) -}}
+{{- install_arguments.append( s1_agent_site_token ) -}}
+{#- set --dont_fail_on_config_preserving_failures -#}
+{%- if s1_no_config_failures is defined and s1_no_config_failures | bool -%}
+{{- install_arguments.append( '--dont_fail_on_config_preserving_failures' ) -}}
+{%- endif -%}
+{#- set --dont_preserve_agent_uid -#}
+{%- if s1_no_preserve_uid is defined and s1_no_preserve_uid | bool -%}
+{{- install_arguments.append( '--dont_preserve_agent_uid' ) -}}
+{%- endif -%}
+{#- set --dont_preserve_proxy -#}
+{%- if s1_no_preserve_proxy is defined and s1_no_preserve_proxy | bool -%}
+{{- install_arguments.append( '--dont_preserve_proxy' ) -}}
+{%- endif -%}
+{#- set --dont_preserve_config_dir -#}
+{%- if s1_no_preserve_config is defined and s1_no_preserve_config | bool -%}
+{{- install_arguments.append( '--dont_preserve_config_dir' ) -}}
+{%- endif -%}
+{#- set --no_initial_installation -#}
+{%- if s1_no_initial_install is defined and s1_no_initial_install | bool -%}
+{{- install_arguments.append( '--no_initial_installation' ) -}}
+{%- endif -%}
+{{- install_arguments | join(' ') -}}

@@ -1,0 +1,9 @@
+---
+# vars file for s1_agent_common
+
+# OS package manager name for the SentinelOne package
+s1_package_name: sentinelagent
+# OS service manager name for the SentinelOne service
+s1_service_name: sentinelone.service
+# Name of the handler task to start the SentinelOne service
+s1_service_handler_name: 'Start SentinelOne service | {{ ansible_system }}'

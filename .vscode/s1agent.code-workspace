@@ -39,12 +39,12 @@
       "!vault"
     ],
     "yaml.format.singleQuote": true,
+    "ansible.ansible.useFullyQualifiedCollectionNames": true,
   },
   "extensions": {
     "recommendations": [
       "redhat.vscode-yaml",
       "wholroyd.jinja",
-      "vector-of-bool.gitflow",
       "streetsidesoftware.code-spell-checker"
     ]
   }

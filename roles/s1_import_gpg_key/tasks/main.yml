@@ -1,0 +1,22 @@
+---
+# tasks file for s1_import_gpg_key
+- name: Only run when host in RPM based
+  when: ansible_pkg_mgr in rpm_pkg_mgrs
+  block:
+    - name: Create working directory | Linux
+      ansible.builtin.file:
+        path: '{{ s1_tmp_linux }}'
+        state: directory
+        mode: '0755'
+
+    - name: Copy SentinelOne GPG key | Linux
+      ansible.builtin.copy:
+        src: sentinel_one.gpg
+        dest: '{{ s1_tmp_linux }}'
+        mode: '0755'
+
+    - name: Import SentinelOne GPG key | Linux
+      ansible.builtin.rpm_key:
+        state: '{{ s1_s1_rpm_key_state | default("present") }}'
+        key: '{{ s1_tmp_linux }}/sentinel_one.gpg'
+      become: yes

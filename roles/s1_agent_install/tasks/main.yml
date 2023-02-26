@@ -1,51 +1,11 @@
 ---
 # tasks file for s1_agent_install
 
-- name: Show distribution facts
-  block:
-    - name: Show s1_supported_linux_distribution
-      ansible.builtin.debug:
-        var: s1_supported_linux_distribution|list
-
-    - name: Show ansible_distribution and ansible_distribution_version
-      ansible.builtin.debug:
-        msg: '[{{ ansible_distribution }}] [{{ ansible_distribution_version }}]'
-
-    - name: Show ansible_distribution and ansible_distribution_major_version
-      ansible.builtin.debug:
-        msg: '[{{ ansible_distribution }}] [{{ ansible_distribution_major_version }}]'
-
-    - name: Show ansible_distribution
-      ansible.builtin.debug:
-        msg: '[{{ ansible_distribution }}]'
-
-    - name: Show ansible_os_family and ansible_distribution_major_version
-      ansible.builtin.debug:
-        msg: '[{{ ansible_os_family }}] [{{ ansible_distribution_major_version }}]'
-
-    - name: Show ansible_os_family
-      ansible.builtin.debug:
-        msg: '[{{ ansible_os_family }}]'
-
-    - name: Show ansible_system
-      ansible.builtin.debug:
-        msg: '[{{ ansible_system }}]'
-
-    - name: Check ansible_distribution in s1_supported_linux_distribution
-      ansible.builtin.debug:
-        var: ansible_distribution in s1_supported_linux_distribution
-
-    - name: Check ansible_os_family in s1_supported_linux_distribution
-      ansible.builtin.debug:
-        var: ansible_distribution in s1_supported_os_family
-  tags:
-    - never
-    - debug
-
 - name: Assert that the operating system is supported
   ansible.builtin.assert:
     that:
       - '(ansible_os_family in s1_supported_os_family) or (ansible_distribution in s1_supported_linux_distribution)'
+    # yamllint disable-line rule:line-length
     fail_msg: 'The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base to confirm compatibility.'
 
 - name: Import OS specific variables
@@ -75,7 +35,7 @@
     success_msg: s1_agent_site_token is set
 
 - name: Download Agent from Management Console
-  include_role:
+  ansible.builtin.include_role:
     name: s1_agent_download
   when: s1_agent_src is undefined
 

@@ -1,5 +1,0 @@
----
-# defaults file for s1_import_rpm_key
-
-# Imports (present) or removes (absent) the SentinelOne GPG key from the RPM database, defaults to present
-# s1_import_rpm_key_state: present

@@ -5,9 +5,9 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: Remove S1 work directory
+    - name: Remove S1 work directory # noqa: run-once[task]
       ansible.builtin.file:
-        path: '{{ s1_workdir }}'
+        path: '{{ s1_download_path }}'
         state: absent
       run_once: true
       delegate_to: localhost

@@ -5,27 +5,10 @@
   ansible.builtin.assert:
     that:
       - ansible_os_family in s1_supported_os_family or ansible_distribution in s1_supported_linux_distribution
-    fail_msg: 'The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base to confirm compatibility.'
-
-- name: Import OS specific variables
-  ansible.builtin.include_vars: '{{ loop_vars }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-      skip: yes
-      paths:
-        - 'vars'
-  loop_control:
-    loop_var: loop_vars
-    label: '{{ loop_vars | basename }}'
+    fail_msg: 'The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base.'
 
 - name: Download Agent from Management Console
-  include_role:
+  ansible.builtin.include_role:
     name: s1_agent_download
   when: s1_agent_src is undefined
 
@@ -38,19 +21,17 @@
     fail_msg: s1_agent_version is not set
     success_msg: s1_agent_version is set
 
-- name: Get the endpoints passphrase
-  include_role:
-    name: s1_mgmt_get_passphrase
-  when: s1_agent_passphrase is undefined
-
-- name: Assert that s1_agent_passphrase is set
+- name: Assert that SentinelOne agent is installed
   ansible.builtin.assert:
     that:
-      - s1_agent_passphrase is defined
-      - s1_agent_passphrase is not none
-      - s1_agent_passphrase | length > 0
-    fail_msg: s1_agent_passphrase is not set
-    success_msg: s1_agent_passphrase is set
+      - s1_agent_info is defined
+      - s1_agent_info.installed | bool
+    fail_msg: The SentinelOne agent is not installed
+    success_msg: SentinelOne agent is installed
+
+- name: Set s1_prior_version
+  ansible.builtin.set_fact:
+    s1_prior_version: '{{ s1_agent_info.version }}'
 
 - name: Include OS specific tasks
   ansible.builtin.include_tasks:

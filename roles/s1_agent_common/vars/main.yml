@@ -1,0 +1,40 @@
+---
+# vars file for s1_agent_common
+
+# OS families supported by the SentinelOne agent.
+# Do not add Linux families, they are listed in s1_supported_linux_distribution
+s1_supported_os_family:
+  - Windows
+  - Darwin
+
+# Linux distributions supported by the SentinelOne agent
+s1_supported_linux_distribution:
+  - CentOS
+  - RedHat
+  - Fedora
+  - Scientific
+  - OracleLinux
+  - Amazon
+  - AlmaLinux
+  - Rocky
+  - Debian
+  - Ubuntu
+  - SLES # SUSE Linux Enterprise Server
+  - openSUSE Leap
+  - Virtuozzo
+
+# Package managers used by RPM based distributions
+rpm_pkg_mgrs:
+  - dnf
+  - yum
+  - zypper
+
+# Package managers used by DEB based distributions
+apt_pkg_mgrs:
+  - apt
+
+# Facts to gather for all roles
+default_gather_subset:
+  - '!all'
+  - '!hardware'
+  - min

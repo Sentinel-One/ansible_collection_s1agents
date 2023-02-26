@@ -1,29 +1,75 @@
 ---
 # tasks file for s1_agent_download
-- name: Set task name
+- name: Set GPG signed x86_64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
-    task_name: "{{ (s1_release_n_minus | default(0) == 0) | ternary('Latest ', 'N-' + (s1_release_n_minus | default(0) | string) + ' release') }}"
-
-- name: Set signed RPM SentinelOne agent source | {{ task_name }}
-  ansible.builtin.set_fact:
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed') | list)[s1_release_n_minus | default(0)] }}"
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed-SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] }}"
   when:
-    - ansible_os_family is in rpm_distribution
-    - not s1_install_unsigned_rpm | default('no') | bool
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'x86_64'
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - s1_install_gpg_signed_rpm | default('no') | bool
 
-- name: Set unsigned RPM SentinelOne agent source | {{ task_name }}
+- name: Set GPG signed aarch64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Sentinel') | list)[s1_release_n_minus | default(0)] }}"
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed-SentinelAgent-aarch64_linux') | list)[s1_release_n_minus | default(0)] }}"
   when:
-    - ansible_os_family is in rpm_distribution
-    - s1_install_unsigned_rpm | default('no') | bool
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'aarch64'
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - s1_install_gpg_signed_rpm | default('no') | bool
 
-- name: Set DEB SentinelOne agent source | {{ task_name }}
+- name: Set x86_64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | list)[s1_release_n_minus | default(0)] }}"
-  when: ansible_os_family is in apt_distribution
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] -}}"
+  when:
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'x86_64'
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - not s1_install_gpg_signed_rpm | default('no') | bool
 
-- name: Set MSI SentinelOne agent source | {{ task_name }}
+- name: Set aarch64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^SentinelAgent-aarch64_linux') | list)[s1_release_n_minus | default(0)] }}"
+  when:
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'aarch64'
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - not s1_install_gpg_signed_rpm | default('no') | bool
+
+- name: Set x86_64 DEB SentinelOne agent source | Release minus n
+  ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | selectattr('fileName', 'match', '^SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] }}"
+  when:
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'x86_64'
+    - ansible_pkg_mgr in apt_pkg_mgrs
+
+- name: Set aarch64 DEB SentinelOne agent source | Release minus n
+  ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | selectattr('fileName', 'match', '^SentinelAgent-aarch64_linux') | list)[s1_release_n_minus | default(0)] }}"
+  when:
+    - ansible_system == 'Linux'
+    - ansible_architecture == 'aarch64'
+    - ansible_pkg_mgr in apt_pkg_mgrs
+
+- name: Set SentinelOneInstaller agent source | Release minus n
+  ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.exe') | selectattr('fileName', 'match', '^SentinelOneInstaller') | selectattr('osArch', 'equalto', (ansible_facts.architecture == '64-bit') | ternary('64 bit', '32 bit')) | list)[s1_release_n_minus | default(0)] }}"
+  when:
+    - ansible_os_family == 'Windows'
+    - not s1_install_msi | default('no') | bool
+
+- name: Set MSI SentinelOne agent source | Release minus n
+  ansible.builtin.set_fact:
+    # yamllint disable-line rule:line-length
     s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.msi') | selectattr('osArch', 'equalto', (ansible_facts.architecture == '64-bit') | ternary('64 bit', '32 bit')) | list)[s1_release_n_minus | default(0)] }}"
-  when: ansible_os_family == 'Windows'
+  when:
+    - ansible_os_family == 'Windows'
+    - s1_install_msi | default('no') | bool

@@ -3,7 +3,7 @@
 [![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
 [![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml)
 
-Retrieves the SentinelOne agent's UUID from each host in the play and stores it the `s1_agent_uuid` fact for use by later tasks in the play.
+The `s1_agent_uuid` role retrieves the SentinelOne agent's UUID from each host in the play and stores it the `s1_agent_uuid` fact for use by later tasks in the play.
 
 ## Requirements
 
@@ -11,13 +11,16 @@ An endpoint with the SentinelOne agent installed and operational.
 
 ## Role Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| s1_agent_uuid_report | If a path is provided a CSV containing UUIDs for the endpoints in the play will be saved to the path on the Ansible controller. |  |
+```yaml
+s1_agent_uuid_report: /home/jdoe/uuid.csv
+```
+
+When defined with a valid path, a CSV file containing UUIDs for the endpoints in the play will be saved to this location on the Ansible controller.
 
 ## Dependencies
 
-None
+* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbooks
 
@@ -32,11 +35,11 @@ Retrieve agent UUIDs for all endpoints. The UUID will be saved to the `s1_agent_
 
   tasks:
     - name: Include the s1_agent_uuid role
-      include_role:
+      ansible.builtin.include_role:
         name: s1_agent_uuid
 
     - name: Show s1_agent_uuid
-      debug:
+      ansible.builtin.debug:
         var: s1_agent_uuid
 ```
 
@@ -53,7 +56,7 @@ Retrieve agent UUIDs for all endpoints and generate a CSV report of UUIDs. The r
 
   tasks:
     - name: Include s1_agent_uuid
-      include_role:
+      ansible.builtin.include_role:
         name: s1_agent_uuid
 ```
 

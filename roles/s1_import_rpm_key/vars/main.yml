@@ -1,5 +1,0 @@
----
-# vars file for s1_import_rpm_key
-
-# Directory to be used as a temporary work directory.
-s1_workdir: /tmp/s1_workdir

@@ -19,7 +19,7 @@ galaxy_info:
   # - CC-BY-4.0
   license: 'license (GPL-3.0-or-later)'
 
-  min_ansible_version: 2.9
+  min_ansible_version: '2.9'
 
   # If this a Container Enabled role, provide the minimum Ansible Container version.
   # min_ansible_container_version:
@@ -66,4 +66,6 @@ galaxy_info:
     # NOTE: A tag is limited to a single word comprised of alphanumeric characters.
     #       Maximum 20 tags per role.
 
-dependencies: []
+dependencies:
+  - role: s1_agent_common
+  - role: s1_agent_info

@@ -21,7 +21,7 @@ authors:
 
 ### OPTIONAL but strongly recommended
 # A short summary description of the collection
-description: Collection of roles to install the SentinelOne agent
+description: Collection of roles to manage the lifecycle of the SentinelOne agent
 
 # Either a single license or a list of licenses for content inside of a collection. Ansible Galaxy currently only
 # accepts L(SPDX,https://spdx.org/licenses/) licenses. This key is mutually exclusive with 'license_file'
@@ -40,7 +40,10 @@ tags: []
 # collection label 'namespace.name'. The value is a version range
 # L(specifiers,https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification). Multiple version
 # range specifiers can be set and are separated by ','
-dependencies: {}
+dependencies:
+  'ansible.windows': '>=1.13.0'
+  'community.windows': '>=1.12.0'
+  'ansible.posix': '>=1.5.1'
 
 # The URL of the originating SCM repository
 repository: http://example.com/repository

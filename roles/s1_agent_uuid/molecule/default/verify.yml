@@ -12,14 +12,14 @@
           - s1_molecule_agent_uuid is not none
           - s1_molecule_agent_uuid | length > 0
 
-    - name: Get uuid report
+    - name: Get uuid report # noqa: run-once[task]
       ansible.builtin.stat:
         path: '{{ s1_agent_uuid_report }}'
       register: uuid_report
       delegate_to: localhost
       run_once: yes
 
-    - name: Assert that UUID report was created
+    - name: Assert that UUID report was created # noqa: run-once[task]
       ansible.builtin.assert:
         that: uuid_report.stat.exists
       run_once: yes

@@ -1,0 +1,80 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Assert that agent is installed
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['installed'] is defined
+          - s1_molecule_agent_info['installed'] == ("true" | bool)
+
+    - name: Assert that agent is enabled
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['agent_enabled'] is defined
+          - s1_molecule_agent_info['agent_enabled'] == (true | bool)
+
+    - name: Assert that anti-tamper is installed
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['anti_tamper_enabled'] is defined
+          - s1_molecule_agent_info['anti_tamper_enabled'] == (true | bool)
+
+    - name: Assert that management url is defined
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['mgmt_url'] is defined
+          - s1_molecule_agent_info['mgmt_url'] is not none
+          - s1_molecule_agent_info['mgmt_url'] | length
+
+    - name: Assert that uuid is defined
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['uuid'] is defined
+          - s1_molecule_agent_info['uuid'] | length >= 32
+
+    - name: Assert that version is defined
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['version'] is defined
+          - s1_molecule_agent_info['version'] is not none
+          - s1_molecule_agent_info['version'] | length
+
+    - name: Assert that service status is running
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['service_status'] is defined
+          - s1_molecule_agent_info['service_status'] is not none
+          - (s1_molecule_agent_info['service_status'] == 'running') or (s1_molecule_agent_info['service_status'] == 'started')
+
+    - name: Assert that Product ID is undefined | Linux
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['product_id'] | length == 0
+      when: ansible_system == 'Linux'
+
+    - name: Assert that Product ID is set | Windows
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['product_id'] is defined
+          - s1_molecule_agent_info['product_id'] is not none
+          - s1_molecule_agent_info['product_id'] | length == 38
+      when: ansible_os_family == 'Windows'
+
+    - name: Assert that reboot required is defined | Linux
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['reboot_required'] is defined
+          - not s1_molecule_agent_info['reboot_required']
+      when: ansible_system == 'Linux'
+
+    - name: Assert that reboot required is defined | Windows
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_agent_info['reboot_required'] is defined
+          - s1_molecule_agent_info['reboot_required'] is not none
+          - s1_molecule_agent_info['reboot_required'] is boolean
+      when: ansible_os_family == 'Windows'

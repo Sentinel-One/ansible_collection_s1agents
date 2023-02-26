@@ -2,15 +2,14 @@
 # tasks file for s1_mgmt_get_passphrase
 
 - name: Check Assertions
+  tags:
+    - always
   block:
-    - name: Assert that s1_agent_uuid is defined
-      ansible.builtin.assert:
-        that:
-          - s1_agent_uuid is defined
-          - s1_agent_uuid is not none
-          - s1_agent_uuid | length > 0
-        fail_msg: s1_agent_uuid is not set
-        success_msg: s1_agent_uuid is set
+    - name: Set the agent's UUID
+      ansible.builtin.set_fact:
+        s1_agent_uuid: '{{ s1_agent_info.uuid }}'
+      when:
+        - s1_agent_uuid is undefined or s1_agent_uuid is none or s1_agent_uuid | length == 0
 
     - name: Assert that Management Console is defined
       ansible.builtin.assert:
@@ -29,28 +28,62 @@
           - s1_api_token | length > 0
         fail_msg: s1_api_token is not set
         success_msg: s1_api_token is set
-  tags:
-    - always
 
-- name: Include tasks to lookup the agent passphrase
-  ansible.builtin.include_tasks:
-    file: '{{ loop_family_passphrase }}'
-  with_first_found:
-    - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-        - 'unsupported.yml'
-  loop_control:
-    loop_var: loop_family_passphrase
-    label: '{{ loop_family_passphrase | basename }}'
+- name: Retrieve Passphrase
+  delegate_to: localhost
+  block:
+    - name: Show URL
+      ansible.builtin.debug:
+        msg: '{{ lookup("template", "passphrase_url.j2") }}'
+      tags:
+        - never
+        - debug
 
-- name: Include tasks to write passphrases to CSV
-  ansible.builtin.include_tasks:
-    file: passphrase_report.yml
+    - name: Get agent passphrase
+      ansible.builtin.uri:
+        url: '{{ lookup("template", "passphrase_url.j2") }}'
+        return_content: false
+        headers:
+          Authorization: 'ApiToken {{ s1_api_token }}'
+      environment:
+        http_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
+        https_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
+      register: s1_passphrase_result
+      until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length
+      retries: 10
+      delay: 10
+      become: no
+      check_mode: no
+      no_log: '{{ ansible_verbosity < 3 }}'
+
+    - name: Show API results
+      ansible.builtin.debug:
+        var: s1_passphrase_result
+      tags:
+        - never
+        - debug
+
+- name: Set agent passphrase
+  ansible.builtin.set_fact:
+    s1_agent_passphrase: '{{ (s1_passphrase_result.json.data | list | first).passphrase }}'
+  no_log: '{{ ansible_verbosity < 3 }}'
+
+- name: Gather network facts
   when:
     - s1_agent_passphrase_report is defined
     - s1_agent_passphrase_report is not none
     - s1_agent_passphrase_report | length > 0
+  block:
+    - name: Gather network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - dns
+          - all_ipv4_addresses
+      tags:
+        - s1_gather_facts
+
+    - name: Include tasks to write passphrases to CSV
+      ansible.builtin.include_tasks:
+        file: passphrase_report.yml

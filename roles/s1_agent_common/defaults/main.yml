@@ -1,0 +1,11 @@
+---
+# defaults file for s1_agent_common
+
+# Directory where agent installation files are downloaded on the Ansible Controller host
+s1_download_path: /tmp/s1_agent_cache
+
+# Temporary work directory on Linux inventory hosts
+s1_tmp_linux: /tmp/s1_install
+
+# Temporary work directory on Windows inventory hosts
+s1_tmp_windows: "{{ ansible_env.TEMP }}\\s1_install"

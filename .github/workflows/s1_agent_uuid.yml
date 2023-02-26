@@ -3,16 +3,20 @@ on:
   push:
     branches:
       - 'main'
+      - 'feature/windows-support'
     paths:
       - 'roles/s1_agent_uuid/**'
       - '!roles/s1_agent_uuid/README.md'
+      - '!roles/s1_agent_uuid/makefile'
       - '.github/workflows/s1_agent_uuid.yml'
+      - 'requirements.yml'
   pull_request:
     branches:
       - 'main'
     paths:
       - 'roles/s1_agent_uuid/**'
       - '!roles/s1_agent_uuid/README.md'
+      - '!roles/s1_agent_uuid/makefile'
       - '.github/workflows/s1_agent_uuid.yml'
   workflow_dispatch:
 concurrency:
@@ -20,7 +24,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   molecule-test:
-    runs-on: [self-hosted, Linux, X64]
+    name: '${{ matrix.boxes.distribution }} (Ⓐ ${{ matrix.versions.ansible }})'
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
       PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
@@ -29,19 +34,49 @@ jobs:
       S1_MANAGEMENT_CONSOLE: https://usea1-support3.sentinelone.net
       S1_MOLECULE_HOSTNAME: falling-lab
       VAGRANT_DEFAULT_PROVIDER: virtualbox
+      VAGRANT_HOME: /opt/hostedtoolcache/Vagrant
     strategy:
       fail-fast: false
       matrix:
         boxes:
-          - box: roboxes/rocky8
-          - box: roboxes/centos6
-          - box: roboxes/ubuntu2204
-          - box: roboxes/opensuse15
-          # - box: gusztavvargadr/windows-server-2022-standard
-          #   group: Windows
-          #   communicator: winrm
-        python-version:
-          - '3.8'
+          - distribution: opensuse15
+            repository: roboxes
+            connection: ssh
+          - distribution: rocky8
+            repository: roboxes
+            connection: ssh
+          - distribution: ubuntu2204
+            repository: roboxes
+            connection: ssh
+          - distribution: windows-server-2022-standard
+            repository: gusztavvargadr
+            connection: ssh
+            group: Windows
+          # Explicitly testing Windows Server 2012r2 is redundant. It is fully
+          # tested by the s1_agent_info role.
+        scenario-name:
+          - default
+        versions:
+          # ansible-core upstream development supports 3 releases at a time
+          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+          - ansible: stable-2.12 # EOL 2023-05-23
+            python: '3.10'
+          - ansible: stable-2.13 # EOL 2023-11-06
+            python: '3.10'
+          - ansible: stable-2.14 # EOL 2024-05-20
+            python: '3.10'
+        include:
+          # ansible-core versions newer than 2.12 require python 2.7, which is not
+          # available out of the box in RedHat/CentOS 6. We include centos6 here,
+          # instead of in the matrix, so that it is only tested once against the
+          # last supported version of ansible-core (2.12). CentOS 6 will continue
+          # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
+          # or a better solution presents itself.
+          - {
+              boxes: { distribution: centos6, repository: roboxes },
+              scenario-name: default,
+              versions: { ansible: stable-2.12, python: '3.10' },
+            }
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -49,26 +84,25 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: ${{ matrix.versions.python }}
 
-      - name: Install dependencies
+      - name: Install ansible-core (${{ matrix.versions.ansible }})
         run: |
-          python -m pip install --upgrade pip
-          pip install molecule_vagrant yamllint ansible-lint flake8 pywinrm
-          # vagrant plugin install vagrant-vbguest
-          # vagrant plugin install winrm
-          # vagrant plugin install winrm-elevated
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install https://github.com/ansible/ansible/archive/${{ matrix.versions.ansible }}.tar.gz --disable-pip-version-check
+
+      - name: Install requirements for molecule tests
+        run: |
+          pip install molecule_vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
+          if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
 
       - name: Set environment
         run: |
-          BOX=${{ matrix.boxes.box }}
+          DISTRIBUTION=${{ matrix.boxes.distribution }}
+          REPOSITORY=${{ matrix.boxes.repository }}
           GROUP=${{ matrix.boxes.group }}
-          COMMUNICATOR=${{ matrix.boxes.communicator }}
-          echo "S1_VAGRANT_DISTRO=${BOX##*/}" >> $GITHUB_ENV
-          echo "S1_VAGRANT_REPO=${BOX%%/*}" >> $GITHUB_ENV
+          echo "S1_VAGRANT_DISTRO=${DISTRIBUTION}" >> $GITHUB_ENV
+          echo "S1_VAGRANT_REPO=${REPOSITORY}" >> $GITHUB_ENV
           if [ -n "$GROUP" ]; then echo "S1_VAGRANT_GROUP=${GROUP}" >> $GITHUB_ENV; fi
-          if [ -n "$COMMUNICATOR" ]; then echo "S1_VAGRANT_COMMUNICATOR=${COMMUNICATOR}" >> $GITHUB_ENV; fi
 
       - name: Assert that variables are defined
         if: ${{ (env.S1_VAGRANT_DISTRO == '') || (env.S1_VAGRANT_REPO == '') }}
@@ -83,22 +117,22 @@ jobs:
           echo ${PWD} &&
           molecule --version &&
           ansible --version &&
-          molecule test --all
+          molecule test --scenario-name ${{ matrix.scenario-name }}
         working-directory: ./roles/s1_agent_uuid
 
   verify-test:
     needs: molecule-test # run after molecule-test
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: success() # only run when all molecule-test have passed
     # store success output flag for assert-passed job
     outputs:
       success: ${{ steps.setoutput.outputs.success }}
     steps:
       - id: setoutput
-        run: echo "::set-output name=success::true"
+        run: echo "success=true" >> $GITHUB_OUTPUT
 
   assert-passed:
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: always() # always run, so we never skip the check
     needs: [molecule-test, verify-test]
     steps:

@@ -1,0 +1,111 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  roles:
+    - s1_agent_common
+  tasks:
+    - name: Assert s1_download_path is defined
+      ansible.builtin.assert:
+        that:
+          - s1_download_path is defined
+          - s1_download_path is not none
+          - s1_download_path | length
+
+    - name: Assert s1_tmp_linux is defined
+      ansible.builtin.assert:
+        that:
+          - s1_tmp_linux is defined
+          - s1_tmp_linux is not none
+          - s1_tmp_linux | length
+      when: ansible_system == "Linux"
+
+    - name: Assert s1_tmp_windows is defined
+      ansible.builtin.assert:
+        that:
+          - s1_tmp_windows is defined
+          - s1_tmp_windows is not none
+          - s1_tmp_windows | length
+      when: ansible_os_family == "Windows"
+
+    - name: Assert s1_supported_os_family is defined
+      ansible.builtin.assert:
+        that:
+          - s1_supported_os_family is defined
+          - s1_supported_os_family | length == 2
+
+    - name: Assert s1_supported_linux_distribution is defined
+      ansible.builtin.assert:
+        that:
+          - s1_supported_linux_distribution is defined
+          - s1_supported_linux_distribution | length == 13
+
+    - name: Assert s1_supported_linux_distribution is defined
+      ansible.builtin.assert:
+        that:
+          - s1_supported_linux_distribution is defined
+          - s1_supported_linux_distribution | length == 13
+
+    - name: Assert rpm_pkg_mgrs is defined
+      ansible.builtin.assert:
+        that:
+          - rpm_pkg_mgrs is defined
+          - rpm_pkg_mgrs | length == 3
+
+    - name: Assert apt_pkg_mgrs is defined
+      ansible.builtin.assert:
+        that:
+          - apt_pkg_mgrs is defined
+          - apt_pkg_mgrs | length == 1
+
+    - name: Assert s1_package_name is defined
+      ansible.builtin.assert:
+        that:
+          - s1_package_name is defined
+          - s1_package_name is not none
+          - s1_package_name | length
+
+    - name: Assert s1_service_name is defined
+      ansible.builtin.assert:
+        that:
+          - s1_service_name is defined
+          - s1_service_name is not none
+          - s1_service_name | length
+
+    - name: Assert s1_service_handler_name is defined
+      ansible.builtin.assert:
+        that:
+          - s1_service_handler_name is defined
+          - s1_service_handler_name is not none
+          - s1_service_handler_name | length
+      when: ansible_system == "Linux"
+
+    - name: Windows only variables
+      when: ansible_os_family == "Windows"
+      block:
+        - name: Assert s1_reboot_handler_name is defined
+          ansible.builtin.assert:
+            that:
+              - s1_reboot_handler_name is defined
+              - s1_reboot_handler_name is not none
+              - s1_reboot_handler_name | length
+
+        - name: Assert s1_new_exe_return_codes is defined
+          ansible.builtin.assert:
+            that:
+              - s1_new_exe_return_codes is defined
+              - s1_new_exe_return_codes | length == 6
+
+        - name: Assert s1_msi_return_codes is defined
+          ansible.builtin.assert:
+            that:
+              - s1_msi_return_codes is defined
+              - s1_msi_return_codes | length == 2
+
+        - name: Assert s1_product_id is defined
+          ansible.builtin.assert:
+            that:
+              - s1_product_id is defined
+              - s1_product_id | length >= 4

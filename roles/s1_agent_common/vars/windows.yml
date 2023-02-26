@@ -1,0 +1,43 @@
+---
+# vars file for s1_agent_common
+
+# OS package manager name for the SentinelOne package
+s1_package_name: Sentinel Agent
+# OS service manager name for the SentinelOne service
+s1_service_name: SentinelAgent
+# Name of the handler task to restart the endpoint
+s1_reboot_handler_name: 'Reboot Node | {{ ansible_os_family }}'
+# Convert the package version to match the version reported by Windows
+s1_agent_win_file_ver: '{{ "v" + (s1_agent_version + "_" + ansible_facts.architecture) | regex_replace("[\.-]", "_") }}'
+
+# Return codes from SentinelOneInstaller.exe that indicate a successful install or upgrade (a reboot may still be required)
+s1_new_exe_return_codes:
+  - 0
+  - 12
+  - 100
+  - 101
+  - 103
+  - 1000
+
+s1_msi_return_codes:
+  - 0
+  - 3010
+
+# The same Product ID is used for MSI and SentinelOneInstaller packages
+s1_product_id:
+  v22_3_2_373_64_bit: '{FB984B57-DE66-4E8F-B51D-1B80B69F2054}'
+  v22_3_2_373_32_bit: '{B1D6E893-4C6E-4429-831D-6812B7B4CE3A}'
+  v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
+  v22_3_1_185_32_bit: '{5548CA13-E999-4066-8F6E-D31776C2143C}'
+  v22_2_5_806_64_bit: '{950D7697-EE20-4E40-88C2-41FEA8D7D1EB}'
+  v22_2_5_806_32_bit: '{15478096-E07D-4292-8651-2BA5E246491A}'
+  v22_2_4_558_64_bit: '{5A990909-DD22-48FA-BD8B-F564AFC81C4B}'
+  v22_2_4_558_32_bit: '{009923EA-54DD-4CF5-BF76-BE5C7EA048EE}'
+  v22_2_3_402_64_bit: '{1D00A4CC-6DBB-46E9-B513-E10F7A72CFCE}'
+  v22_2_3_402_32_bit: '{6598AC11-8766-4CFC-87DA-4ECA96E1B152}'
+  v22_2_2_394_64_bit: '{C62C88EC-7966-48A2-9C6F-CF7E2305CD24}'
+  v22_2_2_394_32_bit: '{779E7223-7849-402F-B5DF-46FD2220A450}'
+  v22_2_1_129_64_bit: '{D84C1739-5168-41BF-84F2-5D9D40BC2574}'
+  v22_2_1_129_32_bit: '{61E7B2E9-637D-405B-9596-078F73EB077E}'
+  v22_1_4_10010_64_bit: '{A699AEE8-B4E7-4474-A217-FDC1CC1C6784}'
+  v22_1_4_10010_32_bit: '{123AD714-A760-4FC9-A706-491A26970E2B}'

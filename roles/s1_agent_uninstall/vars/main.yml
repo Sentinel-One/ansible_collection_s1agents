@@ -1,21 +1,5 @@
 ---
 # vars file for s1_agent_uninstall
 
-# Directory to be used as a temporary work directory. This path will be used by both the controller and inventory nodes.
-s1_workdir: /tmp/s1_workdir
-
 # Default install location for SentinelOne agent
-s1_agent_default_install_path: /opt/sentinelone/
-
-# Package managers used by RPM based distributions
-rpm_pkg_mgrs:
-  - dnf
-  - yum
-  - zypper
-
-# Package managers used by DEB based distributions
-apt_pkg_mgrs:
-  - apt
-
-# Name of the handler task to start the SentinelOne service
-s1_handler_name: 'Start SentinelOne service | {{ ansible_system }}'
+s1_agent_default_install_path: /opt/sentinelone

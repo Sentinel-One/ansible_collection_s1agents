@@ -1,4 +1,9 @@
 inventory_hostname,uuid,ansible_fqdn,ansible_default_ipv4,ansible_all_ipv4_addresses
 {% for host in (ansible_play_hosts | sort) %}
-  "{{ hostvars[host].inventory_hostname }}","{{ hostvars[host].s1_agent_uuid }}","{{ hostvars[host].ansible_fqdn }}","{{ hostvars[host].ansible_default_ipv4.address }}","{{ hostvars[host].ansible_all_ipv4_addresses }}"
+  "{{ hostvars[host].inventory_hostname }}","{{ hostvars[host].s1_agent_uuid }}","{{ hostvars[host].ansible_fqdn }}",
+  {%- if ansible_facts.os_family != "Windows" -%}
+  "{{ hostvars[host].ansible_default_ipv4.address|default(hostvars[host].ansible_all_ipv4_addresses[0]) }}","{{ hostvars[host].ansible_all_ipv4_addresses }}"
+  {%- else -%}
+  "{{ hostvars[host].ansible_ip_addresses | map('regex_search', regexp) |select('string') | list | first }}","{{ hostvars[host].ansible_ip_addresses }}"
+  {%- endif -%}
 {% endfor %}

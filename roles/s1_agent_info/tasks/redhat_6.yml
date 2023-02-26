@@ -1,0 +1,40 @@
+---
+- name: Gather package facts | Red Hat 6
+  ansible.builtin.package_facts:
+    manager: auto
+
+- name: Get service facts | Red Hat 6
+  ansible.builtin.command: service {{ s1_service_name }} status # noqa command-instead-of-module
+  register: s1_rhel6_agent_status
+  changed_when: no
+  become: yes
+  when: ansible_facts.packages[s1_package_name] is defined
+
+- name: Get agent status | Red Hat 6
+  ansible.builtin.command: >
+    /opt/sentinelone/bin/sentinelctl management status
+  register: s1_mgmt_status
+  changed_when: no
+  check_mode: no
+  become: yes
+  until: "'Error: receive failed: Connection reset by peer' not in s1_mgmt_status.stdout"
+  retries: 3
+  delay: 10
+  when: ansible_facts.packages[s1_package_name] is defined
+
+- name: Set package facts | Red Hat 6
+  ansible.builtin.set_fact:
+    s1_agent_info:
+      installed: '{{ ansible_facts.packages[s1_package_name] is defined | bool }}'
+      version: "{{ ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first | default(None) if ansible_facts.packages[s1_package_name] is defined else none }}"
+      service_status: "{{ ('Agent state      Enabled' in s1_rhel6_agent_status.stdout) | ternary('running', 'stopped', none) if s1_rhel6_agent_status.stdout is defined else none }}"
+      product_id: "{{ '' | default(None) }}"
+      uuid: "{{ s1_mgmt_status.stdout | regex_search(reg_uuid, '\\1') | first | default(None) if s1_mgmt_status.stdout is defined else none }}"
+      reboot_required: '{{ ansible_facts.packages[s1_package_name] is defined | ternary(false, none) }}'
+      mgmt_url: "{{ s1_mgmt_status.stdout | regex_search(reg_url, '\\1') | first | default(None) if s1_mgmt_status.stdout is defined else none }}"
+      anti_tamper_enabled: "{{ (s1_mgmt_status.stdout | regex_search(reg_tamper, '\\1') | first == 'On') | bool if s1_mgmt_status.stdout is defined else none }}"
+      agent_enabled: "{{ ('Agent state      Enabled' in s1_rhel6_agent_status.stdout) | ternary(true, false, none) if s1_rhel6_agent_status.stdout is defined else none }}"
+  vars:
+    reg_uuid: 'UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})'
+    reg_url: 'URL\s+(http.*)'
+    reg_tamper: 'Anti Tamper\s+(\w+)'

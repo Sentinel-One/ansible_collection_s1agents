@@ -3,7 +3,7 @@
 [![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
 [![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml)
 
-Retrieves the passphrase for an endpoint from the SentinelOne management console, using the agents UUID, and saves it to the `s1_agent_passphrase` fact.
+The `s1_mgmt_get_passphrase` role retrieves the passphrase for an endpoint from the SentinelOne management console, using the agents UUID, and saves it to the `s1_agent_passphrase` fact.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ An endpoint with the SentinelOne agent installed and operational. A valid Sentin
 
 ### Permissions required to get agent passphrases via the API
 
-In order to successfully query agent passphrases via the API, the user account associated with the API token, `s1_api_token`, must be granted permissions:
+In order to successfully query agent passphrases via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
 * Accounts View
 * Endpoints View
@@ -22,17 +22,37 @@ In order to successfully query agent passphrases via the API, the user account a
 
 ## Role Variables
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| s1_management_console | URL to the SentinelOne management console. | &check; |
-| s1_api_token | API token[^1] with permissions download agent packages and lookup up agent passphrases. | &check; |
-| s1_agent_passphrase_report | If provided a CSV containing passphrases for endpoints in the play will be saved to the path specified on the Ansible controller. This report contains sensitive information. |  |
+```yaml
+s1_management_console: https://usea1-support3.sentinelone.net
+```
+
+This is mandatory and is the URL to your SentinelOne management console.
+
+```yaml
+s1_api_token:
+```
+
+This is mandatory and is the API token[^1] associated with the user which will running the role.
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://support.sentinelone.com/hc/en-us/articles/360004195934).
 
+```yaml
+s1_api_limit: 100
+```
+
+The number of results to return with each call to the packages API endpoint.
+
+```yaml
+s1_agent_passphrase_report: /home/jdoe/passphrase.csv
+```
+
+When defined with a valid path, a CSV file containing passphrases  for the endpoints in the play will be saved to this location on the Ansible controller. **This report contains sensitive information.**
+
 ## Dependencies
 
-* [s1_agent_uuid](../s1_agent_uuid/README.md): The s1_mgmt_get_passphrase role will automatically call the s1_agent_uuid role to retrieve UUIDs from each host in the Ansible inventory.
+* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbook
 
@@ -49,28 +69,28 @@ Retrieve agent passphrases for all endpoints. The passphrase will be saved to th
 
   tasks:
     - name: Include the s1_mgmt_get_passphrase role
-      include_role:
+      ansible.builtin.include_role:
         name: s1_mgmt_get_passphrase
 
     - name: Show s1_agent_passphrase
-      debug:
+      ansible.builtin.debug:
         var: s1_agent_passphrase
 ```
 
 ### Generate a report of agent passphrases
 
-Retrieve agent passphrases for all endpoints and generate a CSV report of passphrases. The report will be saved to /tmp/s1_workdir/agent_passphrase.csv.
+Retrieve agent passphrases for all endpoints and generate a CSV report of passphrases. The report will be saved to /tmp/s1_agent_cache/agent_passphrase.csv.
 
 ```yaml
 ---
 - name: Generate a report of endpoint passphrases
   hosts:
   vars:
-    s1_agent_uuid_report: /tmp/s1_workdir/agent_passphrase.csv
+    s1_agent_uuid_report: /tmp/s1_agent_cache/agent_passphrase.csv
 
   tasks:
     - name: Include the s1_mgmt_get_passphrase role
-      include_role:
+      ansible.builtin.include_role:
         name: s1_mgmt_get_passphrase
 ```
 

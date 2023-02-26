@@ -1,36 +1,45 @@
 ---
 # tasks file for s1_agent_install
 
-- name: Gather package facts | Linux
-  ansible.builtin.package_facts:
-    manager: auto
-
-- name: Assert that SentinelOne agent is installed
+- name: Assert that agent can be upgraded in-place
   ansible.builtin.assert:
-    that: ansible_facts.packages[s1_package_name] is defined
-    fail_msg: The SentinelOne agent is not installed
-    success_msg: SentinelOne agent is installed
+    that:
+      - s1_prior_version is version('22.2.2.2', '>=')
+    fail_msg: 'You must upgrade to agent version 22.2.2.2 before you can upgrade to {{ s1_agent_version }}'
+    success_msg: Agent can be upgraded in-place
+  when:
+    - s1_agent_version is version('22.3', '>=')
+    - s1_install_gpg_signed_rpm | default('no') | bool
 
-- name: Set s1_prior_version | Linux
-  set_fact:
-    s1_prior_version: "{{ ansible_facts.packages[s1_package_name] | map(attribute='version') | list | first }}"
-  when: ansible_facts.packages[s1_package_name] is defined
+- name: Get the endpoints passphrase | Linux
+  ansible.builtin.include_role:
+    name: s1_mgmt_get_passphrase
+  when:
+    - s1_prior_version is version('22.3', '<')
+    - s1_agent_passphrase is undefined
+    - not s1_forced_remove | default('false') | bool
+
+- name: Import the SentinelOne GPG Key | Red Hat Family
+  ansible.builtin.include_role:
+    name: s1_import_gpg_key
+  when:
+    - ansible_pkg_mgr is defined
+    - ansible_pkg_mgr in rpm_pkg_mgrs
+    - s1_install_gpg_signed_rpm | default('no') | bool
 
 - name: Set SentinelOne agent path | Linux
-  set_fact:
-    s1_agent_path: '{{ s1_workdir }}/{{ s1_agent_src | basename }}'
+  ansible.builtin.set_fact:
+    s1_agent_path: '{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}'
 
-- block:
+- name: Upgrade Linux Agent
+  when:
+    - s1_prior_version|default('0') is version(s1_agent_version, '<')
+  block:
     - name: Create working directory | Linux
       ansible.builtin.file:
-        path: '{{ s1_workdir }}'
+        path: '{{ s1_tmp_linux }}'
         state: directory
         mode: '0755'
-
-    - name: Import the SentinelOne RPM Key | Linux
-      include_role:
-        name: s1_import_rpm_key
-      when: ansible_os_family == 'RedHat' or ansible_os_family == 'Suse'
 
     - name: Copy SentinelOne agent | Linux
       ansible.builtin.copy:
@@ -38,16 +47,45 @@
         dest: '{{ s1_agent_path }}'
         mode: '0755'
 
-    - name: Upgrade SentinelOne agent | Linux
+    - name: Upgrade SentinelOne agent with passphrase | Linux
       ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"'
-      notify: '{{ s1_handler_name }}'
+      notify: '{{ s1_service_handler_name }}'
       become: yes
-  when:
-    - s1_prior_version|default('0') is version(s1_agent_version, '<')
+      no_log: '{{ ansible_verbosity < 3 }}'
+      register: s1_upgrade_pass_result
+      changed_when:
+        - '"Agent upgrade successful" in s1_upgrade_pass_result.stdout'
+      when:
+        - s1_prior_version is version('22.3', '<')
+        - not s1_install_gpg_signed_rpm | default('no') | bool
+
+    - name: Show s1_upgrade_pass_result
+      ansible.builtin.debug:
+        var: s1_upgrade_pass_result
+      tags:
+        - never
+        - debug
+
+    - name: Upgrade SentinelOne agent without passphrase | Linux
+      ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}'
+      notify: '{{ s1_service_handler_name }}'
+      become: yes
+      register: s1_upgrade_results
+      changed_when:
+        - '"Agent upgrade successful" in s1_upgrade_results.stdout'
+      when:
+        - s1_prior_version is version('22.3', '>=')
+
+    - name: Show s1_upgrade_results
+      ansible.builtin.debug:
+        var: s1_upgrade_results
+      tags:
+        - never
+        - debug
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: '{{ s1_workdir }}'
+    path: '{{ s1_tmp_linux }}'
     state: absent
   tags:
     - molecule-notest

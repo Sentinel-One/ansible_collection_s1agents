@@ -1,6 +1,6 @@
 ---
-# tasks file for s1_agent_install
+# tasks file for s1_agent_uninstall
 
 - name: Endpoint unsupported
-  fail:
+  ansible.builtin.fail:
     msg: '{{ ansible_distribution }} is not currently supported by the {{ role_name }} Ansible Role.'

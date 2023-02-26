@@ -2,23 +2,27 @@
 # defaults file for s1_agent_install
 
 # URL to the SentinelOne management console
-# s1_management_console:
+s1_management_console: "{{ undef(hint='You must specify your SentinelOne Management Console') }}"
 
 # API token with permissions to access the Packages tab and download agent packages
-# s1_api_token:
+s1_api_token: "{{ undef(hint='You must specify your SentinelOne API Token') }}"
 
 # The Site or Group Token to use when associating the agent with the Management Console
-# s1_agent_site_token:
+s1_agent_site_token: "{{ undef(hint='You must specify your agent Site Token') }}"
 
 # Path to agent installation package (msi, exe, rpm, deb or pkg) on the Ansible Controller
 # Must be assigned at the ansible_os_family (RedHat, Suse, Debian, Windows, Darwin, etc.) or a narrower scope
 # s1_agent_src:
 
 # Download and install unsigned RPM packages, signed packages are used by default
-# s1_install_unsigned_rpm: false
+# s1_install_gpg_signed_rpm: false
+
+# Download msi packages instead of SentinelOneInstaller packages. Do not change this unless you know what you are doing.
+# s1_install_msi: false
 
 # If true (default), the agent starts automatically during the install task
 # If false the agent will not be started by this role
+# Linux Only
 # s1_agent_auto_start: true
 
 # Set a customer specific identifier for the host, AKA Customer ID or External ID
@@ -26,14 +30,31 @@
 
 # If true (default), the Agent creates the sentinelone user and group when it is installed.
 # If false, the sentinelone user and group must be created manually, see documentation for specifics
+# Linux Only
 # s1_agent_create_user: true
 
 # Change the installation directory (and all recursive paths, such as logs) location
-# The Agent will create a symlink from the custom path to /opt/sentinelone.
+# Linux: the Agent will create a symlink from the custom path to /opt/sentinelone
 # s1_agent_custom_install_path:
 
-# Define the endpoint as a server or desktop.
+# Define the endpoint as a server or desktop
+# Linux Only
 # s1_agent_device_type: server
+
+# Product ID (GUID) for the SentinelOne Agent being installed
+# Windows Only
+# s1_agent_product_id:
+
+# The installer will not stop on failure if it cannot preserve the previous Agent configuration
+# When true this passes the --dont_fail_on_config_preserving_failures flag to the SentinelOneInstaller
+# Windows Only
+# s1_no_config_failures: no
+
+# If true set the installer's VDI flag to true and install the SentinelOne agent for a "cold clone".
+# Note: See https://support.sentinelone.com/hc/en-us/articles/360035087333.
+# Default: False
+# Windows Only
+# s1_enable_vdi: false
 
 # If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
 # By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
@@ -48,3 +69,11 @@ s1_agent_dv_proxy: '{{ default_proxy | default(None) }}'
 # s1_agent_dv_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
 
 # s1_agent_validate_certs: '{{ default_validate_certs | default(true) }}' # NOT IMPLEMENTED
+
+# Additional facts to gather
+role_gather_subset:
+  - hardware
+# # Facts to gather
+# role_gather_subset:
+#   - processor_cores
+#   - mounts

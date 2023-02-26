@@ -1,0 +1,29 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: true
+  gather_subset:
+    - '!all'
+    - '!hardware'
+    - min
+  roles:
+    - s1_agent_common
+  tasks:
+    - name: Install GPG Key
+      when:
+        - ansible_system == 'Linux'
+        - ansible_architecture == 'x86_64'
+        - ansible_pkg_mgr in rpm_pkg_mgrs
+      block:
+        - name: Get SentinelOne GPG key | Linux
+          ansible.builtin.rpm_key:
+            state: present
+            key: '{{ s1_tmp_linux }}/sentinel_one.gpg'
+          become: yes
+          register: s1_molecule_rpm_key
+
+        - name: Assert that SentinelOne GPG key is installed | Linux
+          ansible.builtin.assert:
+            that: not s1_molecule_rpm_key is changed
