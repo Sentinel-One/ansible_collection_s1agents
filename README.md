@@ -21,8 +21,8 @@ The Sentinel-One.s1agents Ansible Collection is a collection of roles for managi
 * [s1_agent_uninstall](roles/s1_agent_uninstall/README.md) removes the agent from endpoints.
 * [s1_agent_upgrade](roles/s1_agent_upgrade/README.md) upgrades an existing agent installed on an endpoint.
 * [s1_agent_uuid](roles/s1_agent_uuid/README.md) is used to generate a report of agent UUIDs.
-* [s1_import_gpg_key](roles/s1_import_gpg_key/README.md) is used by the install and upgrade roles to ensure that the SentinelOne GPG key is present on RPM based systems.
-* [s1_mgmt_get_passphrase](roles/s1_mgmt_get_passphrase/README.md) is used by other roles to query the management console and return the unique passphrase for each agent in the play. It can also be used independent of other roles to return the passphrase for use by tasks that call `sentinelctl` or to generate a report of passphrases.
+* [s1_import_gpg_key](roles/s1_import_gpg_key/README.md) ensures the SentinelOne GPG key is present on RPM based systems.
+* [s1_mgmt_get_passphrase](roles/s1_mgmt_get_passphrase/README.md) is used by other roles to retrieve the unique passphrase for each agent in the play, from the management console.
 
 ## Dependencies
 
@@ -38,7 +38,7 @@ The dependencies can be installed by using the ansible-galaxy command `ansible-g
 
 ### Management Console
 
-The various roles in this collection access the SentinelOne Management Console via API and an API token[^1] is needed. It should be passed to the ansible role/playbook via the `s1_api_token` variable.
+The various roles in this collection access the SentinelOne Management Console via API and an API token[^1] is required. It should be passed to the ansible role/playbook via the `s1_api_token` variable.
 
 Create a `Ansible Service Accounts` role in the SentinelOne Management console and grant it the permissions:[^2]
 
@@ -55,19 +55,19 @@ Create a `Ansible Service Accounts` role in the SentinelOne Management console a
 * Sites View
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://support.sentinelone.com/hc/en-us/articles/360004195934).
-[^2]: This is a cumulative list of permissions required by the collection as a whole. If you wish to use a separate Service Account for each Ansible Role, see that roles README for a list of its required permissions.
+[^2]: This is a cumulative list of permissions required by the collection as a whole. If you wish to use a separate Service Account for each Ansible Role, see that role's README for a list of required permissions.
 
 Then add your Service Users to the `Ansible Service Accounts` role and scope it to the appropriate Site/Account/Group.
 
 ### Privileges on Endpoints
 
-The Service Account used by Ansible to connect to each host in the inventory must have elevated rights, sudo or su on Linux and Administrator on Windows, in order to successfully install and manage the agent. Ensure that your Ansible Service account is correctly configured on the endpoint.
+In order to successfully install and manage the agent, the Service Account used by Ansible to connect to each host must have elevated rights, sudo or su on Linux and Administrator on Windows. Ensure that your Ansible Service account is correctly configured on each endpoint.
 
 ## Known Limitations
 
 ### Using the `s1_agent_version` variable with mixed deployments
 
-When deploying a specific version of the agent to an inventory that contains a mix of Linux and Windows endpoints, it is necessary to define the `s1_agent_version` variable so that it applies only to Linux or Windows hosts. This means you must structure your inventory so that Widows and Linux hosts are in separate groups or use `set_fact` to define it in the playbook with a conditional for the `ansible_system`.
+When deploying a specific version of the agent to an inventory that contains a mix of Linux and Windows endpoints, it is necessary to define the `s1_agent_version` variable so that it applies only to Linux or Windows hosts. This means the inventory must be structured so that Widows and Linux hosts are in separate groups. Alternatively, the `set_fact` module can be used to define `s1_agent_version` in the playbook with a conditional for the `ansible_system`.
 
 ### Downgrading agent versions
 
@@ -75,7 +75,7 @@ This collection does not directly support downgrading agent versions. However, i
 
 ### Fact Gathering
 
-The collection uses the setup module to gather a minimum set of facts that is required for it a successful run. This behavior can be disabled by passing `--skip-tags "s1_gather_facts"`to the ansible-playbook command. If you do this, ensure that your playbook contains either `gather_facts: yes` or that the `setup` module is called prior to any Sentinel-One roles.
+The collection uses the setup module to gather a minimum set of facts that is required for it a successful run. This behavior can be disabled by passing `--skip-tags "s1_gather_facts"` to the ansible-playbook command. If you do this, ensure that your playbook contains either `gather_facts: yes` or that the `setup` module is called prior to any Sentinel-One roles.
 
 ### Linux Operating Systems
 
@@ -87,7 +87,7 @@ When upgrading to a Linux agent version that is newer than 22.2.2.2, using the G
 
 #### Idempotence on Windows
 
-The `s1_product_id` variable must be defined with the Product ID (GUID) for the SentinelOne agent version being deployed in order for the install and upgrade tasks to be idempotent. If the Product ID is not set, then the task will attempt to reinstall the same version. This variable is defined in the [s1_agent_common](roles/s1_agent_common/vars/windows.yml) role and will be updated periodically, but it is not guaranteed to have mappings for all releases. Steps for configuring `s1_product_id` specific to your deployment are provided in the README for the [s1_agent_common role](roles/s1_agent_common/README.md) role for.
+To ensure idempotence, the `s1_product_id` variable must be defined with the Product ID (GUID) for the SentinelOne agent version being deployed. If the Product ID is not set, then the task will attempt to reinstall the same version. This variable is defined in the [s1_agent_common](roles/s1_agent_common/vars/windows.yml) role and will be updated periodically, but it is not guaranteed to have mappings for all releases. Steps for configuring `s1_product_id` specific to your deployment are provided in the [s1_agent_common role](roles/s1_agent_common/README.md) role.
 
 Additionally, this can occasionally cause testing these roles with molecule (`molecule test`) to fail on the idempotence step. If you see:
 
@@ -102,10 +102,10 @@ This can indicate that the `s1_product_id` variable needs to updated with the la
 
 #### Installing/Upgrading Windows Agents
 
-If you attempt to install an agent version that is the same or lower than the currently installed Windows agent, the installer will do nothing and exist. Ansible will see this and consider the task `OK` and `Unchanged`. This is by design so that idempotence can be maintained when re-running a playbook with the same input parameters.
+If you attempt to install an agent version that is the same or lower than the currently installed Windows agent, the installer will do nothing and exit. Ansible will see this and consider the task `OK` and `Unchanged`. This is by design so that idempotence can be maintained when re-running a playbook with the same input parameters.
 
 ### MacOS Operating Systems
 
-#### MacOS Unsupported
+#### MacOS is Unsupported
 
 Managing the agent on MacOS is currently unsupported by this collection. This is due to security designs by Apple which limit authorizing the Full Disk Access and Network Extensions to an actual person or an authorized MDM solution. As Ansible and its service account is neither, it is impossible for Ansible to deploy a fully operational SentinelOne agent.
