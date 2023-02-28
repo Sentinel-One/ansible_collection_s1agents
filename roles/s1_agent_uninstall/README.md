@@ -38,6 +38,7 @@ No additional variables must be defined. However, the [s1_agent_common](../s1_ag
 ```yaml
 s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
+s1_validate_certs: true
 ```
 
 ## Dependencies

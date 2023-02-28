@@ -101,6 +101,7 @@ Determines the availability of the package to download. This further limits `s1_
 
 ```yaml
 s1_download_path: /tmp/s1_agent_cache
+s1_validate_certs: true
 ```
 
 ## Dependencies

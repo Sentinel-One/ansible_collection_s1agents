@@ -26,7 +26,7 @@ The Sentinel-One.s1agents Ansible Collection is a collection of roles for managi
 
 ## Dependencies
 
-The Sentinel-One.s1agents collection has dependencies upon the following collections.
+The SentinelOne.s1agents collection has dependencies upon the following collections.
 
 * [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 * [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
@@ -109,3 +109,15 @@ If you attempt to install an agent version that is the same or lower than the cu
 #### MacOS is Unsupported
 
 Managing the agent on MacOS is currently unsupported by this collection. This is due to security designs by Apple which limit authorizing the Full Disk Access and Network Extensions to an actual person or an authorized MDM solution. As Ansible and its service account is neither, it is impossible for Ansible to deploy a fully operational SentinelOne agent.
+
+### On-Premises Management Consoles
+
+#### Ansible Controller Host
+
+When using this collection with an on-prem management console with a self-signed certificate, it may be necessary to either add the certificate to the Ansible Controller's certificate store or set the `s1_validate_certs` variable to `false`.
+
+#### Endpoints
+
+Distributing self-signed certificates to endpoints is out-of-scope for this collection.
+
+Starting with Linux agent 22.4 custom certificates for on-prem management consoles can be saved to /opt/sentinelone/certificates/custom.crt on the endpoint. See the [release notes](https://support.sentinelone.com/hc/en-us/articles/10814416011543-22-4-Linux-Agent-Release-Notes).

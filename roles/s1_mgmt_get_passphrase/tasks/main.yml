@@ -45,9 +45,7 @@
         return_content: false
         headers:
           Authorization: 'ApiToken {{ s1_api_token }}'
-      environment:
-        http_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
-        https_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
+      validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
       register: s1_passphrase_result
       until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length
       retries: 10

@@ -20,11 +20,14 @@ Defaults (`defaults/main.yml`) are listed below. These can safely be customized 
 s1_download_path: /tmp/s1_agent_cache
 s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
+s1_validate_certs: true
 ```
 
 The Ansible controller will download and cache agent packages to the `s1_download_path` directory. To prevent unnecessary load on the management console, this directory is not removed at the end of the play.
 
 Linux and Windows hosts targeted by the play wil use `s1_tmp_linux` and `s1_tmp_windows` as their local working directory for the duration of the play. This directory is removed at the end of a successful play.
+
+When working with an on-premisses management console using self-signed certificates, it may be necessary to disable SSL Certificate Verification `s1_validate_certs: false`.
 
 ### Vars
 

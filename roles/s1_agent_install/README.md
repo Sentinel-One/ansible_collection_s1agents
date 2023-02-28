@@ -124,6 +124,7 @@ No additional variables must be defined. However, the [s1_agent_common](../s1_ag
 s1_download_path: /tmp/s1_agent_cache
 s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
+s1_validate_certs: true
 s1_product_id:
   v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
   v22_3_1_185_32_bit: '{5548CA13-E999-4066-8F6E-D31776C2143C}'
