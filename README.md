@@ -124,6 +124,11 @@ When using this collection with an on-prem management console with a self-signed
 
 Endpoints need to trust the management console's self-signed certificate before the agent can successfully communicate with. Distributing self-signed certificates to endpoints is out-of-scope for this collection.
 
-Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint and the agent will use it for agent to management console communications.
+* Linux
+  * Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint and the agent will use it for agent to management console communications.
+  * While there is no official Ansible module for managing certificates on a Linux endpoint, numerous third-party solutions exist, check <https://galaxy.ansible.com/>.
+* Windows
+  * For domain joined systems, Group Policy can be used to add custom certificates to the trusted store.
+  * The official [ansible.windows.win_certificate_store](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_certificate_store_module.html) module can manage certificates in the trusted store.
 
 [^3]: See the [Release Notes](https://support.sentinelone.com/hc/en-us/articles/10814416011543-22-4-Linux-Agent-Release-Notes)
