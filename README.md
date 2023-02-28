@@ -1,16 +1,20 @@
-# Ansible Collection - Sentinel-One.s1agents
+# Ansible Collection - SentinelOne.s1agents
 
-[![s1_agent_common](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_common.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_common.yml)
-[![s1_agent_info](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_info.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_info.yml)
-[![s1_agent_download](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml)
-[![s1_agent_install](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_install.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_install.yml)
-[![s1_agent_uninstall](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml)
-[![s1_agent_upgrade](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml)
-[![s1_agent_uuid](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uuid.yml)
-[![s1_import_gpg_key](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_gpg_key.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_import_gpg_key.yml)
-[![s1_mgmt_get_passphrase](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_mgmt_get_passphrase.yml)
+![Release](https://badgen.net/github/release/Sentinel-One/ansible_collection_s1agents)
+![CI](https://badgen.net/github/status/Sentinel-One/ansible_collection_s1agents)
+[![GitHub license](https://badgen.net/github/license/Sentinel-One/ansible_collection_s1agents)](https://github.com/Sentinel-One/ansible_collection_s1agents/blob/main/LICENSE)
 
-The Sentinel-One.s1agents Ansible Collection is a collection of roles for managing the lifecycle of the SentinelOne Agent.
+[![s1_agent_common](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_common.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_common.yml)
+[![s1_agent_info](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_info.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_info.yml)
+[![s1_agent_download](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_download.yml)
+[![s1_agent_install](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_install.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_install.yml)
+[![s1_agent_uninstall](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uninstall.yml)
+[![s1_agent_upgrade](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_upgrade.yml)
+[![s1_agent_uuid](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uuid.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uuid.yml)
+[![s1_import_gpg_key](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_import_gpg_key.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_import_gpg_key.yml)
+[![s1_mgmt_get_passphrase](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_mgmt_get_passphrase.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_mgmt_get_passphrase.yml)
+
+The SentinelOne.s1agents Ansible Collection is a collection of roles for managing the lifecycle of the SentinelOne Agent.
 
 ## Included Roles
 
@@ -118,8 +122,8 @@ When using this collection with an on-prem management console with a self-signed
 
 #### Endpoints
 
-Distributing self-signed certificates to endpoints is out-of-scope for this collection.
+Endpoints need to trust the management console's self-signed certificate before the agent can successfully communicate with. Distributing self-signed certificates to endpoints is out-of-scope for this collection.
 
-Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint.
+Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint and the agent will use it for agent to management console communications.
 
 [^3]: See the [Release Notes](https://support.sentinelone.com/hc/en-us/articles/10814416011543-22-4-Linux-Agent-Release-Notes)
