@@ -2,8 +2,7 @@ name: S1 Import GPG Key
 on:
   push:
     branches:
-      - 'main'
-      - 'feature/windows-support'
+      - 'release/**'
     paths:
       - 'roles/s1_import_gpg_key/**'
       - '!roles/s1_import_gpg_key/README.md'
@@ -24,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   molecule-test:
-    name: '${{ matrix.boxes.distribution }} (Ⓐ ${{ matrix.versions.ansible }})'
+    name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
@@ -42,8 +41,10 @@ jobs:
           # GPG Key only needs to be installed on RPM-based systems
           - distribution: opensuse15
             repository: roboxes
+            display_name: OpenSuse 15
           - distribution: rocky8
             repository: roboxes
+            display_name: Rocky 8
         scenario-name:
           - default
         versions:
@@ -63,7 +64,12 @@ jobs:
           # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
           # or a better solution presents itself.
           - {
-              boxes: { distribution: centos6, repository: roboxes },
+              boxes:
+                {
+                  distribution: centos6,
+                  repository: roboxes,
+                  display_name: CentOS 6,
+                },
               scenario-name: default,
               versions: { ansible: stable-2.12, python: '3.10' },
             }

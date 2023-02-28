@@ -2,8 +2,7 @@ name: S1 Agent UUID
 on:
   push:
     branches:
-      - 'main'
-      - 'feature/windows-support'
+      - 'release/**'
     paths:
       - 'roles/s1_agent_uuid/**'
       - '!roles/s1_agent_uuid/README.md'
@@ -24,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   molecule-test:
-    name: '${{ matrix.boxes.distribution }} (Ⓐ ${{ matrix.versions.ansible }})'
+    name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
@@ -42,15 +41,19 @@ jobs:
           - distribution: opensuse15
             repository: roboxes
             connection: ssh
+            display_name: OpenSuse 15
           - distribution: rocky8
             repository: roboxes
             connection: ssh
+            display_name: Rocky 8
           - distribution: ubuntu2204
             repository: roboxes
             connection: ssh
+            display_name: Ubuntu 22.04
           - distribution: windows-server-2022-standard
             repository: gusztavvargadr
             connection: ssh
+            display_name: Server 2022
             group: Windows
           # Explicitly testing Windows Server 2012r2 is redundant. It is fully
           # tested by the s1_agent_info role.
@@ -73,7 +76,12 @@ jobs:
           # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
           # or a better solution presents itself.
           - {
-              boxes: { distribution: centos6, repository: roboxes },
+              boxes:
+                {
+                  distribution: centos6,
+                  repository: roboxes,
+                  display_name: CentOS 6,
+                },
               scenario-name: default,
               versions: { ansible: stable-2.12, python: '3.10' },
             }

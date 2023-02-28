@@ -2,8 +2,7 @@ name: S1 Agent Uninstall
 on:
   push:
     branches:
-      - 'main'
-      - 'feature/windows-support'
+      - 'release/**'
     paths:
       - 'roles/s1_agent_uninstall/**'
       - '!roles/s1_agent_uninstall/README.md'
@@ -42,19 +41,24 @@ jobs:
           - distribution: opensuse15
             repository: roboxes
             connection: ssh
+            display_name: OpenSuse 15
           - distribution: rocky8
             repository: roboxes
             connection: ssh
+            display_name: Rocky 8
           - distribution: ubuntu2204
             repository: roboxes
             connection: ssh
+            display_name: Ubuntu 22.04
           - distribution: windows-server-2022-standard
             repository: gusztavvargadr
             connection: ssh
+            display_name: Server 2022
             group: Windows
           - distribution: WindowsServer2012R2
             repository: jborean93
             connection: winrm
+            display_name: Server 2012r2
         scenario-name:
           - default
           - forced_remove
@@ -86,7 +90,12 @@ jobs:
           # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
           # or a better solution presents itself.
           - {
-              boxes: { distribution: centos6, repository: roboxes },
+              boxes:
+                {
+                  distribution: centos6,
+                  repository: roboxes,
+                  display_name: CentOS 6,
+                },
               scenario-name: default,
               versions: { ansible: stable-2.12, python: '3.10' },
             }
