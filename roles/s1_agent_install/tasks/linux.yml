@@ -27,6 +27,7 @@
       - ansible_facts.architecture == 'x86_64'
     # yamllint disable-line rule:line-length
     fail_msg: 'The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.'
+  when: ansible_architecture != 'aarch64'
 
 - name: Assert disk meets requirements | Linux
   ansible.builtin.assert:

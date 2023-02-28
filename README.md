@@ -120,4 +120,6 @@ When using this collection with an on-prem management console with a self-signed
 
 Distributing self-signed certificates to endpoints is out-of-scope for this collection.
 
-Starting with Linux agent 22.4 custom certificates for on-prem management consoles can be saved to /opt/sentinelone/certificates/custom.crt on the endpoint. See the [release notes](https://support.sentinelone.com/hc/en-us/articles/10814416011543-22-4-Linux-Agent-Release-Notes).
+Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint.
+
+[^3]: See the [Release Notes](https://support.sentinelone.com/hc/en-us/articles/10814416011543-22-4-Linux-Agent-Release-Notes)
