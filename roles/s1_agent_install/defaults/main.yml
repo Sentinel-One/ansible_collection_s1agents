@@ -68,8 +68,6 @@ s1_agent_dv_proxy: '{{ default_proxy | default(None) }}'
 # s1_agent_dv_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
 # s1_agent_dv_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
 
-# s1_agent_validate_certs: '{{ default_validate_certs | default(true) }}' # NOT IMPLEMENTED
-
 # Additional facts to gather
 role_gather_subset:
   - hardware
