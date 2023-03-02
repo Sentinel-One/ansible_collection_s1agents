@@ -1,5 +1,4 @@
 name: S1 Agent Download
-
 on:
   push:
     branches:
@@ -29,14 +28,14 @@ jobs:
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
     uses: ./.github/workflows/ci-molecule.yml
     with:
-      box_distribution: ${matrix.boxes.distribution}
-      box_repository: ${matrix.boxes.repository}
-      ansible_connection: ${matrix.boxes.connection}
-      ansible_group: ${matrix.boxes.connection}
-      display_name: ${matrix.boxes.display_name}
-      scenario_name: ${matrix.scenario-name}
-      ansible_version: ${matrix.versions.ansible}
-      python_version: ${matrix.versions.python}
+      box_distribution: ${{ matrix.boxes.distribution }}
+      box_repository: ${{ matrix.boxes.repository }}
+      ansible_connection: ${{ matrix.boxes.connection }}
+      ansible_group: ${{ matrix.boxes.connection }}
+      display_name: ${{ matrix.boxes.display_name }}
+      scenario_name: ${{ matrix.scenario-name }}
+      ansible_version: ${{ matrix.versions.ansible }}
+      python_version: ${{ matrix.versions.python }}
     secrets: inherit
     strategy:
       fail-fast: false

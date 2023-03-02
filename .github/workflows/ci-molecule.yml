@@ -40,7 +40,7 @@ on:
 
 jobs:
   molecule-test:
-    name: '${{ matrix.boxes.display_name }} - ${{ matrix.scenario-name }} (Ⓐ ${{ matrix.versions.ansible }})'
+    name: '${{ inputs.display_name }} - ${{ inputs.scenario-name }} (Ⓐ ${{ inputs.ansible_version }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
