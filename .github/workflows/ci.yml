@@ -1,0 +1,125 @@
+name: Continuous Integration
+on:
+  workflow_call:
+    inputs:
+      box_distribution:
+        description: 'Vagrant Box Operating System'
+        type: string
+        required: true
+      box_repository:
+        description: 'Vagrant Box repository'
+        type: string
+        required: true
+      ansible_connection:
+        description: 'Ansible connection type for connecting to the Box'
+        type: string
+        required: false
+        default: ssh
+      ansible_group:
+        description: "Box's Ansible inventory group"
+        type: string
+        required: false
+        default: Linux
+      display_name:
+        description: 'OS Name to display in workflow steps'
+        type: string
+        required: true
+      scenario_name:
+        description: 'Name of the molecule scenario to execute'
+        type: string
+        required: false
+        default: default
+      ansible_version:
+        description: 'Ansible Version'
+        type: number
+        required: true
+      python_version:
+        description: 'Python Version'
+        type: number
+        required: true
+
+jobs:
+  molecule-test:
+    name: '${{ matrix.boxes.display_name }} - ${{ matrix.scenario-name }} (Ⓐ ${{ matrix.versions.ansible }})'
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    env:
+      ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
+      PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
+      S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
+      S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
+      S1_MANAGEMENT_CONSOLE: https://usea1-support3.sentinelone.net
+      S1_MOLECULE_HOSTNAME: falling-lab
+      VAGRANT_DEFAULT_PROVIDER: virtualbox
+      VAGRANT_HOME: /opt/hostedtoolcache/Vagrant
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python_version }}
+
+      - name: Install ansible-core (${{ inputs.ansible_version }})
+        run: |
+          pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible_version }}.tar.gz --disable-pip-version-check
+
+      - name: Install requirements for molecule tests
+        run: |
+          pip install molecule_vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
+          if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
+
+      - name: Set environment
+        run: |
+          DISTRIBUTION=${{ inputs.box_distribution }}
+          REPOSITORY=${{ inputs.box_repository }}
+          GROUP=${{ inputs.ansible_group }}
+          echo "S1_VAGRANT_DISTRO=${DISTRIBUTION}" >> $GITHUB_ENV
+          echo "S1_VAGRANT_REPO=${REPOSITORY}" >> $GITHUB_ENV
+          if [ -n "$GROUP" ]; then echo "S1_VAGRANT_GROUP=${GROUP}" >> $GITHUB_ENV; fi
+
+      - name: Assert that variables are defined
+        if: ${{ (env.S1_VAGRANT_DISTRO == '') || (env.S1_VAGRANT_REPO == '') }}
+        uses: actions/github-script@v3
+        with:
+          script: |
+            core.setFailed('S1_VAGRANT_DISTRO and S1_VAGRANT_REPO are not set!')
+
+      - name: Execute Molecule Scenarios
+        if: success()
+        run: >-
+          echo ${PWD} &&
+          molecule --version &&
+          ansible --version &&
+          molecule test --scenario-name ${{ inputs.scenario_name }}
+        working-directory: ./roles/s1_agent_download
+
+  verify-test:
+    needs: molecule-test # run after molecule-test
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    if: success() # only run when all molecule-test have passed
+    # store success output flag for assert-passed job
+    outputs:
+      success: ${{ steps.setoutput.outputs.success }}
+    steps:
+      - id: setoutput
+        run: echo "success=true" >> $GITHUB_OUTPUT
+
+  assert-passed:
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    if: always() # always run, so we never skip the check
+    needs: [molecule-test, verify-test]
+    steps:
+      # pass step only when output of previous verify-test job is set
+      # in case at least one of the shard fails, verify-test is skipped
+      # and the output will not be set, which will then cause the assert-passed job to fail
+      - run: |
+          passed="${{ needs.verify-test.outputs.success }}"
+          if [[ $passed == "true" ]]; then
+            echo "molecule-test passed"
+            exit 0
+          else
+            echo "molecule-test failed"
+            exit 1
+          fi
