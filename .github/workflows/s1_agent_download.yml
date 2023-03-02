@@ -25,15 +25,17 @@ jobs:
   molecule-test:
     name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
-    # env:
-    #   ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
-    #   PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
-    #   S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
-    #   S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
-    #   S1_MANAGEMENT_CONSOLE: https://usea1-support3.sentinelone.net
-    #   S1_MOLECULE_HOSTNAME: falling-lab
-    #   VAGRANT_DEFAULT_PROVIDER: virtualbox
-    #   VAGRANT_HOME: /opt/hostedtoolcache/Vagrant
+    uses: ./.github/workflows/ci-molecule.yml
+    with:
+      box_distribution: ${matrix.boxes.distribution}
+      box_repository: ${matrix.boxes.repository}
+      ansible_connection: ${matrix.boxes.connection}
+      ansible_group: ${matrix.boxes.connection}
+      display_name: ${matrix.boxes.display_name}
+      scenario_name: ${matrix.scenario-name}
+      ansible_version: ${matrix.versions.ansible}
+      python_version: ${matrix.versions.python}
+    secrets: inherit
     strategy:
       fail-fast: false
       matrix:
@@ -95,15 +97,3 @@ jobs:
               scenario-name: default,
               versions: { ansible: stable-2.12, python: '3.10' },
             }
-
-    uses: ./.github/workflows/ci-molecule.yml
-    with:
-      box_distribution: ${matrix.boxes.distribution}
-      box_repository: ${matrix.boxes.repository}
-      ansible_connection: ${matrix.boxes.connection}
-      ansible_group: ${matrix.boxes.connection}
-      display_name: ${matrix.boxes.display_name}
-      scenario_name: ${matrix.scenario-name}
-      ansible_version: ${matrix.versions.ansible}
-      python_version: ${matrix.versions.python}
-    secrets: inherit
