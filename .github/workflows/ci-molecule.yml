@@ -31,11 +31,11 @@ on:
         default: default
       ansible_version:
         description: 'Ansible Version'
-        type: number
+        type: string
         required: true
       python_version:
         description: 'Python Version'
-        type: number
+        type: string
         required: true
 
 jobs:
