@@ -96,7 +96,7 @@ jobs:
               versions: { ansible: stable-2.12, python: '3.10' },
             }
 
-    uses: ./.github/workflows/molecule-test.yml
+    uses: ./.github/workflows/ci-molecule.yml
     with:
       box_distribution: ${matrix.boxes.distribution}
       box_repository: ${matrix.boxes.repository}
