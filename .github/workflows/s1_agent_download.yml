@@ -45,14 +45,17 @@ jobs:
             repository: roboxes
             connection: ssh
             display_name: OpenSuse 15
+            group: Linux
           - distribution: rocky8
             repository: roboxes
             connection: ssh
             display_name: Rocky 8
+            group: Linux
           - distribution: ubuntu2204
             repository: roboxes
             connection: ssh
             display_name: Ubuntu 22.04
+            group: Linux
           - distribution: windows-server-2022-standard
             repository: gusztavvargadr
             connection: ssh
@@ -62,6 +65,7 @@ jobs:
             repository: jborean93
             connection: winrm
             display_name: Server 2012r2
+            group: Windows
         scenario-name:
           - default
           - winrm_default
