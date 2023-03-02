@@ -22,9 +22,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  molecule-test:
-    name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
+  call-workflow:
+    name: Call a reusable workflow
+    # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
+    # runs-on: [self-hosted, Linux, X64, ansible-collection]
     uses: ./.github/workflows/ci-molecule.yml
     with:
       box_distribution: ${matrix.boxes.distribution}
