@@ -47,7 +47,7 @@ jobs:
       PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
       S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
       S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
-      S1_MANAGEMENT_CONSOLE: https://usea1-support3.sentinelone.net
+      S1_MANAGEMENT_CONSOLE: ${{ env.S1_MANAGEMENT_CONSOLE }}
       S1_MOLECULE_HOSTNAME: falling-lab
       VAGRANT_DEFAULT_PROVIDER: virtualbox
       VAGRANT_HOME: /opt/hostedtoolcache/Vagrant

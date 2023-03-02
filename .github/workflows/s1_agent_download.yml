@@ -41,27 +41,23 @@ jobs:
       fail-fast: false
       matrix:
         boxes:
-          - distribution: opensuse15
-            repository: roboxes
-            connection: ssh
-            display_name: OpenSuse 15
           - distribution: rocky8
             repository: roboxes
-            connection: ssh
             display_name: Rocky 8
+            connection: ssh
           - distribution: ubuntu2204
             repository: roboxes
-            connection: ssh
             display_name: Ubuntu 22.04
+            connection: ssh
           - distribution: windows-server-2022-standard
             repository: gusztavvargadr
-            connection: ssh
             display_name: Server 2022
+            connection: ssh
             group: Windows
           - distribution: WindowsServer2012R2
             repository: jborean93
-            connection: winrm
             display_name: Server 2012r2
+            connection: winrm
         scenario-name:
           - default
           - winrm_default
@@ -81,23 +77,6 @@ jobs:
           # connections.
           - { boxes: { connection: winrm }, scenario-name: default }
           - { boxes: { connection: ssh }, scenario-name: winrm_default }
-        include:
-          # ansible-core versions newer than 2.12 require python 2.7, which is not
-          # available out of the box in RedHat/CentOS 6. We include centos6 here,
-          # instead of in the matrix, so that it is only tested once against the
-          # last supported version of ansible-core (2.12). CentOS 6 will continue
-          # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
-          # or a better solution presents itself.
-          - {
-              boxes:
-                {
-                  distribution: centos6,
-                  repository: roboxes,
-                  display_name: CentOS 6,
-                },
-              scenario-name: default,
-              versions: { ansible: stable-2.12, python: '3.10' },
-            }
 
   verify-test:
     needs: call-workflow # run after call-workflow
