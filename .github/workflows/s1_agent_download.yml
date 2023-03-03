@@ -58,7 +58,8 @@ jobs:
   #         molecule lint
   #       working-directory: ./roles/s1_agent_download
 
-  lint:
+  call-lint:
+    name: Molecule Lint
     # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
@@ -67,11 +68,12 @@ jobs:
       role-path: ./roles/s1_agent_download
     secrets: inherit
 
-  call-workflow:
-    needs: lint
+  call-test:
     # name: Call a reusable workflow
+    name: 'Test ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
+    needs: call-lint
     uses: ./.github/workflows/ci-test.yml
     strategy:
       fail-fast: false
@@ -124,9 +126,9 @@ jobs:
     secrets: inherit
 
   verify-test:
-    needs: call-workflow # run after call-workflow
+    needs: call-test # run after call-test
     runs-on: [self-hosted, Linux, X64, ansible-collection]
-    if: success() # only run when all call-workflow have passed
+    if: success() # only run when all call-test have passed
     # store success output flag for assert-passed job
     outputs:
       success: ${{ steps.setoutput.outputs.success }}
@@ -137,17 +139,18 @@ jobs:
   assert-passed:
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: always() # always run, so we never skip the check
-    needs: [call-workflow, verify-test]
+    needs: [call-test, verify-test]
     steps:
       # pass step only when output of previous verify-test job is set
       # in case at least one of the shard fails, verify-test is skipped
       # and the output will not be set, which will then cause the assert-passed job to fail
       - run: |
-          passed="${{ needs.verify-test.outputs.success }}"
-          if [[ $passed == "true" ]]; then
-            echo "call-workflow passed"
+          PASSED="${{ needs.verify-test.outputs.success }}"
+          WORKFLOW="${{ GITHUB_WORKFLOW }}"
+          if [[ $PASSED == "true" ]]; then
+            echo "${WORKFLOW} passed"
             exit 0
           else
-            echo "call-workflow failed"
+            echo "${WORKFLOW} failed"
             exit 1
           fi
