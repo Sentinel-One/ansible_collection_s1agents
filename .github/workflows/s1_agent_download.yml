@@ -23,7 +23,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   call-workflow:
-    name: Call a reusable workflow
+    # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
     uses: ./.github/workflows/ci-molecule.yml
