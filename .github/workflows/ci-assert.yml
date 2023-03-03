@@ -18,7 +18,7 @@ jobs:
     name: Assert test suite passed
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: always() # always run, so we never skip the check
-    needs: [call-test, verify-test]
+    needs: verify-test
     steps:
       # pass step only when output of previous verify-test job is set
       # in case at least one of the shard fails, verify-test is skipped
