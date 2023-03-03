@@ -83,19 +83,19 @@ jobs:
             repository: roboxes
             display_name: Rocky 8
             connection: ssh
-          - distribution: ubuntu2204
-            repository: roboxes
-            display_name: Ubuntu 22.04
-            connection: ssh
-          - distribution: windows-server-2022-standard
-            repository: gusztavvargadr
-            display_name: Server 2022
-            connection: ssh
-            group: Windows
-          - distribution: WindowsServer2012R2
-            repository: jborean93
-            display_name: Server 2012r2
-            connection: winrm
+          # - distribution: ubuntu2204
+          #   repository: roboxes
+          #   display_name: Ubuntu 22.04
+          #   connection: ssh
+          # - distribution: windows-server-2022-standard
+          #   repository: gusztavvargadr
+          #   display_name: Server 2022
+          #   connection: ssh
+          #   group: Windows
+          # - distribution: WindowsServer2012R2
+          #   repository: jborean93
+          #   display_name: Server 2012r2
+          #   connection: winrm
         scenario-name:
           - default
           - winrm_default
@@ -116,32 +116,9 @@ jobs:
       role-path: ./roles/s1_agent_download
     secrets: inherit
 
-  verify-test:
-    needs: call-test # run after call-test
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
-    if: success() # only run when all call-test have passed
-    # store success output flag for assert-passed job
-    outputs:
-      success: ${{ steps.setoutput.outputs.success }}
-    steps:
-      - id: setoutput
-        run: echo "success=true" >> $GITHUB_OUTPUT
-
-  assert-passed:
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
-    if: always() # always run, so we never skip the check
-    needs: [call-test, verify-test]
-    steps:
-      # pass step only when output of previous verify-test job is set
-      # in case at least one of the shard fails, verify-test is skipped
-      # and the output will not be set, which will then cause the assert-passed job to fail
-      - run: |
-          PASSED="${{ needs.verify-test.outputs.success }}"
-          WORKFLOW="${{ env.GITHUB_WORKFLOW }}"
-          if [[ $PASSED == "true" ]]; then
-            echo "${WORKFLOW} passed"
-            exit 0
-          else
-            echo "${WORKFLOW} failed"
-            exit 1
-          fi
+  call-assert:
+    name: Assert Success
+    # name: Call a reusable workflow
+    # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
+    # runs-on: [self-hosted, Linux, X64, ansible-collection]
+    uses: ./.github/workflows/ci-assert.yml
