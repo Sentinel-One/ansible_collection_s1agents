@@ -70,7 +70,7 @@ jobs:
 
   call-test:
     # name: Call a reusable workflow
-    name: 'Test ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
+    name: 'Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
     needs: call-lint

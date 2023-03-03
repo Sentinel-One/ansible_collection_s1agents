@@ -9,7 +9,7 @@ on:
 
 jobs:
   molecule-lint:
-    name: 'Ansible: ${{ inputs.ansible_version }} / Python: ${{ inputs.python_version }}'
+    name: 'Ansible: ${{ matrix.versions.ansible }} / Python: ${{ matrix.versions.python }}'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
