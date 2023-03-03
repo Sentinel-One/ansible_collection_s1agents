@@ -146,7 +146,7 @@ jobs:
       # and the output will not be set, which will then cause the assert-passed job to fail
       - run: |
           PASSED="${{ needs.verify-test.outputs.success }}"
-          WORKFLOW="${{ GITHUB_WORKFLOW }}"
+          WORKFLOW="${{ env.GITHUB_WORKFLOW }}"
           if [[ $PASSED == "true" ]]; then
             echo "${WORKFLOW} passed"
             exit 0
