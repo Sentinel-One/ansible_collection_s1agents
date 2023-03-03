@@ -56,19 +56,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
         with:
-          python-version: ${{ inputs.python_version }}
-
-      - name: Install ansible-core (${{ inputs.ansible_version }})
-        run: |
-          pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible_version }}.tar.gz --disable-pip-version-check
-
-      - name: Install requirements for molecule tests
-        run: |
-          pip install molecule_vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
-          if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
+          python_version: ${{ matrix.versions.python }}
+          ansible_version: ${{ matrix.versions.ansible }}
 
       - name: Set environment
         run: |
