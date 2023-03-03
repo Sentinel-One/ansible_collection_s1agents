@@ -22,7 +22,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  lint-code:
+  molecule-lint:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -56,6 +56,7 @@ jobs:
         working-directory: ./roles/s1_agent_download
 
   call-workflow:
+    needs: molecule-lint
     # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
