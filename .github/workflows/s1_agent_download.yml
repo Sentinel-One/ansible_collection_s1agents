@@ -67,7 +67,7 @@ jobs:
       role-path: ./roles/s1_agent_download
     secrets: inherit
 
-  test:
+  call-workflow:
     needs: lint
     # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
