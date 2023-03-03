@@ -36,7 +36,7 @@ on:
 
 jobs:
   molecule-test:
-    name: 'Ansible: ${{ matrix.versions.ansible }} / Python: ${{ matrix.versions.python }}'
+    name: 'Ansible: ${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})'
     # name: '${{ inputs.display_name }} - ${{ inputs.scenario_name }} (Ⓐ ${{ inputs.ansible_version }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     strategy:

@@ -99,15 +99,6 @@ jobs:
         scenario-name:
           - default
           - winrm_default
-        # versions:
-        #   # ansible-core upstream development supports 3 releases at a time
-        #   # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
-        #   - ansible: stable-2.12 # EOL 2023-05-23
-        #     python: '3.10'
-        #   - ansible: stable-2.13 # EOL 2023-11-06
-        #     python: '3.10'
-        #   - ansible: stable-2.14 # EOL 2024-05-20
-        #     python: '3.10'
         exclude:
           # OpenSSH is not supported on Windows Server 2012r2. We need to use
           # custom scenarios configured for winrm connections. Exclude normal
