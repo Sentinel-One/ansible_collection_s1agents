@@ -68,7 +68,7 @@ jobs:
     secrets: inherit
 
   test:
-    needs: molecule-lint
+    needs: lint
     # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
