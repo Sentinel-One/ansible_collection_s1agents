@@ -29,12 +29,8 @@ on:
         type: string
         required: false
         default: default
-      ansible_version:
-        description: 'Ansible Version'
-        type: string
-        required: true
-      python_version:
-        description: 'Python Version'
+      role-path:
+        description: 'Relative path to the role to be linted'
         type: string
         required: true
 
@@ -42,6 +38,18 @@ jobs:
   molecule-test:
     # name: '${{ inputs.display_name }} - ${{ inputs.scenario_name }} (Ⓐ ${{ inputs.ansible_version }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
+    strategy:
+      fail-fast: true
+      matrix:
+        versions:
+          # ansible-core upstream development supports 3 releases at a time
+          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+          - ansible: stable-2.12 # EOL 2023-05-23
+            python: '3.10'
+          - ansible: stable-2.13 # EOL 2023-11-06
+            python: '3.10'
+          - ansible: stable-2.14 # EOL 2024-05-20
+            python: '3.10'
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
       PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
@@ -59,8 +67,8 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/ci-setup
         with:
-          python_version: ${{ inputs.python_version }}
-          ansible_version: ${{ inputs.ansible_version }}
+          python_version: ${{ matrix.versions.python }}
+          ansible_version: ${{ matrix.versions.ansible }}
 
       - name: Set environment
         run: |
@@ -85,4 +93,5 @@ jobs:
           molecule --version &&
           ansible --version &&
           molecule test --scenario-name ${{ inputs.scenario_name }}
-        working-directory: ./roles/s1_agent_download
+        working-directory: ${{ inputs.role-path }}
+        # working-directory: ./roles/s1_agent_download

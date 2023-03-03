@@ -1,0 +1,46 @@
+name: Continuous Integration
+on:
+  workflow_call:
+    inputs:
+      role-path:
+        description: 'Relative path to the role to be linted'
+        type: string
+        required: true
+
+jobs:
+  molecule-lint:
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    env:
+      ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
+      PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
+    strategy:
+      fail-fast: true
+      matrix:
+        versions:
+          # ansible-core upstream development supports 3 releases at a time
+          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+          - ansible: stable-2.12 # EOL 2023-05-23
+            python: '3.10'
+          - ansible: stable-2.13 # EOL 2023-11-06
+            python: '3.10'
+          - ansible: stable-2.14 # EOL 2024-05-20
+            python: '3.10'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          python_version: ${{ matrix.versions.python }}
+          ansible_version: ${{ matrix.versions.ansible }}
+
+      - name: Lint Ansible Role
+        if: success()
+        run: >-
+          echo ${PWD} &&
+          molecule --version &&
+          ansible --version &&
+          molecule lint
+        working-directory: ${{ inputs.role-path }}
+        # working-directory: ./roles/s1_agent_download
