@@ -118,6 +118,7 @@ jobs:
 
   call-assert:
     name: Assert Success
+    needs: call-test # run after call-test
     # name: Call a reusable workflow
     # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
     # runs-on: [self-hosted, Linux, X64, ansible-collection]
