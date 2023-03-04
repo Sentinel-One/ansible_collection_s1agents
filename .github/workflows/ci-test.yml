@@ -2,29 +2,29 @@ name: Continuous Integration
 on:
   workflow_call:
     inputs:
-      box_distribution:
+      box-distribution:
         description: 'Vagrant Box Operating System'
         type: string
         required: true
-      box_repository:
+      box-repository:
         description: 'Vagrant Box repository'
         type: string
         required: true
-      ansible_connection:
+      ansible-connection:
         description: 'Ansible connection type for connecting to the Box'
         type: string
         required: false
         default: ssh
-      ansible_group:
+      ansible-group:
         description: "Box's Ansible inventory group"
         type: string
         required: false
         default: Linux
-      display_name:
+      display-name:
         description: 'OS Name to display in workflow steps'
         type: string
         required: true
-      scenario_name:
+      scenario-name:
         description: 'Name of the molecule scenario to execute'
         type: string
         required: false
@@ -37,10 +37,9 @@ on:
 jobs:
   molecule-test:
     name: 'ansible-${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})'
-    # name: '${{ inputs.display_name }} - ${{ inputs.scenario_name }} (Ⓐ ${{ inputs.ansible_version }})'
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         versions:
           # ansible-core upstream development supports 3 releases at a time
@@ -68,14 +67,14 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/ci-setup
         with:
-          python_version: ${{ matrix.versions.python }}
-          ansible_version: ${{ matrix.versions.ansible }}
+          python-version: ${{ matrix.versions.python }}
+          ansible-version: ${{ matrix.versions.ansible }}
 
       - name: Set environment
         run: |
-          DISTRIBUTION=${{ inputs.box_distribution }}
-          REPOSITORY=${{ inputs.box_repository }}
-          GROUP=${{ inputs.ansible_group }}
+          DISTRIBUTION=${{ inputs.box-distribution }}
+          REPOSITORY=${{ inputs.box-repository }}
+          GROUP=${{ inputs.ansible-group }}
           echo "S1_VAGRANT_DISTRO=${DISTRIBUTION}" >> $GITHUB_ENV
           echo "S1_VAGRANT_REPO=${REPOSITORY}" >> $GITHUB_ENV
           if [ -n "$GROUP" ]; then echo "S1_VAGRANT_GROUP=${GROUP}" >> $GITHUB_ENV; fi
@@ -93,6 +92,5 @@ jobs:
           echo ${PWD} &&
           molecule --version &&
           ansible --version &&
-          molecule test --scenario-name ${{ inputs.scenario_name }}
+          molecule test --scenario-name ${{ inputs.scenario-name }}
         working-directory: ${{ inputs.role-path }}
-        # working-directory: ./roles/s1_agent_download

@@ -44,4 +44,3 @@ jobs:
           ansible --version &&
           molecule lint
         working-directory: ${{ inputs.role-path }}
-        # working-directory: ./roles/s1_agent_download

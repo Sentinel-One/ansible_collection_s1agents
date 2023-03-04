@@ -8,72 +8,38 @@ on:
       - '!roles/s1_agent_download/README.md'
       - '!roles/s1_agent_download/makefile'
       - '.github/workflows/s1_agent_download.yml'
+      - '.github/workflows/ci-*.yml'
+      - '.github/actions/ci-setup/actions.yml'
       - 'requirements.yml'
   pull_request:
     branches:
       - 'main'
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
     paths:
       - 'roles/s1_agent_download/**'
       - '!roles/s1_agent_download/README.md'
       - '!roles/s1_agent_download/makefile'
       - '.github/workflows/s1_agent_download.yml'
+      - '.github/workflows/ci-*.yml'
+      - '.github/actions/ci-setup/actions.yml'
+      - 'requirements.yml'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  # molecule-lint:
-  #   runs-on: [self-hosted, Linux, X64, ansible-collection]
-  #   env:
-  #     ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
-  #     PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       versions:
-  #         # ansible-core upstream development supports 3 releases at a time
-  #         # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
-  #         - ansible: stable-2.12 # EOL 2023-05-23
-  #           python: '3.10'
-  #         - ansible: stable-2.13 # EOL 2023-11-06
-  #           python: '3.10'
-  #         - ansible: stable-2.14 # EOL 2024-05-20
-  #           python: '3.10'
-  #   steps:
-  #     - name: Check out code
-  #       uses: actions/checkout@v3
-
-  #     - name: Set up environment
-  #       uses: ./.github/actions/ci-setup
-  #       with:
-  #         python_version: ${{ matrix.versions.python }}
-  #         ansible_version: ${{ matrix.versions.ansible }}
-
-  #     - name: Lint Ansible Role
-  #       if: success()
-  #       run: >-
-  #         echo ${PWD} &&
-  #         molecule --version &&
-  #         ansible --version &&
-  #         molecule lint
-  #       working-directory: ./roles/s1_agent_download
-
-  call-lint:
+  call-ci-lint:
     name: Lint Role
-    # name: Call a reusable workflow
-    # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
-    # runs-on: [self-hosted, Linux, X64, ansible-collection]
     uses: ./.github/workflows/ci-lint.yml
     with:
       role-path: ./roles/s1_agent_download
-    # secrets: inherit
 
-  call-test:
-    # name: Call a reusable workflow
+  call-ci-test:
     name: 'Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
-    # name: '${{ matrix.boxes.display_name }} (Ⓐ ${{ matrix.versions.ansible }})'
-    # runs-on: [self-hosted, Linux, X64, ansible-collection]
-    needs: call-lint
+    needs: call-ci-lint
     uses: ./.github/workflows/ci-test.yml
     strategy:
       fail-fast: false
@@ -83,19 +49,19 @@ jobs:
             repository: roboxes
             display_name: Rocky 8
             connection: ssh
-          - distribution: ubuntu2205
+          - distribution: ubuntu2204
             repository: roboxes
             display_name: Ubuntu 22.04
-          #   connection: ssh
-          # - distribution: windows-server-2022-standard
-          #   repository: gusztavvargadr
-          #   display_name: Server 2022
-          #   connection: ssh
-          #   group: Windows
-          # - distribution: WindowsServer2012R2
-          #   repository: jborean93
-          #   display_name: Server 2012r2
-          #   connection: winrm
+            connection: ssh
+          - distribution: windows-server-2022-standard
+            repository: gusztavvargadr
+            display_name: Server 2022
+            connection: ssh
+            group: Windows
+          - distribution: WindowsServer2012R2
+            repository: jborean93
+            display_name: Server 2012r2
+            connection: winrm
         scenario-name:
           - default
           - winrm_default
@@ -107,16 +73,16 @@ jobs:
           - { boxes: { connection: winrm }, scenario-name: default }
           - { boxes: { connection: ssh }, scenario-name: winrm_default }
     with:
-      box_distribution: ${{ matrix.boxes.distribution }}
-      box_repository: ${{ matrix.boxes.repository }}
-      ansible_connection: ${{ matrix.boxes.connection }}
-      ansible_group: ${{ matrix.boxes.group }}
-      display_name: ${{ matrix.boxes.display_name }}
-      scenario_name: ${{ matrix.scenario-name }}
+      box-distribution: ${{ matrix.boxes.distribution }}
+      box-repository: ${{ matrix.boxes.repository }}
+      ansible-connection: ${{ matrix.boxes.connection }}
+      ansible-group: ${{ matrix.boxes.group }}
+      display-name: ${{ matrix.boxes.display_name }}
+      scenario-name: ${{ matrix.scenario-name }}
       role-path: ./roles/s1_agent_download
     secrets: inherit
 
-  call-assert:
+  call-ci-assert:
     name: Assert Success
-    needs: call-test # run after call-test
+    needs: call-ci-test
     uses: ./.github/workflows/ci-assert.yml
