@@ -4,7 +4,7 @@ on:
 
 jobs:
   verify-test:
-    name: Confirm workflow jobs completed
+    name: Check Matrix Status
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: success() # only run when all call-test have passed
     # store success output flag for assert-passed job
@@ -15,7 +15,7 @@ jobs:
         run: echo "success=true" >> $GITHUB_OUTPUT
 
   assert-passed:
-    name: Assert test suite passed
+    name: Set Status
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     if: always() # always run, so we never skip the check
     needs: verify-test
