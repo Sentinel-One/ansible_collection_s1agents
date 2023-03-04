@@ -33,8 +33,8 @@ jobs:
       - name: Set up environment
         uses: ./.github/actions/ci-setup
         with:
-          python_version: ${{ matrix.versions.python }}
-          ansible_version: ${{ matrix.versions.ansible }}
+          python-version: ${{ matrix.versions.python }}
+          ansible-version: ${{ matrix.versions.ansible }}
 
       - name: Lint Ansible Role
         if: success()
