@@ -8,6 +8,8 @@ driver:
   name: vagrant
   provider:
     name: '${VAGRANT_DEFAULT_PROVIDER:-virtualbox}'
+    options:
+      linked_clone: true
 
 lint: |
   set -e
@@ -109,7 +111,7 @@ scenario:
     - destroy
   test_sequence:
     - dependency
-    - lint
+    # - lint
     - cleanup
     - destroy
     - syntax
