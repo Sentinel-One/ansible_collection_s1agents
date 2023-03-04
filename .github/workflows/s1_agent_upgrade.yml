@@ -62,6 +62,7 @@ jobs:
             repository: jborean93
             display_name: Server 2012r2
             connection: winrm
+            group: Windows
         scenario-name:
           - default
           - gpg_signed_rpm
