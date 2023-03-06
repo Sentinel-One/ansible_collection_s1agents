@@ -55,7 +55,7 @@ jobs:
 
       - name: Publish a release and attach collection
         run: |
-          gh release create ${RELEASE_TAG} --generate-notes --draft sentinelone-s1agents-${RELEASE_TAG}.tar.gz
+          gh release create ${RELEASE_TAG} -F CHANGELOG.md --notes "https://github.com/Sentinel-One/ansible_collection_s1agents/releases/download/${RELEASE_TAG}/sentinelone-s1agents-${RELEASE_TAG}.tar.gz" --draft "sentinelone-s1agents-${RELEASE_TAG}.tar.gz#Ansible Collection"
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash

@@ -38,6 +38,41 @@ The SentinelOne.s1agents collection has dependencies upon the following collecti
 
 The dependencies can be installed by using the ansible-galaxy command `ansible-galaxy install -r requirements.yml` and the requirements file found at the root of the project.
 
+## Using this collection
+
+### Using a requirements file
+
+Create a `requirements.yml` and add the ansible_collection_s1agents git repository to it.
+
+```yaml
+collections:
+  - name: https://github.com/Sentinel-One/ansible_collection_s1agents.git
+    type: git
+    # version: release/v0.3.0
+```
+
+The collection can then be installed with the `ansible-galaxy` command
+
+```bash
+ansible-galaxy collection install -r requirements.yml
+```
+
+When using Ansible Tower to deploy the agents, if the requirements.yml file is placed within the project's roles folder `<project-top-level-directory>/roles/requirements.yml` Ansible Tower will automatically download the collection at the end of the Project Update cycle.
+
+### Using ansible-galaxy to download directly from GitHub
+
+The `ansible-galaxy` command can be used to download this collection directly from the GitHub repo.
+
+```bash
+ansible-galaxy collection install git+https://github.com/Sentinel-One/ansible_collection_s1agents.git
+```
+
+This method maybe used to test a pre-release version. In this case append the branch or tag you wish to test to the end of the git URL. In the example below `release/v0.3.0` is the branch to use for testing.
+
+```bash
+ansible-galaxy collection install git+https://github.com/Sentinel-One/ansible_collection_s1agents.git,release/v0.3.0
+```
+
 ## Required Permissions
 
 ### Management Console
@@ -85,7 +120,7 @@ The collection uses the setup module to gather a minimum set of facts that is re
 
 #### Upgrading older Linux Agents beyond version 22.2.2.2 when `s1_install_gpg_signed_rpm` is `true`
 
-When upgrading to a Linux agent version that is newer than 22.2.2.2, using the GPG Signed packages, from an agent that is older than 22.2.2.2, you must first upgrade the agent to version 22.2.2.2. Once the agent has been upgraded to 22.2.2.2, you can upgrade to the desired version.
+When upgrading to a Linux agent version that is newer than 22.2.2.2, using the GPG Signed packages, from an agent that is older than 22.2.2.2, you must first upgrade the agent to version 22.2.2.2. Once the agent has been upgraded to 22.2.2.2, you can upgrade to the desired version. [Example Playbook](playbooks/example_upgrade_linux_with_gpg_signed_package.yml).
 
 ### Windows Operating Systems
 
