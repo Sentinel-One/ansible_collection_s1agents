@@ -13,6 +13,7 @@ on:
       - '.github/workflows/s1_mgmt_get_passphrase.yml'
       - '.github/workflows/s1_agent_uuid.yml'
       - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
       - '.github/actions/ci-setup/action.yml'
       - 'requirements.yml'
   pull_request:
@@ -32,6 +33,7 @@ on:
       - '.github/workflows/s1_mgmt_get_passphrase.yml'
       - '.github/workflows/s1_agent_uuid.yml'
       - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
       - '.github/actions/ci-setup/actions.yml'
       - 'requirements.yml'
   workflow_dispatch:

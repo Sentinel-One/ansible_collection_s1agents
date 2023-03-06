@@ -9,6 +9,7 @@ on:
       - '!roles/s1_import_gpg_key/makefile'
       - '.github/workflows/s1_import_gpg_key.yml'
       - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
       - '.github/actions/ci-setup/action.yml'
       - 'requirements.yml'
   pull_request:
@@ -24,6 +25,7 @@ on:
       - '!roles/s1_import_gpg_key/makefile'
       - '.github/workflows/s1_import_gpg_key.yml'
       - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
       - '.github/actions/ci-setup/actions.yml'
       - 'requirements.yml'
   workflow_dispatch:
