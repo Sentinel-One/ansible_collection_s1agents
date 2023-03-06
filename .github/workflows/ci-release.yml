@@ -2,12 +2,26 @@
 name: Release Ansible collection
 on:
   workflow_dispatch:
-  # push:
-  #   tags:
-  #     - "v*"
+  push:
+    tags:
+      - 'v*'
+    branches:
+      - 'release/**'
 
-permission:
-  content: write
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  deployments: read
+  id-token: read
+  issues: read
+  discussions: read
+  packages: read
+  pages: read
+  pull-requests: read
+  repository-projects: read
+  security-events: read
+  statuses: read
 
 jobs:
   release:
