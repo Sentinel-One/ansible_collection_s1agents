@@ -9,18 +9,8 @@ on:
       - 'release/**'
 
 permissions:
-  actions: read
-  checks: read
   contents: write
-  deployments: read
-  issues: read
-  discussions: read
-  packages: read
-  pages: read
   pull-requests: read
-  repository-projects: read
-  security-events: read
-  statuses: read
 
 jobs:
   release:
@@ -55,7 +45,7 @@ jobs:
 
       - name: Publish a release and attach collection
         run: |
-          gh release create ${RELEASE_TAG} -F CHANGELOG.md  --draft sentinelone-s1agents-${RELEASE_TAG}.tar.gz
+          gh release create ${RELEASE_TAG} -F CHANGELOG.md --generate-notes --draft sentinelone-s1agents-${RELEASE_TAG}.tar.gz
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash
