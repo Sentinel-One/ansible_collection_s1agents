@@ -12,7 +12,7 @@ A valid SentinelOne license, access to the SentinelOne Management Console and ac
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
@@ -58,7 +58,7 @@ s1_validate_certs: true
 - name: Uninstall the SentinelOne agent
   hosts: all
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_api_token: REDACTED
   tasks:
     - name: Include s1_agent_uninstall

@@ -30,7 +30,7 @@ Best practice is to create a new "Confirm Local Upgrade via API" role with these
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
@@ -136,7 +136,7 @@ Upgrade the SentinelOne Agent from a package that has already been downloaded an
 - name: Upgrade the SentinelOne Agent
   hosts: RedHat_Servers
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_agent_src: /software/sentinelone/SentinelAgent_linux_v22_1_2_7.rpm
     s1_agent_version: 22.1.2.7
   tasks:
@@ -154,7 +154,7 @@ Automatically download the most recent Generally Available SentinelOne package a
 - name: Download and upgrade to the latest SentinelOne Agent
   hosts: all
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_api_token: REDACTED
   tasks:
     - name: Include s1_agent_install

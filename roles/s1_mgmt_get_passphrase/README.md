@@ -23,7 +23,7 @@ In order to successfully query agent passphrases via the API, the user account a
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
