@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*'
+      - '*.*.*'
     branches:
       - 'release/**'
 
@@ -13,7 +13,6 @@ permissions:
   checks: read
   contents: write
   deployments: read
-  # id-token: read
   issues: read
   discussions: read
   packages: read
@@ -56,7 +55,7 @@ jobs:
 
       - name: Publish a release and attach collection
         run: |
-          gh release create ${RELEASE_TAG} sentinelone-s1agents-${RELEASE_TAG}.tar.gz
+          gh release create ${RELEASE_TAG} --generate-notes --draft sentinelone-s1agents-${RELEASE_TAG}.tar.gz
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash
