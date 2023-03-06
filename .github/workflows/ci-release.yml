@@ -56,7 +56,7 @@ jobs:
 
       - name: Publish a release and attach collection
         run: |
-          gh release create ${env.RELEASE_TAG} sentinelone-s1agents-${env.RELEASE_TAG}.tar.xz
+          gh release create ${RELEASE_TAG} sentinelone-s1agents-${RELEASE_TAG}.tar.xz
         env:
           GITHUB_TOKEN: ${{ github.TOKEN }}
         shell: bash
