@@ -1,0 +1,51 @@
+---
+name: Release Ansible collection
+on:
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - "v*"
+
+permission:
+  content: write
+
+jobs:
+  release:
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    strategy:
+      matrix:
+        versions:
+          # ansible-core upstream development supports 3 releases at a time
+          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
+          - ansible: stable-2.14 # EOL 2024-05-20
+            python: '3.10'
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          python-version: ${{ matrix.versions.python }}
+          ansible-version: ${{ matrix.versions.ansible }}
+
+      - name: Get version from galaxy.yml
+        id: collection-version
+        run: |
+          echo "RELEASE_TAG=$(grep '^version' galaxy.yml | awk '{ print $2 }')" >> $GITHUB_ENV
+          echo
+
+      - name: Build Ansible Collection
+        run: ansible-galaxy collection build
+
+      - name: Publish a release and attach collection
+        run: |
+          gh release create ${env.RELEASE_TAG} sentinelone-s1agents-${env.RELEASE_TAG}.tar.xz
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+
+      # - name: Deploy Ansible collection to Galaxy
+      #   run: ansible-galaxy collection publish sentinelone-s1agents-${env.RELEASE_TAG}.tar.xz --api-key ${{ secrets.GALAXY_API_KEY }}
