@@ -1,7 +1,7 @@
 # S1 Agent Uninstall
 
-[![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
-[![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_uninstall.yml)
+[![GitHub license](https://badgen.net/github/license/Sentinel-One/ansible_collection_s1agents)](https://github.com/Sentinel-One/ansible_collection_s1agents/blob/main/LICENSE)
+[![Molecule CI](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uninstall.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_uninstall.yml)
 
 The `s1_agent_uninstall` role uninstalls the SentinelOne agent.
 
@@ -12,7 +12,7 @@ A valid SentinelOne license, access to the SentinelOne Management Console and ac
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
@@ -38,6 +38,7 @@ No additional variables must be defined. However, the [s1_agent_common](../s1_ag
 ```yaml
 s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
+s1_validate_certs: true
 ```
 
 ## Dependencies
@@ -57,7 +58,7 @@ s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
 - name: Uninstall the SentinelOne agent
   hosts: all
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_api_token: REDACTED
   tasks:
     - name: Include s1_agent_uninstall

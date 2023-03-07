@@ -1,0 +1,31 @@
+---
+- name: Example play to upgrade Linux agents older than 22.2 to a version newer than 22.2 with the GPG signed package
+  hosts: all
+  gather_facts: no
+  vars:
+    s1_install_gpg_signed_rpm: true
+    s1_management_console: <Management Console URL>
+    s1_api_token: <API Token>
+  tasks:
+    - name: Get information about the installed agent
+      ansible.builtin.include_role:
+        name: sentinelone.s1_agents.s1_agent_info
+
+    - name: Show agent info
+      ansible.builtin.debug:
+        var: s1_agent_info
+
+    # Upgrade to agent version 22.2.2.2
+    # When conditional ensures task only applies to agents older than 22.2.2.2
+    - name: Upgrade agents to 22.2.2.2
+      ansible.builtin.include_role:
+        name: s1_agent_upgrade
+      vars:
+        s1_agent_version: 22.2.2.2
+      when: s1_agent_info.version is version('22.2.2.2', '<')
+
+    # Upgrade to agent the latest version
+    # Applies to all agents
+    - name: Upgrade agents to latest version
+      ansible.builtin.include_role:
+        name: s1_agent_upgrade

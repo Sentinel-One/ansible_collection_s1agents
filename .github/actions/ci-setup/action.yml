@@ -1,0 +1,29 @@
+name: CI Setup
+description: Sets up Python and Ansible for jobs during CI workflow
+
+inputs:
+  ansible-version:
+    description: 'Ansible Version'
+    required: true
+  python-version:
+    description: 'Python Version'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install ansible-core (${{ inputs.ansible-version }})
+      shell: bash
+      run: |
+        pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible-version }}.tar.gz --disable-pip-version-check
+
+    - name: Install requirements for molecule tests
+      shell: bash
+      run: |
+        pip install molecule-vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
+        if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi

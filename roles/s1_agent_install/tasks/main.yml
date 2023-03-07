@@ -25,14 +25,16 @@
     loop_var: loop_vars
     label: '{{ loop_vars | basename }}'
 
-- name: Assert that s1_agent_site_token is set
+- name: Assert that s1_agent_site_token is valid
   ansible.builtin.assert:
     that:
       - s1_agent_site_token is defined
       - s1_agent_site_token is not none
       - s1_agent_site_token | length > 0
-    fail_msg: s1_agent_site_token is not set
-    success_msg: s1_agent_site_token is set
+      - (s1_agent_site_token | b64decode | from_json).site_key is defined
+      - (s1_agent_site_token | b64decode | from_json).url is defined
+    fail_msg: s1_agent_site_token is not valid
+    success_msg: s1_agent_site_token is valid
 
 - name: Download Agent from Management Console
   ansible.builtin.include_role:

@@ -1,0 +1,35 @@
+name: Assert Tests Passed
+on:
+  workflow_call:
+
+jobs:
+  verify-test:
+    name: Check Matrix Status
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    if: success() # only run when all call-test have passed
+    # store success output flag for assert-passed job
+    outputs:
+      success: ${{ steps.setoutput.outputs.success }}
+    steps:
+      - id: setoutput
+        run: echo "success=true" >> $GITHUB_OUTPUT
+
+  assert-passed:
+    name: Set Status
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    if: always() # always run, so we never skip the check
+    needs: verify-test
+    steps:
+      # pass step only when output of previous verify-test job is set
+      # in case at least one of the shard fails, verify-test is skipped
+      # and the output will not be set, which will then cause the assert-passed job to fail
+      - run: |
+          PASSED="${{ needs.verify-test.outputs.success }}"
+          WORKFLOW="${{ github.workflow }}"
+          if [[ $PASSED == "true" ]]; then
+            echo "${WORKFLOW} passed"
+            exit 0
+          else
+            echo "${WORKFLOW} failed"
+            exit 1
+          fi

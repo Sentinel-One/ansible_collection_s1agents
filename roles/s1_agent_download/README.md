@@ -1,7 +1,7 @@
 # S1 Agent Download
 
-[![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
-[![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_download.yml)
+[![GitHub license](https://badgen.net/github/license/Sentinel-One/ansible_collection_s1agents)](https://github.com/Sentinel-One/ansible_collection_s1agents/blob/main/LICENSE)
+[![Molecule CI](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_download.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_download.yml)
 
 The `s1_agent_download` role downloads the SentinelOne Agents from the management console.
 This role is called automatically by the [s1_agent_install](../s1_agent_install/) and [s1_agent_upgrade](../s1_agent_upgrade/) roles if the `s1_agent_src` variable is unset.
@@ -25,7 +25,7 @@ Best practice is to create a new "Download packages via API" role with these per
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
@@ -101,6 +101,7 @@ Determines the availability of the package to download. This further limits `s1_
 
 ```yaml
 s1_download_path: /tmp/s1_agent_cache
+s1_validate_certs: true
 ```
 
 ## Dependencies

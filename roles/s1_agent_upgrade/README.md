@@ -1,7 +1,7 @@
 # S1 Agent Upgrade
 
-[![GitHub license](https://badgen.net/github/license/s1-nathangerhart/ansible_collection_s1agent)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/blob/main/LICENSE)
-[![Molecule CI](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/s1-nathangerhart/ansible_collection_s1agent/actions/workflows/s1_agent_upgrade.yml)
+[![GitHub license](https://badgen.net/github/license/Sentinel-One/ansible_collection_s1agents)](https://github.com/Sentinel-One/ansible_collection_s1agents/blob/main/LICENSE)
+[![Molecule CI](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_upgrade.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_upgrade.yml)
 
 The `s1_agent_upgrade` role upgrades an existing SentinelOne Agent installed on Linux endpoints.
 
@@ -30,7 +30,7 @@ Best practice is to create a new "Confirm Local Upgrade via API" role with these
 ## Role Variables
 
 ```yaml
-s1_management_console: https://usea1-support3.sentinelone.net
+s1_management_console: https://<management fqdn>
 ```
 
 This is mandatory and is the URL to your SentinelOne management console.
@@ -99,6 +99,7 @@ No additional variables must be defined. However, the [s1_agent_common](../s1_ag
 s1_download_path: /tmp/s1_agent_cache
 s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
+s1_validate_certs: true
 s1_product_id:
   v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
   v22_3_1_185_32_bit: '{5548CA13-E999-4066-8F6E-D31776C2143C}'
@@ -135,7 +136,7 @@ Upgrade the SentinelOne Agent from a package that has already been downloaded an
 - name: Upgrade the SentinelOne Agent
   hosts: RedHat_Servers
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_agent_src: /software/sentinelone/SentinelAgent_linux_v22_1_2_7.rpm
     s1_agent_version: 22.1.2.7
   tasks:
@@ -153,7 +154,7 @@ Automatically download the most recent Generally Available SentinelOne package a
 - name: Download and upgrade to the latest SentinelOne Agent
   hosts: all
   vars:
-    s1_management_console: https://usea1-support3.sentinelone.net
+    s1_management_console: https://<management fqdn>
     s1_api_token: REDACTED
   tasks:
     - name: Include s1_agent_install

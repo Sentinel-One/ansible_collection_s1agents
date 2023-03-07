@@ -2,71 +2,71 @@ name: S1 Agent Download
 on:
   push:
     branches:
-      - 'main'
-      - 'feature/windows-support'
+      - 'release/**'
     paths:
       - 'roles/s1_agent_download/**'
       - '!roles/s1_agent_download/README.md'
       - '!roles/s1_agent_download/makefile'
       - '.github/workflows/s1_agent_download.yml'
+      - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
+      - '.github/actions/ci-setup/action.yml'
       - 'requirements.yml'
   pull_request:
     branches:
       - 'main'
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
     paths:
       - 'roles/s1_agent_download/**'
       - '!roles/s1_agent_download/README.md'
       - '!roles/s1_agent_download/makefile'
       - '.github/workflows/s1_agent_download.yml'
+      - '.github/workflows/ci-*.yml'
+      - '!.github/workflows/ci-release.yml'
+      - '.github/actions/ci-setup/actions.yml'
+      - 'requirements.yml'
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  molecule-test:
-    name: '${{ matrix.boxes.distribution }} (Ⓐ ${{ matrix.versions.ansible }})'
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
-    env:
-      ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
-      PY_COLORS: 1 # allows molecule colors to be passed to GitHub Actions
-      S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
-      S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
-      S1_MANAGEMENT_CONSOLE: https://usea1-support3.sentinelone.net
-      S1_MOLECULE_HOSTNAME: falling-lab
-      VAGRANT_DEFAULT_PROVIDER: virtualbox
-      VAGRANT_HOME: /opt/hostedtoolcache/Vagrant
+  call-ci-lint:
+    name: Lint Role
+    uses: ./.github/workflows/ci-lint.yml
+    with:
+      role-path: ./roles/s1_agent_download
+
+  call-ci-test:
+    name: 'Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
+    needs: call-ci-lint
+    uses: ./.github/workflows/ci-test.yml
     strategy:
       fail-fast: false
       matrix:
         boxes:
-          - distribution: opensuse15
-            repository: roboxes
-            connection: ssh
           - distribution: rocky8
             repository: roboxes
+            display_name: Rocky 8
             connection: ssh
           - distribution: ubuntu2204
             repository: roboxes
+            display_name: Ubuntu 22.04
             connection: ssh
           - distribution: windows-server-2022-standard
             repository: gusztavvargadr
+            display_name: Server 2022
             connection: ssh
             group: Windows
           - distribution: WindowsServer2012R2
             repository: jborean93
+            display_name: Server 2012r2
             connection: winrm
         scenario-name:
           - default
           - winrm_default
-        versions:
-          # ansible-core upstream development supports 3 releases at a time
-          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
-          - ansible: stable-2.12 # EOL 2023-05-23
-            python: '3.10'
-          - ansible: stable-2.13 # EOL 2023-11-06
-            python: '3.10'
-          - ansible: stable-2.14 # EOL 2024-05-20
-            python: '3.10'
         exclude:
           # OpenSSH is not supported on Windows Server 2012r2. We need to use
           # custom scenarios configured for winrm connections. Exclude normal
@@ -74,86 +74,17 @@ jobs:
           # connections.
           - { boxes: { connection: winrm }, scenario-name: default }
           - { boxes: { connection: ssh }, scenario-name: winrm_default }
-        include:
-          # ansible-core versions newer than 2.12 require python 2.7, which is not
-          # available out of the box in RedHat/CentOS 6. We include centos6 here,
-          # instead of in the matrix, so that it is only tested once against the
-          # last supported version of ansible-core (2.12). CentOS 6 will continue
-          # to be tested against ansible-core-2.12 until CentOS 6 is deprecated
-          # or a better solution presents itself.
-          - {
-              boxes: { distribution: centos6, repository: roboxes },
-              scenario-name: default,
-              versions: { ansible: stable-2.12, python: '3.10' },
-            }
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
+    with:
+      box-distribution: ${{ matrix.boxes.distribution }}
+      box-repository: ${{ matrix.boxes.repository }}
+      ansible-connection: ${{ matrix.boxes.connection }}
+      ansible-group: ${{ matrix.boxes.group }}
+      display-name: ${{ matrix.boxes.display_name }}
+      scenario-name: ${{ matrix.scenario-name }}
+      role-path: ./roles/s1_agent_download
+    secrets: inherit
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.versions.python }}
-
-      - name: Install ansible-core (${{ matrix.versions.ansible }})
-        run: |
-          pip install https://github.com/ansible/ansible/archive/${{ matrix.versions.ansible }}.tar.gz --disable-pip-version-check
-
-      - name: Install requirements for molecule tests
-        run: |
-          pip install molecule_vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
-          if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
-
-      - name: Set environment
-        run: |
-          DISTRIBUTION=${{ matrix.boxes.distribution }}
-          REPOSITORY=${{ matrix.boxes.repository }}
-          GROUP=${{ matrix.boxes.group }}
-          echo "S1_VAGRANT_DISTRO=${DISTRIBUTION}" >> $GITHUB_ENV
-          echo "S1_VAGRANT_REPO=${REPOSITORY}" >> $GITHUB_ENV
-          if [ -n "$GROUP" ]; then echo "S1_VAGRANT_GROUP=${GROUP}" >> $GITHUB_ENV; fi
-
-      - name: Assert that variables are defined
-        if: ${{ (env.S1_VAGRANT_DISTRO == '') || (env.S1_VAGRANT_REPO == '') }}
-        uses: actions/github-script@v3
-        with:
-          script: |
-            core.setFailed('S1_VAGRANT_DISTRO and S1_VAGRANT_REPO are not set!')
-
-      - name: Execute Molecule Scenarios
-        if: success()
-        run: >-
-          echo ${PWD} &&
-          molecule --version &&
-          ansible --version &&
-          molecule test --scenario-name ${{ matrix.scenario-name }}
-        working-directory: ./roles/s1_agent_download
-
-  verify-test:
-    needs: molecule-test # run after molecule-test
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
-    if: success() # only run when all molecule-test have passed
-    # store success output flag for assert-passed job
-    outputs:
-      success: ${{ steps.setoutput.outputs.success }}
-    steps:
-      - id: setoutput
-        run: echo "success=true" >> $GITHUB_OUTPUT
-
-  assert-passed:
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
-    if: always() # always run, so we never skip the check
-    needs: [molecule-test, verify-test]
-    steps:
-      # pass step only when output of previous verify-test job is set
-      # in case at least one of the shard fails, verify-test is skipped
-      # and the output will not be set, which will then cause the assert-passed job to fail
-      - run: |
-          passed="${{ needs.verify-test.outputs.success }}"
-          if [[ $passed == "true" ]]; then
-            echo "molecule-test passed"
-            exit 0
-          else
-            echo "molecule-test failed"
-            exit 1
-          fi
+  call-ci-assert:
+    name: Assert Success
+    needs: call-ci-test
+    uses: ./.github/workflows/ci-assert.yml

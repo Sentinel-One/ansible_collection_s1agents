@@ -49,6 +49,7 @@
     return_content: false
     headers:
       Authorization: 'ApiToken {{ s1_api_token }}'
+    validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
   register: s1_available_packages
   until: s1_available_packages is not failed
   retries: 10
@@ -130,6 +131,7 @@
     mode: 440
     headers:
       Authorization: 'ApiToken {{ s1_api_token }}'
+    validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
   register: url_result
   until: url_result is not failed
   retries: 10

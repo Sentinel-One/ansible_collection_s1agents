@@ -22,6 +22,7 @@
         return_content: false
         headers:
           Authorization: 'ApiToken {{ s1_api_token }}'
+        validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
         body:
           filter:
             uuid: '{{ s1_agent_info.uuid }}'
@@ -29,9 +30,6 @@
             expiration: 1
         body_format: json
         method: POST
-      environment:
-        http_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
-        https_proxy: '{{ s1_agent_management_proxy | default(None) | default(omit) }}'
       register: s1_local_upgrade_result
       until: s1_local_upgrade_result is not failed and s1_local_upgrade_result.json.data | length
       retries: 10
