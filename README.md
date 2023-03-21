@@ -1,7 +1,6 @@
 # Ansible Collection - SentinelOne.s1agents
 
 ![Release](https://badgen.net/github/release/Sentinel-One/ansible_collection_s1agents)
-![CI](https://badgen.net/github/status/Sentinel-One/ansible_collection_s1agents)
 [![GitHub license](https://badgen.net/github/license/Sentinel-One/ansible_collection_s1agents)](https://github.com/Sentinel-One/ansible_collection_s1agents/blob/main/LICENSE)
 
 [![s1_agent_common](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_common.yml/badge.svg)](https://github.com/Sentinel-One/ansible_collection_s1agents/actions/workflows/s1_agent_common.yml)
