@@ -25,6 +25,8 @@ s1_msi_return_codes:
 
 # The same Product ID is used for MSI and SentinelOneInstaller packages
 s1_product_id:
+  v22_3_4_612_32_bit: '{32D20419-EC91-40D6-8123-960370BD6D13}'
+  v22_3_4_612_64_bit: '{BAD89140-6B9C-480D-984E-24E6F121FF6B}'
   v22_3_2_373_64_bit: '{FB984B57-DE66-4E8F-B51D-1B80B69F2054}'
   v22_3_2_373_32_bit: '{B1D6E893-4C6E-4429-831D-6812B7B4CE3A}'
   v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
