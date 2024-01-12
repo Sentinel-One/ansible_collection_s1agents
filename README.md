@@ -113,7 +113,7 @@ This collection does not directly support downgrading agent versions. However, i
 
 ### Fact Gathering
 
-The collection uses the setup module to gather a minimum set of facts that is required for it a successful run. This behavior can be disabled by passing `--skip-tags "s1_gather_facts"` to the ansible-playbook command. If you do this, ensure that your playbook contains either `gather_facts: yes` or that the `setup` module is called prior to any Sentinel-One roles.
+The collection uses the setup module to gather a minimum set of facts that is required for a successful run. This behavior can be disabled by passing `--skip-tags "s1_gather_facts"` to the ansible-playbook command. If you do this, ensure that your playbook contains either `gather_facts: yes` or that the `setup` module is called prior to any Sentinel-One roles.
 
 ### Linux Operating Systems
 
