@@ -5,6 +5,7 @@
 
 The `s1_agent_common` role is a dependency of all other roles in the `s1agent` Ansible Collection and is responsible for loading common variables, handlers and other configuration used by the other roles in the collection.
 
+
 ## Requirements
 
 Access to the SentinelOne Management console.
