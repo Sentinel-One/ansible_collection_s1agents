@@ -33,6 +33,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  test2:
+    name: 'ansible-${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})'
+    runs-on: [self-hosted, Linux, X64, ansible-collection]
+    steps:
+      - name: matrix-test
+        run: echo "matrix test worked"
   call-ci-lint:
     name: Lint Role
     uses: ./.github/workflows/ci-lint.yml
