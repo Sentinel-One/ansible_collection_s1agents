@@ -64,6 +64,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: test
+        run: |
+          while true: do echo test success; sleep 3600; done
+
       - name: Set up environment
         uses: ./.github/actions/ci-setup
         with:
