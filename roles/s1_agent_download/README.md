@@ -8,6 +8,7 @@ This role is called automatically by the [s1_agent_install](../s1_agent_install/
 
 ## Requirements
 
+
 A valid SentinelOne license, access to the SentinelOne Management Console and an account with permission to download packages and an API Token are required to use this role.
 
 ### Permissions required to download packages via the API
