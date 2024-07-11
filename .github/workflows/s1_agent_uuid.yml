@@ -2,32 +2,34 @@ name: S1 Agent UUID
 on:
   push:
     branches:
-      - 'release/**'
+      - "release/**"
     paths:
-      - 'roles/s1_agent_uuid/**'
-      - '!roles/s1_agent_uuid/README.md'
-      - '!roles/s1_agent_uuid/makefile'
-      - '.github/workflows/s1_agent_uuid.yml'
-      - '.github/workflows/ci-*.yml'
-      - '!.github/workflows/ci-release.yml'
-      - '.github/actions/ci-setup/action.yml'
-      - 'requirements.yml'
+      - "roles/s1_agent_uuid/**"
+      - "!roles/s1_agent_uuid/README.md"
+      - "!roles/s1_agent_uuid/makefile"
+      - "extensions/molecule/uuid"
+      - ".github/workflows/s1_agent_uuid.yml"
+      - ".github/workflows/ci-*.yml"
+      - "!.github/workflows/ci-release.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
   pull_request:
     branches:
-      - 'main'
+      - "main"
     types:
       - opened
       - synchronize
       - ready_for_review
     paths:
-      - 'roles/s1_agent_uuid/**'
-      - '!roles/s1_agent_uuid/README.md'
-      - '!roles/s1_agent_uuid/makefile'
-      - '.github/workflows/s1_agent_uuid.yml'
-      - '.github/workflows/ci-*.yml'
-      - '!.github/workflows/ci-release.yml'
-      - '.github/actions/ci-setup/actions.yml'
-      - 'requirements.yml'
+      - "roles/s1_agent_uuid/**"
+      - "!roles/s1_agent_uuid/README.md"
+      - "!roles/s1_agent_uuid/makefile"
+      - "extensions/molecule/uuid"
+      - ".github/workflows/s1_agent_uuid.yml"
+      - ".github/workflows/ci-*.yml"
+      - "!.github/workflows/ci-release.yml"
+      - ".github/actions/ci-setup/actions.yml"
+      - "requirements.yml"
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,7 +42,7 @@ jobs:
       role-path: ./roles/s1_agent_uuid
 
   call-ci-test:
-    name: 'Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
+    name: "Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})"
     needs: call-ci-lint
     uses: ./.github/workflows/ci-test.yml
     strategy:
@@ -63,7 +65,7 @@ jobs:
           # Explicitly testing Windows Server 2012r2 is redundant. It is fully
           # tested by the s1_agent_info role.
         scenario-name:
-          - default
+          - uuid
     with:
       box-distribution: ${{ matrix.boxes.distribution }}
       box-repository: ${{ matrix.boxes.repository }}
@@ -71,7 +73,7 @@ jobs:
       ansible-group: ${{ matrix.boxes.group }}
       display-name: ${{ matrix.boxes.display_name }}
       scenario-name: ${{ matrix.scenario-name }}
-      role-path: ./roles/s1_agent_uuid
+      # role-path: ./roles/s1_agent_uuid
     secrets: inherit
 
   call-ci-assert:
