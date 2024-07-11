@@ -32,7 +32,7 @@ on:
       role-path:
         description: "Relative path to the role to be linted"
         type: string
-        required: true
+        required: false
         default: extensions
 
 jobs:
