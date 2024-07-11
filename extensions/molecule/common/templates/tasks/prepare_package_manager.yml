@@ -1,0 +1,25 @@
+---
+- name: Prepare Package Mangers
+  when: ansible_os_family == "RedHat"
+  block:
+    - name: Clean up deprecated repo files
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/CentOS-Base.repo
+        state: absent
+      become: yes
+      when: ansible_distribution_major_version == '6'
+
+    - name: Clean yum metadata
+      ansible.builtin.command: yum clean metadata # noqa: no-changed-when
+
+- name: Update apt cache on Debian
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: yes
+  when: ansible_os_family == 'Debian'
+
+- name: Install python3-dnf on Suse
+  ansible.builtin.command: 'zypper --non-interactive install python3-xml python3-dnf' # noqa command-instead-of-module
+  become: yes
+  when: ansible_os_family == "Suse"

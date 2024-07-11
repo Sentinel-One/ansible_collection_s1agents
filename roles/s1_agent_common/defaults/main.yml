@@ -12,3 +12,6 @@ s1_tmp_windows: "{{ ansible_env.TEMP }}\\s1_install"
 
 # Validate certificates. Set to false for management consoles with self-signed certificates
 s1_validate_certs: true
+
+# Skip running the reboot handler
+s1_common_skip_reboot: false

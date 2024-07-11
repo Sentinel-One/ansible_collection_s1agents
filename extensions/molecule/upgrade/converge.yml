@@ -1,0 +1,25 @@
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Include s1_agent_upgrade
+      ansible.builtin.include_role:
+        name: s1_agent_upgrade
+      vars:
+        s1_install_gpg_signed_rpm: false
+        s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+
+    - name: Persist facts for verify step
+      ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
+        s1_molecule_upgraded_version: "{{ s1_agent_version if ansible_os_family != 'Windows' else s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
+        s1_molecule_upgrade_package: "{{ s1_agent_path | basename }}"
+        cacheable: yes
+
+    - name: Show s1_molecule_upgraded_version
+      ansible.builtin.debug:
+        var: s1_molecule_upgraded_version
+
+    - name: Show s1_molecule_upgrade_package
+      ansible.builtin.debug:
+        var: s1_molecule_upgrade_package

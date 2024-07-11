@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: "Include s1_agent_common"
+      ansible.builtin.include_role:
+        name: "s1_agent_common"

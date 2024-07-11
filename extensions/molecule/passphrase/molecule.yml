@@ -1,0 +1,71 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: vagrant
+  provider:
+    name: "${VAGRANT_DEFAULT_PROVIDER:-virtualbox}"
+    options:
+      linked_clone: true
+
+platforms:
+  - name: "${S1_MOLECULE_HOSTNAME:-blue-firefly}-${S1_VAGRANT_DISTRO:-rocky8}"
+    groups:
+      - all
+    children:
+      - "${S1_VAGRANT_GROUP:-Linux}"
+    box: "${S1_VAGRANT_REPO:-roboxes}/${S1_VAGRANT_DISTRO:-rocky8}"
+    memory: 4096
+    cpus: 2
+    config_options:
+      synced_folder: false
+    provider_options:
+      linked_clone: true
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: "${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}"
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+    ssh_connection:
+      # Required for connecting to RHEL 6.x
+      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+  env:
+    ANSIBLE_ROLES_PATH: "../../../roles"
+    # ANSIBLE_VERBOSITY: 3
+    VAGRANT_DEFAULT_PROVIDER: "${VAGRANT_DEFAULT_PROVIDER:-virtualbox}"
+    S1_MOLECULE_HOSTNAME: "${S1_MOLECULE_HOSTNAME:-blue-firefly}"
+  inventory:
+    group_vars:
+      all:
+        s1_management_console: "${S1_MANAGEMENT_CONSOLE}"
+        s1_agent_site_token: "${S1_AGENT_SITE_TOKEN}"
+        s1_api_token: "${S1_API_TOKEN}"
+        s1_agent_customer_id: ansible_collection_dev
+        s1_download_path: "${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}"
+        s1_forced_remove: false
+        # s1_force_reboot: false
+        s1_agent_passphrase_report: "{{ s1_download_path }}/passphrase_report.csv"
+      Linux:
+      Windows:
+        ansible_become_method: runas
+        ansible_become_user: vagrant
+        ansible_become_password: vagrant
+        ansible_user: vagrant
+        ansible_connection: ssh
+        ansible_shell_type: cmd
+        ansible_win_async_startup_timeout: 30
+      Darwin:
+  playbooks:
+    cleanup: ../common/templates/cleanup-uninstall-agent.yml
+    prepare: ../common/templates/prepare-install-agent.yml
+
+verifier:
+  name: ansible

@@ -12,7 +12,7 @@
     that:
       - ansible_processor_vcpus >= 2
     # yamllint disable-line rule:line-length
-    fail_msg: 'The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.'
+    fail_msg: "The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
 
 - name: Assert disk meets requirements | Windows
   ansible.builtin.assert:
@@ -20,18 +20,18 @@
       # yamllint disable-line rule:line-length
       - (((ansible_facts.disks|selectattr('system_disk') | first).partitions | selectattr('drive_letter') | first).volumes | list | sort(reverse=true, attribute='size') | first)['size_remaining'] >= 2147483648
     # yamllint disable-line rule:line-length
-    fail_msg: 'The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.'
+    fail_msg: "The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
 
 - name: Assert memory meets requirements | Windows
   ansible.builtin.assert:
     that:
       - ansible_memfree_mb >= 1024
     # yamllint disable-line rule:line-length
-    fail_msg: 'The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.'
+    fail_msg: "The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
 
 - name: Set SentinelOne agent product Id | Windows
   ansible.builtin.set_fact:
-    s1_agent_product_id: '{{ s1_product_id[s1_agent_win_file_ver] }}'
+    s1_agent_product_id: "{{ s1_product_id[s1_agent_win_file_ver] }}"
   when:
     - s1_product_id[s1_agent_win_file_ver] is defined
     - s1_agent_product_id is undefined
@@ -48,29 +48,29 @@
 
 - name: Create working directory | Windows
   ansible.windows.win_file:
-    path: '{{ s1_tmp_windows }}'
+    path: "{{ s1_tmp_windows }}"
     state: directory
 
 - name: Copy SentinelOne agent | Windows
   ansible.windows.win_copy:
-    src: '{{ s1_agent_src }}'
-    dest: '{{ s1_agent_path }}'
+    src: "{{ s1_agent_src }}"
+    dest: "{{ s1_agent_path }}"
 
 # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
 - name: Install SentinelOne | Windows
   ansible.windows.win_package:
-    path: '{{ s1_agent_path }}'
+    path: "{{ s1_agent_path }}"
     state: present
-    arguments: '{{ s1_agent_silent_cmd }}'
+    arguments: "{{ s1_agent_silent_cmd }}"
     wait_for_children: yes
-    product_id: '{{ s1_agent_product_id | default(omit) }}'
-    expected_return_code: '{{ s1_agent_return_code }}'
+    product_id: "{{ s1_agent_product_id | default(omit) }}"
+    expected_return_code: "{{ s1_agent_return_code }}"
   become: yes
-  notify: '{{ s1_reboot_handler_name }}'
+  notify: "{{ s1_reboot_handler_name }}"
   register: s1_install_log
-  changed_when:
-    - s1_agent_product_id is undefined
-    - s1_install_log.rc != 1000
+  # changed_when:
+  #   - s1_agent_product_id is undefined
+  #   - s1_install_log.rc != 1000
 
 - name: Show install log | Windows
   ansible.builtin.debug:
@@ -81,7 +81,7 @@
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:
-    path: '{{ s1_tmp_windows }}'
+    path: "{{ s1_tmp_windows }}"
     state: absent
   tags:
     - molecule-notest

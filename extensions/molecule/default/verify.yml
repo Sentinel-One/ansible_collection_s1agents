@@ -1,0 +1,48 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  roles:
+    - s1_agent_common
+    - s1_agent_info
+  pre_tasks:
+    - name: Verify Agent Downloaded
+      block:
+        - name: Assert that s1_agent_src is defined
+          ansible.builtin.assert:
+            that:
+              - s1_molecule_installed_src is defined
+              - s1_molecule_installed_src is not none
+              - s1_molecule_installed_src | length > 0
+
+        - name: Get SentinelOne Agent
+          ansible.builtin.stat:
+            path: "{{ s1_molecule_installed_src }}"
+          register: s1_agent_stat
+          delegate_to: localhost
+
+        - name: Assert that SentinelOne Agent was downloaded
+          ansible.builtin.assert:
+            that: s1_agent_stat.stat.exists
+  tasks:
+    - name: Verify Agent installed
+      block:
+        - name: Show agent info
+          ansible.builtin.debug:
+            var: s1_agent_info
+
+        - name: Assert SentinelOne Agent is installed
+          ansible.builtin.assert:
+            that:
+              - s1_agent_info is defined
+              - s1_agent_info.installed | bool
+              - s1_agent_info.version == s1_molecule_installed_version
+
+        - name: Assert SentinelOne service is running
+          ansible.builtin.assert:
+            that:
+              - s1_agent_info is defined
+              - s1_agent_info.service_status == ('running' if ansible_os_family != 'Windows' else 'started')
+              - s1_agent_info.agent_enabled == (true | bool)
