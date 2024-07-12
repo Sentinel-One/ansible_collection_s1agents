@@ -51,7 +51,7 @@ jobs:
           #   python: '3.10'
           # - ansible: stable-2.14 # EOL 2024-05-20
           #   python: '3.10'
-          - ansible: stable-2.16
+          - ansible: "2.16.8"
             python: "3.12"
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions

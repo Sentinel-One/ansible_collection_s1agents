@@ -17,13 +17,14 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Install ansible-core (${{ inputs.ansible-version }})
-      shell: bash
-      run: |
-        pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible-version }}.tar.gz --disable-pip-version-check
+    # - name: Install ansible-core (${{ inputs.ansible-version }})
+    #   shell: bash
+    #   run: |
+    #     pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible-version }}.tar.gz --disable-pip-version-check
 
     - name: Install requirements for molecule tests
       shell: bash
       run: |
+        pip install ansible-core=={{ inputs.ansible-version }}
         pip install ansible-dev-tools python-vagrant pywinrm molecule ansible-lint flake8 molecule-plugins --disable-pip-version-check
         if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
