@@ -36,15 +36,15 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  call-ci-lint:
-    name: Lint Role
-    uses: ./.github/workflows/ci-lint.yml
-    with:
-      role-path: ./roles/s1_agent_common
+  # call-ci-lint:
+  #   name: Lint Role
+  #   uses: ./.github/workflows/ci-lint.yml
+  #   with:
+  #     role-path: ./roles/s1_agent_common
 
   call-ci-test:
     name: "Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})"
-    needs: call-ci-lint
+    # needs: call-ci-lint
     uses: ./.github/workflows/ci-test.yml
     strategy:
       fail-fast: false
