@@ -27,5 +27,5 @@ runs:
       run: |
         pip uninstall molecule-vagrant
         pip install ansible-core==${{ inputs.ansible-version }}
-        pip install ansible-dev-tools pywinrm molecule molecule-plugins molecule-plugins[vagrant] ansible-lint flake8 --disable-pip-version-check
+        pip install ansible-dev-tools pywinrm molecule molecule-plugins ansible-lint flake8 --disable-pip-version-check
         if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
