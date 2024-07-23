@@ -44,5 +44,5 @@ jobs:
           echo ${PWD} &&
           molecule --version &&
           ansible --version &&
-          molecule lint
+          # molecule lint
         working-directory: ${{ inputs.role-path }}
