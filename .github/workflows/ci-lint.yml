@@ -54,3 +54,8 @@ jobs:
           molecule --version &&
           ansible --version
         working-directory: ${{ inputs.role-path }}
+
+      - name: Run ansible-lint
+        uses: ansible/ansible-lint@v24.7.0
+        with:
+          working_directory: ${{ inputs.role-path }}
