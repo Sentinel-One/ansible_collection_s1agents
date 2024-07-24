@@ -4,29 +4,26 @@ extends: default
 
 rules:
   braces:
-    max-spaces-inside: 1
-    level: error
+    min-spaces-inside: 0 # yamllint defaults to 0
+    max-spaces-inside: 1 # yamllint defaults to 0
   brackets:
+    min-spaces-inside: 0
     max-spaces-inside: 1
-    level: error
   colons:
     max-spaces-after: -1
-    level: error
   commas:
     max-spaces-after: -1
-    level: error
   comments:
     min-spaces-from-content: 1
+  comments-indentation: false
   document-start: enable
   empty-lines:
     max: 3
-    level: error
   hyphens:
     level: error
   indentation:
     spaces: consistent
     indent-sequences: true
-    check-multi-line-strings: true
   key-duplicates: enable
   line-length:
     max: 160
@@ -36,5 +33,8 @@ rules:
   new-line-at-end-of-file: enable
   new-lines:
     type: unix
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
   truthy:
-    allowed-values: ['true', 'false', 'yes', 'no']
+    allowed-values: ["true", "false", "yes", "no"]
