@@ -3,7 +3,7 @@
 
 - name: Gather required facts
   ansible.builtin.setup:
-    gather_subset: '{{ default_gather_subset + (role_gather_subset | default([])) }}'
+    gather_subset: "{{ default_gather_subset + (role_gather_subset | default([])) }}"
   tags:
     - s1_gather_facts
 
@@ -27,11 +27,11 @@
     - name: Endpoint details
       ansible.builtin.debug:
         msg:
-          - 'Ansible Distribution: {{ ansible_distribution }}'
-          - 'Ansible Distribution Version: {{ ansible_distribution_version }}'
-          - 'Ansible Distribution Major Version: {{ ansible_distribution_major_version }}'
-          - 'Ansible OS Family: {{ ansible_os_family }}'
-          - 'Ansible System: {{ ansible_system }}'
+          - "Ansible Distribution: {{ ansible_distribution }}"
+          - "Ansible Distribution Version: {{ ansible_distribution_version }}"
+          - "Ansible Distribution Major Version: {{ ansible_distribution_major_version }}"
+          - "Ansible OS Family: {{ ansible_os_family }}"
+          - "Ansible System: {{ ansible_system }}"
 
     - name: Variables will be loaded from the first matching file in vars
       ansible.builtin.debug:
@@ -44,7 +44,7 @@
           - "{{ ansible_system | replace(' ', '_') | lower }}.yml"
 
 - name: Set distribution variables
-  ansible.builtin.include_vars: '{{ loop_vars }}'
+  ansible.builtin.include_vars: "{{ loop_vars }}"
   with_first_found:
     - files:
         - "{{ ansible_distribution | lower | replace(' ', '_') }}_{{ ansible_distribution_version }}.yml"
@@ -53,11 +53,11 @@
         - "{{ ansible_os_family | replace(' ', '_') | lower }}_{{ ansible_distribution_major_version }}.yml"
         - "{{ ansible_os_family | replace(' ', '_') | lower }}.yml"
         - "{{ ansible_system | replace(' ', '_') | lower }}.yml"
-      skip: yes
+      skip: true
       paths:
-        - 'vars'
+        - vars
   loop_control:
     loop_var: loop_vars
-    label: '{{ loop_vars | basename }}'
+    label: "{{ loop_vars | basename }}"
   tags:
     - always

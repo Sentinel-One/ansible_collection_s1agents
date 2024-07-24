@@ -35,6 +35,6 @@ apt_pkg_mgrs:
 
 # Facts to gather for all roles
 default_gather_subset:
-  - '!all'
-  - '!hardware'
+  - "!all"
+  - "!hardware"
   - min

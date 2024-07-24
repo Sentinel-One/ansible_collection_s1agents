@@ -6,7 +6,7 @@ s1_package_name: Sentinel Agent
 # OS service manager name for the SentinelOne service
 s1_service_name: SentinelAgent
 # Name of the handler task to restart the endpoint
-s1_reboot_handler_name: "Reboot Node | {{ ansible_os_family }}"
+s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }}
 # Convert the package version to match the version reported by Windows
 s1_agent_win_file_ver: '{{ "v" + (s1_agent_version + "_" + ansible_facts.architecture) | regex_replace("[\.-]", "_") }}'
 

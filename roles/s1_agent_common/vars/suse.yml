@@ -6,4 +6,4 @@ s1_package_name: SentinelAgent
 # OS service manager name for the SentinelOne service
 s1_service_name: sentinelone.service
 # Name of the handler task to start the SentinelOne service
-s1_service_handler_name: 'Start SentinelOne service | {{ ansible_system }}'
+s1_service_handler_name: Start SentinelOne service | {{ ansible_system }}
