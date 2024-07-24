@@ -61,7 +61,7 @@ provisioner:
         ansible_user: vagrant
         ansible_connection: ssh
         ansible_shell_type: cmd
-        ansible_win_async_startup_timeout: 30
+        ansible_win_async_startup_timeout: 60
       Darwin:
   playbooks:
     cleanup: ../common/templates/cleanup-uninstall-agent.yml

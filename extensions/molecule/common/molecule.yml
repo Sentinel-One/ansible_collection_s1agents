@@ -60,7 +60,7 @@ provisioner:
         ansible_user: vagrant
         ansible_connection: ssh
         ansible_shell_type: cmd
-        ansible_win_async_startup_timeout: 30
+        ansible_win_async_startup_timeout: 60
       Darwin:
   playbooks:
     cleanup: templates/cleanup-basic.yml
@@ -68,3 +68,7 @@ provisioner:
 
 verifier:
   name: ansible
+# lint: |
+#   yamllint .
+#   ansible-lint .
+#   flake8
