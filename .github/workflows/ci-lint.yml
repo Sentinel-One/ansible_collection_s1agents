@@ -38,24 +38,11 @@ jobs:
           python-version: ${{ matrix.versions.python }}
           ansible-version: ${{ matrix.versions.ansible }}
 
-      # - name: Lint Ansible Role
-      #   if: success()
-      #   run: >-
-      #     echo ${PWD} &&
-      #     molecule --version &&
-      #     ansible --version &&
-      #     molecule lint
-      #   working-directory: ${{ inputs.role-path }}
-
-      - name: Skipped - Lint Ansible Role
+      - name: Lint Ansible Role
         if: success()
         run: >-
           echo ${PWD} &&
           molecule --version &&
-          ansible --version
+          ansible --version &&
+          ansible-lint --profile production
         working-directory: ${{ inputs.role-path }}
-
-      - name: Run ansible-lint
-        uses: ansible/ansible-lint@v24.7.0
-        with:
-          working_directory: ${{ inputs.role-path }}
