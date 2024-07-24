@@ -48,7 +48,7 @@
     url: '{{ lookup("template", "packages_url.j2") }}'
     return_content: false
     headers:
-      Authorization: 'ApiToken {{ s1_api_token }}'
+      Authorization: ApiToken {{ s1_api_token }}
     validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
   register: s1_available_packages
   until: s1_available_packages is not failed
@@ -56,7 +56,7 @@
   delay: 10
   delegate_to: localhost
   run_once: true
-  become: no
+  become: false
 
 - name: Show s1_agent_version
   ansible.builtin.debug:
@@ -80,14 +80,14 @@
 
 - name: Set download variables
   ansible.builtin.set_fact:
-    s1_agent_package_link: '{{ s1_download_src.link }}'
-    s1_agent_package_sha1: '{{ s1_download_src.sha1 }}'
-    s1_agent_package_name: '{{ s1_download_src.fileName }}'
+    s1_agent_package_link: "{{ s1_download_src.link }}"
+    s1_agent_package_sha1: "{{ s1_download_src.sha1 }}"
+    s1_agent_package_name: "{{ s1_download_src.fileName }}"
 
 - name: Set SentinelOne agent variables
   ansible.builtin.set_fact:
-    s1_agent_src: '{{ s1_download_path }}/{{ s1_agent_package_name }}'
-    s1_agent_version: '{{ s1_download_src.version }}'
+    s1_agent_src: "{{ s1_download_path }}/{{ s1_agent_package_name }}"
+    s1_agent_version: "{{ s1_download_src.version }}"
 
 - name: Show package details
   tags:
@@ -116,25 +116,25 @@
 
 - name: Create working directory
   ansible.builtin.file:
-    path: '{{ s1_download_path }}'
+    path: "{{ s1_download_path }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
   delegate_to: localhost
   run_once: true
-  become: no
+  become: false
 
 - name: Download SentinelOne agent
   ansible.builtin.get_url:
-    url: '{{ s1_agent_package_link }}'
-    checksum: 'sha1:{{ s1_agent_package_sha1 }}'
-    dest: '{{ s1_agent_src }}'
+    url: "{{ s1_agent_package_link }}"
+    checksum: sha1:{{ s1_agent_package_sha1 }}
+    dest: "{{ s1_agent_src }}"
     mode: 440
     headers:
-      Authorization: 'ApiToken {{ s1_api_token }}'
+      Authorization: ApiToken {{ s1_api_token }}
     validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
   register: url_result
   until: url_result is not failed
   retries: 10
   delay: 60 # Mgmt Console API is limited to 2 pkg downloads / 60 seconds
   delegate_to: localhost
-  become: no
+  become: false

@@ -7,40 +7,40 @@
     - name: Uninstall SentinelOne agent | Windows
       ansible.windows.win_package:
         state: absent
-        arguments: 'UNINSTALL_KEY="{{ s1_agent_passphrase }}"'
-        wait_for_children: yes
-        product_id: '{{ s1_agent_info.product_id }}'
-      become: yes
+        arguments: UNINSTALL_KEY="{{ s1_agent_passphrase }}"
+        wait_for_children: true
+        product_id: "{{ s1_agent_info.product_id }}"
+      become: true
       register: s1_uninstall_log
-      notify: '{{ s1_reboot_handler_name }}'
+      notify: "{{ s1_reboot_handler_name }}"
   rescue:
     - name: Include tasks to retry a failed uninstall | Windows
       ansible.builtin.include_tasks:
-        file: '{{ loop_fallback_remove }}'
+        file: "{{ loop_fallback_remove }}"
       with_first_found:
         - files:
-            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml'
-            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml'
-            - '{{ ansible_distribution | lower }}_fallback_remove.yml'
-            - '{{ ansible_os_family | lower }}_fallback_remove.yml'
-            - '{{ ansible_system | lower }}_fallback_remove.yml'
-            - 'unsupported.yml'
+            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml"
+            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml"
+            - "{{ ansible_distribution | lower }}_fallback_remove.yml"
+            - "{{ ansible_os_family | lower }}_fallback_remove.yml"
+            - "{{ ansible_system | lower }}_fallback_remove.yml"
+            - unsupported.yml
       loop_control:
         loop_var: loop_fallback_remove
-        label: '{{ loop_fallback_remove | basename }}'
+        label: "{{ loop_fallback_remove | basename }}"
 
 - name: Include fallback tasks to remove the SeintinelOne agent | Windows
   ansible.builtin.include_tasks:
-    file: '{{ loop_fallback_remove }}'
+    file: "{{ loop_fallback_remove }}"
   with_first_found:
     - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml'
-        - '{{ ansible_distribution | lower }}_fallback_remove.yml'
-        - '{{ ansible_os_family | lower }}_fallback_remove.yml'
-        - '{{ ansible_system | lower }}_fallback_remove.yml'
-        - 'unsupported.yml'
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml"
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml"
+        - "{{ ansible_distribution | lower }}_fallback_remove.yml"
+        - "{{ ansible_os_family | lower }}_fallback_remove.yml"
+        - "{{ ansible_system | lower }}_fallback_remove.yml"
+        - unsupported.yml
   loop_control:
     loop_var: loop_fallback_remove
-    label: '{{ loop_fallback_remove | basename }}'
+    label: "{{ loop_fallback_remove | basename }}"
   when: s1_forced_remove | default('false') | bool

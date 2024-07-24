@@ -4,19 +4,19 @@
   ansible.builtin.command: dmesg
   register: s1_dmesg_raw
   changed_when: false
-  check_mode: no
-  become: yes
+  check_mode: false
+  become: true
 
 - name: Gather CPU Flags | Linux
   ansible.builtin.command: >
     awk -F: '/^flags/ {print $2; exit}' /proc/cpuinfo
   register: s1_cpu_flags_raw
   changed_when: false
-  check_mode: no
+  check_mode: false
 
 - name: Set CPU Flags | Linux
   ansible.builtin.set_fact:
-    s1_cpu_flags: '{{ s1_cpu_flags_raw.stdout.split() }}'
+    s1_cpu_flags: "{{ s1_cpu_flags_raw.stdout.split() }}"
 
 - name: Assert meets requirements | Linux
   ansible.builtin.assert:
@@ -26,7 +26,7 @@
       - "'popcnt' in s1_cpu_flags"
       - ansible_facts.architecture == 'x86_64'
     # yamllint disable-line rule:line-length
-    fail_msg: 'The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.'
+    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
   when: ansible_architecture != 'aarch64'
 
 - name: Assert disk meets requirements | Linux
@@ -35,42 +35,42 @@
       # yamllint disable-line rule:line-length
       - ((ansible_mounts | selectattr('mount', 'in', s1_agent_custom_install_path|default('/opt/sentinelone')) | list | sort(attribute='mount'))[-1]['size_available']) >= 2147483648
     # yamllint disable-line rule:line-length
-    fail_msg: "The SentinelOne Agent requires 2GB of free space on the {{ s1_agent_custom_install_path | default('/opt') }} partition. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543."
+    fail_msg: The SentinelOne Agent requires 2GB of free space on the {{ s1_agent_custom_install_path | default('/opt') }} partition. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
 
 - name: Assert memory meets requirements | Linux
   ansible.builtin.assert:
     that:
       - ansible_memfree_mb >= 800
     # yamllint disable-line rule:line-length
-    fail_msg: 'The SentinelOne Agent requires at least 800MB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.'
+    fail_msg: The SentinelOne Agent requires at least 800MB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
 
 - name: Assert host is stable | Linux
   ansible.builtin.assert:
     that:
       - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
-    fail_msg: 'System Instability Detected'
+    fail_msg: System Instability Detected
 
 - name: Set SentinelOne agent path | Linux
   ansible.builtin.set_fact:
-    s1_agent_path: '{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}'
+    s1_agent_path: "{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}"
 
 - name: Create working directory | Linux
   ansible.builtin.file:
-    path: '{{ s1_tmp_linux }}'
+    path: "{{ s1_tmp_linux }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 - name: Copy SentinelOne agent | Linux
   ansible.builtin.copy:
-    src: '{{ s1_agent_src }}'
-    dest: '{{ s1_agent_path }}'
-    mode: '0755'
+    src: "{{ s1_agent_src }}"
+    dest: "{{ s1_agent_path }}"
+    mode: "0755"
 
 - name: Create configuration file | Linux
   ansible.builtin.template:
     src: linux_agent_config.cfg.j2
-    dest: '{{ s1_tmp_linux }}/s1_config.cfg'
-    mode: '0744'
+    dest: "{{ s1_tmp_linux }}/s1_config.cfg"
+    mode: "0744"
 
 - name: Import the SentinelOne GPG Key | Red Hat Family
   ansible.builtin.include_role:
@@ -82,13 +82,13 @@
 
 - name: Install SentinelOne GPG signed RPM package | Linux
   ansible.builtin.yum:
-    name: '{{ s1_agent_path }}'
+    name: "{{ s1_agent_path }}"
     state: present
     use_backend: '{{ (ansible_pkg_mgr == "zypper") | ternary("yum4", "auto") }}'
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_tmp_linux }}/s1_config.cfg'
-  become: yes
-  notify: '{{ s1_service_handler_name }}'
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+  become: true
+  notify: "{{ s1_service_handler_name }}"
   when:
     - ansible_pkg_mgr in rpm_pkg_mgrs
     - s1_install_gpg_signed_rpm | default('no') | bool
@@ -104,7 +104,7 @@
       failed_when:
         - s1_rpm_query is failed
         - '"package " ~ s1_package_name ~ " is not installed" not in s1_rpm_query.stdout'
-      changed_when: no
+      changed_when: false
 
     - name: Show s1_rpm_query
       ansible.builtin.debug:
@@ -116,9 +116,9 @@
     - name: Install SentinelOne RPM package | Linux
       ansible.builtin.command: rpm -i --nodigest '{{ s1_agent_path }}' # noqa command-instead-of-module
       environment:
-        S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_tmp_linux }}/s1_config.cfg'
-      become: yes
-      notify: '{{ s1_service_handler_name }}'
+        S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+      become: true
+      notify: "{{ s1_service_handler_name }}"
       register: s1_rpm_install_result
       changed_when: '"Registration token successfully set" in s1_rpm_install_result.stdout'
       when: '"package " ~ s1_package_name ~ " is not installed" in s1_rpm_query.stdout'
@@ -132,17 +132,17 @@
 
 - name: Install SentinelOne DEB package | Linux
   ansible.builtin.apt:
-    deb: '{{ s1_agent_path }}'
+    deb: "{{ s1_agent_path }}"
     state: present
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: '{{ s1_tmp_linux }}/s1_config.cfg'
-  become: yes
-  notify: '{{ s1_service_handler_name }}'
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+  become: true
+  notify: "{{ s1_service_handler_name }}"
   when: ansible_pkg_mgr in apt_pkg_mgrs
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: '{{ s1_tmp_linux }}'
+    path: "{{ s1_tmp_linux }}"
     state: absent
   tags:
     - molecule-notest

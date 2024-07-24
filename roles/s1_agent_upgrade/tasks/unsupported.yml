@@ -3,4 +3,4 @@
 
 - name: Endpoint unsupported
   ansible.builtin.fail:
-    msg: '{{ ansible_distribution }} is not currently supported by the {{ role_name }} Ansible Role.'
+    msg: "{{ ansible_distribution }} is not currently supported by the {{ role_name }} Ansible Role."

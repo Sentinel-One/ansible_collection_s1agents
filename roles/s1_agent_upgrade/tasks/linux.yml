@@ -5,7 +5,7 @@
   ansible.builtin.assert:
     that:
       - s1_prior_version is version('22.2.2.2', '>=')
-    fail_msg: 'You must upgrade to agent version 22.2.2.2 before you can upgrade to {{ s1_agent_version }}'
+    fail_msg: You must upgrade to agent version 22.2.2.2 before you can upgrade to {{ s1_agent_version }}
     success_msg: Agent can be upgraded in-place
   when:
     - s1_agent_version is version('22.3', '>=')
@@ -29,7 +29,7 @@
 
 - name: Set SentinelOne agent path | Linux
   ansible.builtin.set_fact:
-    s1_agent_path: '{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}'
+    s1_agent_path: "{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}"
 
 - name: Upgrade Linux Agent
   when:
@@ -37,21 +37,21 @@
   block:
     - name: Create working directory | Linux
       ansible.builtin.file:
-        path: '{{ s1_tmp_linux }}'
+        path: "{{ s1_tmp_linux }}"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Copy SentinelOne agent | Linux
       ansible.builtin.copy:
-        src: '{{ s1_agent_src }}'
-        dest: '{{ s1_agent_path }}'
-        mode: '0755'
+        src: "{{ s1_agent_src }}"
+        dest: "{{ s1_agent_path }}"
+        mode: "0755"
 
     - name: Upgrade SentinelOne agent with passphrase | Linux
-      ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"'
-      notify: '{{ s1_service_handler_name }}'
-      become: yes
-      no_log: '{{ ansible_verbosity < 3 }}'
+      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"
+      notify: "{{ s1_service_handler_name }}"
+      become: true
+      no_log: "{{ ansible_verbosity < 3 }}"
       register: s1_upgrade_pass_result
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_pass_result.stdout'
@@ -67,9 +67,9 @@
         - debug
 
     - name: Upgrade SentinelOne agent without passphrase | Linux
-      ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}'
-      notify: '{{ s1_service_handler_name }}'
-      become: yes
+      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
+      notify: "{{ s1_service_handler_name }}"
+      become: true
       register: s1_upgrade_results
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_results.stdout'
@@ -85,7 +85,7 @@
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: '{{ s1_tmp_linux }}'
+    path: "{{ s1_tmp_linux }}"
     state: absent
   tags:
     - molecule-notest

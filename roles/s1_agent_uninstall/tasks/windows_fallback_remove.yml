@@ -9,17 +9,17 @@
 
 - name: Uninstall SentinelOne agent | Windows
   ansible.windows.win_package:
-    creates_service: '{{ s1_service_name }}'
+    creates_service: "{{ s1_service_name }}"
     state: absent
-    path: '{{ s1_image_path.value | regex_replace(''"'', '''') | win_dirname }}\uninstall.exe'
+    path: "{{ s1_image_path.value | regex_replace('\"', '') | win_dirname }}\\uninstall.exe"
     arguments:
       - /uninstall
       - /norestart
       - /quiet
       - /k
-      - '{{ s1_agent_passphrase }}'
-    wait_for_children: yes
-  become: yes
+      - "{{ s1_agent_passphrase }}"
+    wait_for_children: true
+  become: true
   register: s1_uninstall_log
   when: s1_image_path.exists | bool
-  notify: '{{ s1_reboot_handler_name }}'
+  notify: "{{ s1_reboot_handler_name }}"

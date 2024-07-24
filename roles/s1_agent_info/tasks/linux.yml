@@ -10,9 +10,9 @@
   ansible.builtin.command: >
     /opt/sentinelone/bin/sentinelctl management status
   register: s1_mgmt_status
-  changed_when: no
-  check_mode: no
-  become: yes
+  changed_when: false
+  check_mode: false
+  become: true
   until: "'Error: receive failed: Connection reset by peer' not in s1_mgmt_status.stdout"
   retries: 3
   delay: 10
@@ -39,7 +39,7 @@
       anti_tamper_enabled: "{{ (s1_mgmt_status.stdout | regex_findall(reg_tamper, '\\1') | first == 'On') | bool if s1_mgmt_status.stdout is defined else none }}"
       agent_enabled: "{{ (ansible_facts.services[s1_service_name]['status'] == 'enabled') | ternary(true, false) if ansible_facts.services[s1_service_name] is defined else none }}"
   vars:
-    reg_uuid: 'UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})'
-    reg_url: 'URL\s+(http.*)'
-    reg_tamper: 'Anti Tamper\s+(\w+)'
+    reg_uuid: UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})
+    reg_url: URL\s+(http.*)
+    reg_tamper: Anti Tamper\s+(\w+)
 # yamllint enable rule:line-length

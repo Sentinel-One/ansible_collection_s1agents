@@ -6,8 +6,8 @@
     - not s1_forced_remove | default('false') | bool
   block:
     - name: Uninstall SentinelOne agent | Linux
-      ansible.builtin.command: '/opt/sentinelone/bin/sentinelctl control uninstall --passphrase "{{ s1_agent_passphrase }}"'
-      become: yes
+      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control uninstall --passphrase "{{ s1_agent_passphrase }}"
+      become: true
       register: s1_sentinelctl_uninstall
       retries: 3
       delay: 30
@@ -16,31 +16,31 @@
   rescue:
     - name: Include tasks to clean up a failed uninstall | Linux
       ansible.builtin.include_tasks:
-        file: '{{ loop_cleanup_failed }}'
+        file: "{{ loop_cleanup_failed }}"
       with_first_found:
         - files:
-            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml'
-            - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml'
-            - '{{ ansible_distribution | lower }}_forced_remove.yml'
-            - '{{ ansible_os_family | lower }}_forced_remove.yml'
-            - '{{ ansible_system | lower }}_forced_remove.yml'
-            - 'unsupported.yml'
+            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
+            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
+            - "{{ ansible_distribution | lower }}_forced_remove.yml"
+            - "{{ ansible_os_family | lower }}_forced_remove.yml"
+            - "{{ ansible_system | lower }}_forced_remove.yml"
+            - unsupported.yml
       loop_control:
         loop_var: loop_cleanup_failed
-        label: '{{ loop_cleanup_failed | basename }}'
+        label: "{{ loop_cleanup_failed | basename }}"
 
 - name: Include tasks to forcibly remove the SeintinelOne agent | Linux
   ansible.builtin.include_tasks:
-    file: '{{ loop_forced_remove }}'
+    file: "{{ loop_forced_remove }}"
   with_first_found:
     - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml'
-        - '{{ ansible_distribution | lower }}_forced_remove.yml'
-        - '{{ ansible_os_family | lower }}_forced_remove.yml'
-        - '{{ ansible_system | lower }}_forced_remove.yml'
-        - 'unsupported.yml'
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
+        - "{{ ansible_distribution | lower }}_forced_remove.yml"
+        - "{{ ansible_os_family | lower }}_forced_remove.yml"
+        - "{{ ansible_system | lower }}_forced_remove.yml"
+        - unsupported.yml
   loop_control:
     loop_var: loop_forced_remove
-    label: '{{ loop_forced_remove | basename }}'
+    label: "{{ loop_forced_remove | basename }}"
   when: s1_forced_remove | default('false') | bool

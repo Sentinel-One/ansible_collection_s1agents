@@ -36,5 +36,5 @@ rules:
   octal-values:
     forbid-implicit-octal: true
     forbid-explicit-octal: true
-  truthy:
-    allowed-values: ["true", "false", "yes", "no"]
+  # truthy:
+  #   allowed-values: ["true", "false", "yes", "no"]

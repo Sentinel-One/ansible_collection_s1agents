@@ -12,7 +12,7 @@
     that:
       - ansible_processor_vcpus >= 2
     # yamllint disable-line rule:line-length
-    fail_msg: "The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
+    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
 
 - name: Assert disk meets requirements | Windows
   ansible.builtin.assert:
@@ -20,14 +20,14 @@
       # yamllint disable-line rule:line-length
       - (((ansible_facts.disks|selectattr('system_disk') | first).partitions | selectattr('drive_letter') | first).volumes | list | sort(reverse=true, attribute='size') | first)['size_remaining'] >= 2147483648
     # yamllint disable-line rule:line-length
-    fail_msg: "The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
+    fail_msg: The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
 
 - name: Assert memory meets requirements | Windows
   ansible.builtin.assert:
     that:
       - ansible_memfree_mb >= 1024
     # yamllint disable-line rule:line-length
-    fail_msg: "The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151."
+    fail_msg: The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
 
 - name: Set SentinelOne agent product Id | Windows
   ansible.builtin.set_fact:
@@ -38,7 +38,7 @@
 
 - name: Set SentinelOne agent path | Windows
   ansible.builtin.set_fact:
-    s1_agent_path: '{{ s1_tmp_windows }}\{{ s1_agent_src | basename }}'
+    s1_agent_path: "{{ s1_tmp_windows }}\\{{ s1_agent_src | basename }}"
 
 - name: Set SentinelOne agent parameters | Windows
   ansible.builtin.set_fact:
@@ -62,10 +62,10 @@
     path: "{{ s1_agent_path }}"
     state: present
     arguments: "{{ s1_agent_silent_cmd }}"
-    wait_for_children: yes
+    wait_for_children: true
     product_id: "{{ s1_agent_product_id | default(omit) }}"
     expected_return_code: "{{ s1_agent_return_code }}"
-  become: yes
+  become: true
   notify: "{{ s1_reboot_handler_name }}"
   register: s1_install_log
   # changed_when:

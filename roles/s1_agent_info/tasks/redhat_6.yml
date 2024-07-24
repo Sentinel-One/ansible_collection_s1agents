@@ -6,17 +6,17 @@
 - name: Get service facts | Red Hat 6
   ansible.builtin.command: service {{ s1_service_name }} status # noqa command-instead-of-module
   register: s1_rhel6_agent_status
-  changed_when: no
-  become: yes
+  changed_when: false
+  become: true
   when: ansible_facts.packages[s1_package_name] is defined
 
 - name: Get agent status | Red Hat 6
   ansible.builtin.command: >
     /opt/sentinelone/bin/sentinelctl management status
   register: s1_mgmt_status
-  changed_when: no
-  check_mode: no
-  become: yes
+  changed_when: false
+  check_mode: false
+  become: true
   until: "'Error: receive failed: Connection reset by peer' not in s1_mgmt_status.stdout"
   retries: 3
   delay: 10
@@ -36,7 +36,7 @@
       anti_tamper_enabled: "{{ (s1_mgmt_status.stdout | regex_search(reg_tamper, '\\1') | first == 'On') | bool if s1_mgmt_status.stdout is defined else none }}"
       agent_enabled: "{{ ('Agent state      Enabled' in s1_rhel6_agent_status.stdout) | ternary(true, false, none) if s1_rhel6_agent_status.stdout is defined else none }}"
   vars:
-    reg_uuid: 'UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})'
-    reg_url: 'URL\s+(http.*)'
-    reg_tamper: 'Anti Tamper\s+(\w+)'
+    reg_uuid: UUID\s+([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})
+    reg_url: URL\s+(http.*)
+    reg_tamper: Anti Tamper\s+(\w+)
 # yamllint enable rule:line-length
