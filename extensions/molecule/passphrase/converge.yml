@@ -1,7 +1,7 @@
 ---
 - name: Converge
   hosts: all
-  gather_facts: no
+  gather_facts: false
   tasks:
     - name: Include s1_mgmt_get_passphrase
       ansible.builtin.include_role:
@@ -17,4 +17,4 @@
     - name: Persist facts
       ansible.builtin.set_fact:
         s1_molecule_agent_passphrase: "{{ s1_agent_passphrase }}"
-        cacheable: yes
+        cacheable: true

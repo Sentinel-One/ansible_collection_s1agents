@@ -15,4 +15,4 @@
       ansible.builtin.set_fact:
         s1_molecule_installed_src: "{{ s1_agent_src }}"
         s1_molecule_installed_version: "{{ s1_agent_version }}"
-        cacheable: yes
+        cacheable: true

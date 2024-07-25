@@ -5,8 +5,8 @@
   hosts: all
   gather_facts: true
   gather_subset:
-    - '!all'
-    - '!hardware'
+    - "!all"
+    - "!hardware"
     - min
   roles:
     - s1_agent_common
@@ -20,8 +20,8 @@
         - name: Get SentinelOne GPG key | Linux
           ansible.builtin.rpm_key:
             state: present
-            key: '{{ s1_tmp_linux }}/sentinel_one.gpg'
-          become: yes
+            key: "{{ s1_tmp_linux }}/sentinel_one.gpg"
+          become: true
           register: s1_molecule_rpm_key
 
         - name: Assert that SentinelOne GPG key is installed | Linux

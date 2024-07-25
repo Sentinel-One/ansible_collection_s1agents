@@ -14,13 +14,13 @@
 
     - name: Get passphrase report # noqa: run-once[task]
       ansible.builtin.stat:
-        path: '{{ s1_agent_passphrase_report }}'
+        path: "{{ s1_agent_passphrase_report }}"
       register: passphrase_report
       delegate_to: localhost
-      run_once: yes
+      run_once: true
 
     - name: Assert that passphrase report was created # noqa: run-once[task]
       ansible.builtin.assert:
         that: passphrase_report.stat.exists
       delegate_to: localhost
-      run_once: yes
+      run_once: true

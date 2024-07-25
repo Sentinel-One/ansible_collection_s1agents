@@ -21,7 +21,7 @@
         s1_molecule_installed_src: "{{ s1_agent_src }}"
         # yamllint disable-line rule:line-length
         s1_molecule_installed_version: "{{ s1_agent_version if ansible_os_family != 'Windows' else s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
-        cacheable: yes
+        cacheable: true
 
     - name: Show s1_molecule_installed_version
       ansible.builtin.debug:

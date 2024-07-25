@@ -14,12 +14,12 @@
 
     - name: Get uuid report # noqa: run-once[task]
       ansible.builtin.stat:
-        path: '{{ s1_agent_uuid_report }}'
+        path: "{{ s1_agent_uuid_report }}"
       register: uuid_report
       delegate_to: localhost
-      run_once: yes
+      run_once: true
 
     - name: Assert that UUID report was created # noqa: run-once[task]
       ansible.builtin.assert:
         that: uuid_report.stat.exists
-      run_once: yes
+      run_once: true

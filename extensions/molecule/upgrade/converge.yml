@@ -1,3 +1,4 @@
+---
 - name: Converge
   hosts: all
   gather_facts: false
@@ -14,7 +15,7 @@
         # yamllint disable-line rule:line-length
         s1_molecule_upgraded_version: "{{ s1_agent_version if ansible_os_family != 'Windows' else s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
         s1_molecule_upgrade_package: "{{ s1_agent_path | basename }}"
-        cacheable: yes
+        cacheable: true
 
     - name: Show s1_molecule_upgraded_version
       ansible.builtin.debug:

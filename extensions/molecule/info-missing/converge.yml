@@ -3,9 +3,9 @@
   hosts: all
   gather_facts: false
   tasks:
-    - name: "Include s1_agent_info"
+    - name: Include s1_agent_info
       ansible.builtin.include_role:
-        name: "s1_agent_info"
+        name: s1_agent_info
 
     - name: Show agent info
       ansible.builtin.debug:
@@ -14,4 +14,4 @@
     - name: Persist facts
       ansible.builtin.set_fact:
         s1_molecule_agent_info: "{{ s1_agent_info }}"
-        cacheable: yes
+        cacheable: true
