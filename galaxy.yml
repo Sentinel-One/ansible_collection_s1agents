@@ -49,9 +49,9 @@ tags:
 # L(specifiers,https://python-semanticversion.readthedocs.io/en/latest/#requirement-specification). Multiple version
 # range specifiers can be set and are separated by ','
 dependencies:
-  'ansible.windows': '>=1.13.0'
-  'community.windows': '>=1.12.0'
-  'ansible.posix': '>=1.5.1'
+  "ansible.windows": ">=1.13.0"
+  "community.windows": ">=1.12.0"
+  "ansible.posix": ">=1.5.1"
 
 # The URL of the originating SCM repository
 repository: https://github.com/Sentinel-One/ansible_collection_s1agents
@@ -77,8 +77,9 @@ build_ignore:
   - .vscode
   - .git*
   - .yamllint
-  - '**/.yamllint'
+  - "**/.yamllint"
   - .env.yml
-  - '**/.env.yml'
-  - '**/makefile'
-  - '**/molecule'
+  - "**/.env.yml"
+  - "**/makefile"
+  - "**/molecule"
+  - "**/.ansible-lint"
