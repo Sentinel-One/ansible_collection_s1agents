@@ -3,7 +3,7 @@
 - name: Set GPG signed x86_64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed-SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] }}"
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^Signed-SentinelAgent[_-][Ll]inux') | list)[s1_release_n_minus | default(0)] }}"
   when:
     - ansible_system == 'Linux'
     - ansible_architecture == 'x86_64'
@@ -23,7 +23,7 @@
 - name: Set x86_64 RPM SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] -}}"
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.rpm') | selectattr('fileName', 'match', '^SentinelAgent[_-][Ll]inux') | list)[s1_release_n_minus | default(0)] -}}"
   when:
     - ansible_system == 'Linux'
     - ansible_architecture == 'x86_64'
@@ -43,7 +43,7 @@
 - name: Set x86_64 DEB SentinelOne agent source | Release minus n
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
-    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | selectattr('fileName', 'match', '^SentinelAgent[_-]linux') | list)[s1_release_n_minus | default(0)] }}"
+    s1_download_src: "{{ (s1_available_packages.json.data | selectattr('fileExtension', 'equalto', '.deb') | selectattr('fileName', 'match', '^SentinelAgent[_-][Ll]inux') | list)[s1_release_n_minus | default(0)] }}"
   when:
     - ansible_system == 'Linux'
     - ansible_architecture == 'x86_64'
