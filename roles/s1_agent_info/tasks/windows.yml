@@ -1,18 +1,20 @@
 ---
 - name: Gather package facts | Windows
   ansible.windows.win_powershell:
+    # yamllint disable rule:line-length
     script: |
       Get-ChildItem -Force -Recurse HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | Where-Object {$_.DisplayName -eq '{{ s1_package_name }}'} | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate, @{Name='ProductId'; Expression={$('{0}' -f $_.PSChildName)}}
       Get-ChildItem -Force -Recurse HKLM:\Software\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall | Get-ItemProperty | Where-Object {$_.DisplayName -eq '{{ s1_package_name }}'} | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate, @{Name='ProductId'; Expression={$('{0}' -f $_.PSChildName)}}
+  # yamllint enable rule:line-length
   register: s1_windows_software
-  become: yes
-  changed_when: no
+  become: true
+  changed_when: false
   tags:
     - skip_ansible_lint
 
 - name: Gather service facts | Windows
   ansible.windows.win_service_info:
-    name: '{{ s1_service_name }}'
+    name: "{{ s1_service_name }}"
   register: s1_windows_service
 
 - name: Get agent status | Windows
@@ -21,9 +23,9 @@
       $helper = New-Object -ComObject "SentinelHelper.1"
       $helper.GetAgentStatusJSON()
   register: s1_com_status
-  changed_when: no
-  check_mode: no
-  become: no
+  changed_when: false
+  check_mode: false
+  become: false
   until: s1_com_status.output != ""
   retries: 3
   delay: 10

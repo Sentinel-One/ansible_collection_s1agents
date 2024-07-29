@@ -1,0 +1,17 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Assert that s1_agent_info is empty
+      ansible.builtin.assert:
+        that:
+          - not s1_molecule_agent_info['installed']
+          - not s1_molecule_agent_info['agent_enabled'] | length
+          - not s1_molecule_agent_info['anti_tamper_enabled'] | length
+          - not s1_molecule_agent_info['mgmt_url'] | length
+          - not s1_molecule_agent_info['product_id'] | length
+          - not s1_molecule_agent_info['reboot_required'] | length
+          - not s1_molecule_agent_info['service_status'] | length
+          - not s1_molecule_agent_info['uuid'] | length
+          - not s1_molecule_agent_info['version'] | length

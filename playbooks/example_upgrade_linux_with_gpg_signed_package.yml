@@ -1,7 +1,7 @@
 ---
 - name: Example play to upgrade Linux agents older than 22.2 to a version newer than 22.2 with the GPG signed package
   hosts: all
-  gather_facts: no
+  gather_facts: false
   vars:
     s1_install_gpg_signed_rpm: true
     s1_management_console: <Management Console URL>

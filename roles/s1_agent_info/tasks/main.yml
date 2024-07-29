@@ -3,7 +3,7 @@
 
 - name: Include tasks to get the agent info
   ansible.builtin.include_tasks:
-    file: '{{ loop_family }}'
+    file: "{{ loop_family }}"
   with_first_found:
     - files:
         - "{{ ansible_distribution | lower | replace(' ', '_') }}_{{ ansible_distribution_version }}.yml"
@@ -12,9 +12,9 @@
         - "{{ ansible_os_family | replace(' ', '_') | lower }}_{{ ansible_distribution_major_version }}.yml"
         - "{{ ansible_os_family | replace(' ', '_') | lower }}.yml"
         - "{{ ansible_system | replace(' ', '_') | lower }}.yml"
-        - 'unsupported.yml'
+        - unsupported.yml
   loop_control:
     loop_var: loop_family
-    label: '{{ loop_family | basename }}'
+    label: "{{ loop_family | basename }}"
   tags:
     - always

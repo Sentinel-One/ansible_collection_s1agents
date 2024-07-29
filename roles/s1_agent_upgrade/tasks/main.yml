@@ -5,7 +5,7 @@
   ansible.builtin.assert:
     that:
       - ansible_os_family in s1_supported_os_family or ansible_distribution in s1_supported_linux_distribution
-    fail_msg: 'The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base.'
+    fail_msg: The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base.
 
 - name: Download Agent from Management Console
   ansible.builtin.include_role:
@@ -31,23 +31,23 @@
 
 - name: Set s1_prior_version
   ansible.builtin.set_fact:
-    s1_prior_version: '{{ s1_agent_info.version }}'
+    s1_prior_version: "{{ s1_agent_info.version }}"
 
 - name: Include OS specific tasks
   ansible.builtin.include_tasks:
-    file: '{{ loop_family }}'
+    file: "{{ loop_family }}"
   with_first_found:
     - files:
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
-        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_distribution | lower }}.yml'
-        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
-        - '{{ ansible_os_family | lower }}.yml'
-        - '{{ ansible_system | lower }}.yml'
-        - 'unsupported.yml'
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml"
+        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_os_family | lower }}.yml"
+        - "{{ ansible_system | lower }}.yml"
+        - unsupported.yml
   loop_control:
     loop_var: loop_family
-    label: '{{ loop_family | basename }}'
+    label: "{{ loop_family | basename }}"
 
 - name: SentinelOne agent version installed
   ansible.builtin.debug:

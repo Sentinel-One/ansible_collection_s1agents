@@ -2,33 +2,35 @@ name: S1 Agent Common
 on:
   push:
     branches:
-      - 'release/**'
+      - "release/**"
     paths:
-      - 'roles/s1_agent_common/**'
-      - '!roles/s1_agent_common/README.md'
-      - '!roles/s1_agent_common/makefile'
-      - '.github/workflows/s1_agent_common.yml'
-      - '.github/workflows/ci-*.yml'
-      - '!.github/workflows/ci-release.yml'
-      - '!.github/workflows/ci-release.yml'
-      - '.github/actions/ci-setup/action.yml'
-      - 'requirements.yml'
+      - "roles/s1_agent_common/**"
+      - "!roles/s1_agent_common/README.md"
+      - "!roles/s1_agent_common/makefile"
+      - "extensions/molecule/common"
+      - ".github/workflows/s1_agent_common.yml"
+      - ".github/workflows/ci-*.yml"
+      - "!.github/workflows/ci-release.yml"
+      - "!.github/workflows/ci-release.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
   pull_request:
     branches:
-      - 'main'
+      - "main"
     types:
       - opened
       - synchronize
       - ready_for_review
     paths:
-      - 'roles/s1_agent_common/**'
-      - '!roles/s1_agent_common/README.md'
-      - '!roles/s1_agent_common/makefile'
-      - '.github/workflows/s1_agent_common.yml'
-      - '.github/workflows/ci-*.yml'
-      - '!.github/workflows/ci-release.yml'
-      - '.github/actions/ci-setup/actions.yml'
-      - 'requirements.yml'
+      - "roles/s1_agent_common/**"
+      - "!roles/s1_agent_common/README.md"
+      - "!roles/s1_agent_common/makefile"
+      - "extensions/molecule/common"
+      - ".github/workflows/s1_agent_common.yml"
+      - ".github/workflows/ci-*.yml"
+      - "!.github/workflows/ci-release.yml"
+      - ".github/actions/ci-setup/actions.yml"
+      - "requirements.yml"
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,7 +43,7 @@ jobs:
       role-path: ./roles/s1_agent_common
 
   call-ci-test:
-    name: 'Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})'
+    name: "Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})"
     needs: call-ci-lint
     uses: ./.github/workflows/ci-test.yml
     strategy:
@@ -61,20 +63,19 @@ jobs:
             display_name: Server 2022
             connection: ssh
             group: Windows
-          - distribution: WindowsServer2012R2
-            repository: jborean93
-            display_name: Server 2012r2
-            connection: winrm
+          # - distribution: WindowsServer2012R2
+          #   repository: jborean93
+          #   display_name: Server 2012r2
+          #   connection: winrm
         scenario-name:
-          - default
-          - winrm_default
-        exclude:
-          # OpenSSH is not supported on Windows Server 2012r2. We need to use
-          # custom scenarios configured for winrm connections. Exclude normal
-          # scenarios for winrm connections and winrm_* scenarios for ssh
-          # connections.
-          - { boxes: { connection: winrm }, scenario-name: default }
-          - { boxes: { connection: ssh }, scenario-name: winrm_default }
+          - common
+        # exclude:
+        #   # OpenSSH is not supported on Windows Server 2012r2. We need to use
+        #   # custom scenarios configured for winrm connections. Exclude normal
+        #   # scenarios for winrm connections and winrm_* scenarios for ssh
+        #   # connections.
+        #   - { boxes: { connection: winrm }, scenario-name: default }
+        #   - { boxes: { connection: ssh }, scenario-name: winrm_default }
     with:
       box-distribution: ${{ matrix.boxes.distribution }}
       box-repository: ${{ matrix.boxes.repository }}
@@ -82,7 +83,7 @@ jobs:
       ansible-group: ${{ matrix.boxes.group }}
       display-name: ${{ matrix.boxes.display_name }}
       scenario-name: ${{ matrix.scenario-name }}
-      role-path: ./roles/s1_agent_common
+      # role-path: ./roles/s1_agent_common
     secrets: inherit
 
   call-ci-assert:

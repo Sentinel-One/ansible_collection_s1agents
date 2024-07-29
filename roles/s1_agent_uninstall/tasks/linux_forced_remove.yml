@@ -7,10 +7,10 @@
 
 - name: Stop and disable the SentinelOne service | Linux
   ansible.builtin.service:
-    name: '{{ s1_service_name }}'
+    name: "{{ s1_service_name }}"
     state: stopped
-    enabled: no
-  become: yes
+    enabled: false
+  become: true
   when:
     - s1_agent_info.service_status is defined
     - s1_agent_info.service_status is not none
@@ -18,9 +18,9 @@
 
 - name: Remove the SentinelOne service files | Linux
   ansible.builtin.file:
-    path: '{{ item }}'
+    path: "{{ item }}"
     state: absent
-  become: yes
+  become: true
   with_items:
     - /usr/lib/systemd/system/sentinelone.service
     - /lib/systemd/system/sentinelone.service
@@ -28,40 +28,40 @@
 
 - name: Unmount SentinelOne directories | Linux
   ansible.posix.mount:
-    path: '{{ item }}'
+    path: "{{ item }}"
     state: unmounted
-  become: yes
+  become: true
   with_items:
-    - '{{ s1_agent_default_install_path }}/mount'
-    - '{{ s1_agent_default_install_path }}/cgroups/memory'
-    - '{{ s1_agent_default_install_path }}/rpm_mount'
+    - "{{ s1_agent_default_install_path }}/mount"
+    - "{{ s1_agent_default_install_path }}/cgroups/memory"
+    - "{{ s1_agent_default_install_path }}/rpm_mount"
 
 - name: Remove SentinelOne directory | Linux
   ansible.builtin.file:
-    path: '{{ item }}'
+    path: "{{ item }}"
     state: absent
-  become: yes
+  become: true
   with_items:
-    - '{{ s1_agent_custom_install_path | default(s1_agent_default_install_path) }}'
-    - '{{ s1_agent_default_install_path }}'
+    - "{{ s1_agent_custom_install_path | default(s1_agent_default_install_path) }}"
+    - "{{ s1_agent_default_install_path }}"
 
 - name: Remove the sentinelone user | Linux
   ansible.builtin.user:
     name: sentinelone
     state: absent
-    remove: yes
-  become: yes
+    remove: true
+  become: true
 
 - name: Remove SentinelOne apt package | Linux
   ansible.builtin.file:
     path: /var/lib/dpkg/info/{{ s1_package_name }}.*
     state: absent
-  become: yes
+  become: true
   when: ansible_pkg_mgr in apt_pkg_mgrs
 
 - name: Remove the SentinelOne package from dpkg | Linux
   ansible.builtin.command: dpkg --purge --force-all {{ s1_package_name }} # noqa command-instead-of-module
-  become: yes
+  become: true
   register: dpkg_remove
   changed_when:
     - '"Purging configuration files for " ~ s1_package_name ~ "" in dpkg_remove.stdout'
@@ -70,7 +70,7 @@
 
 - name: Remove the SentinelOne package from rpm | Linux
   ansible.builtin.command: rpm -ev --noscripts {{ s1_package_name }} # noqa command-instead-of-module
-  become: yes
+  become: true
   register: rpm_remove
   changed_when:
     - '"Preparing packages...\n" ~ s1_package_name ~ "" in rpm_remove.stdout'

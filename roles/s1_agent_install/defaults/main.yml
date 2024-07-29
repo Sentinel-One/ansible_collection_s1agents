@@ -58,13 +58,13 @@ s1_agent_site_token: "{{ undef(hint='You must specify your agent Site Token') }}
 
 # If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
 # By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
-s1_agent_management_proxy: '{{ default_proxy | default(None) }}'
+s1_agent_management_proxy: "{{ default_proxy | default(None) }}"
 # s1_agent_management_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
 # s1_agent_management_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
 
 # If there is a proxy server between the Agent and the Deep Visibility service, enter the proxy URL (or IP address) and the port.
 # By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
-s1_agent_dv_proxy: '{{ default_proxy | default(None) }}'
+s1_agent_dv_proxy: "{{ default_proxy | default(None) }}"
 # s1_agent_dv_proxy_password: '{{ default_proxy_password | default(None) }}' # NOT IMPLEMENTED
 # s1_agent_dv_proxy_username: '{{ default_proxy_username | default(None) }}' # NOT IMPLEMENTED
 

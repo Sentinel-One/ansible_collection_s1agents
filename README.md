@@ -105,7 +105,7 @@ In order to successfully install and manage the agent, the Service Account used 
 
 ### Using the `s1_agent_version` variable with mixed deployments
 
-When deploying a specific version of the agent to an inventory that contains a mix of Linux and Windows endpoints, it is necessary to define the `s1_agent_version` variable so that it applies only to Linux or Windows hosts. This means the inventory must be structured so that Widows and Linux hosts are in separate groups. Alternatively, the `set_fact` module can be used to define `s1_agent_version` in the playbook with a conditional for the `ansible_system`.
+When deploying a specific version of the agent to an inventory that contains a mix of Linux and Windows endpoints, it is necessary to define the `s1_agent_version` variable so that it applies only to Linux or Windows hosts. This means the inventory must be structured so that Windows and Linux hosts are in separate groups. Alternatively, the `set_fact` module can be used to define `s1_agent_version` in the playbook with a conditional for the `ansible_system`.
 
 ### Downgrading agent versions
 

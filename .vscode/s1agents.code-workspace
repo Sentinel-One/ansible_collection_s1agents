@@ -25,7 +25,7 @@
     },
     "[shellscript]": {
       "editor.insertSpaces": false,
-      "editor.tabSize": 4,
+      "editor.tabSize": 4
     },
     "[yaml]": {
       "editor.tabSize": 2,
@@ -33,11 +33,9 @@
       "editor.renderWhitespace": "all",
       "editor.renderControlCharacters": true,
       "editor.formatOnSave": true,
-      "editor.insertSpaces": true,
+      "editor.insertSpaces": true
     },
-    "yaml.customTags": [
-      "!vault"
-    ],
+    "yaml.customTags": ["!vault"],
     "yaml.format.singleQuote": true,
     "ansible.ansible.useFullyQualifiedCollectionNames": true,
   },

@@ -140,9 +140,9 @@ Upgrade the SentinelOne Agent from a package that has already been downloaded an
     s1_agent_src: /software/sentinelone/SentinelAgent_linux_v22_1_2_7.rpm
     s1_agent_version: 22.1.2.7
   tasks:
-    - name: Include s1_agent_install
+    - name: Include s1_agent_upgrade
       ansible.builtin.include_role:
-        name: s1_agent_install
+        name: s1_agent_upgrade
 ```
 
 ### Download and upgrade to the latest SentinelOne agent
