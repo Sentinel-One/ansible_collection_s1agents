@@ -3,7 +3,7 @@
 
 - name: Set the agent's UUID
   ansible.builtin.set_fact:
-    s1_agent_uuid: '{{ s1_agent_info.uuid }}'
+    s1_agent_uuid: "{{ s1_agent_info.uuid }}"
 
 - name: Gather network facts
   when:
@@ -14,8 +14,8 @@
     - name: Gather network facts
       ansible.builtin.setup:
         gather_subset:
-          - '!all'
-          - '!min'
+          - "!all"
+          - "!min"
           - dns
           - all_ipv4_addresses
       tags:

@@ -7,7 +7,7 @@
   block:
     - name: Set the agent's UUID
       ansible.builtin.set_fact:
-        s1_agent_uuid: '{{ s1_agent_info.uuid }}'
+        s1_agent_uuid: "{{ s1_agent_info.uuid }}"
       when:
         - s1_agent_uuid is undefined or s1_agent_uuid is none or s1_agent_uuid | length == 0
 
@@ -44,15 +44,15 @@
         url: '{{ lookup("template", "passphrase_url.j2") }}'
         return_content: false
         headers:
-          Authorization: 'ApiToken {{ s1_api_token }}'
+          Authorization: ApiToken {{ s1_api_token }}
         validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
       register: s1_passphrase_result
       until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length
       retries: 10
       delay: 10
-      become: no
-      check_mode: no
-      no_log: '{{ ansible_verbosity < 3 }}'
+      become: false
+      check_mode: false
+      no_log: "{{ ansible_verbosity < 3 }}"
 
     - name: Show API results
       ansible.builtin.debug:
@@ -63,8 +63,8 @@
 
 - name: Set agent passphrase
   ansible.builtin.set_fact:
-    s1_agent_passphrase: '{{ (s1_passphrase_result.json.data | list | first).passphrase }}'
-  no_log: '{{ ansible_verbosity < 3 }}'
+    s1_agent_passphrase: "{{ (s1_passphrase_result.json.data | list | first).passphrase }}"
+  no_log: "{{ ansible_verbosity < 3 }}"
 
 - name: Gather network facts
   when:
@@ -75,8 +75,8 @@
     - name: Gather network facts
       ansible.builtin.setup:
         gather_subset:
-          - '!all'
-          - '!min'
+          - "!all"
+          - "!min"
           - dns
           - all_ipv4_addresses
       tags:

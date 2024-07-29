@@ -3,13 +3,13 @@ on:
   workflow_call:
     inputs:
       role-path:
-        description: 'Relative path to the role to be linted'
+        description: "Relative path to the role to be linted"
         type: string
         required: true
 
 jobs:
   molecule-lint:
-    name: 'ansible-${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})'
+    name: "ansible-${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})"
     runs-on: [self-hosted, Linux, X64, ansible-collection]
     env:
       ANSIBLE_FORCE_COLOR: 1 # allows ansible colors to be passed to GitHub Actions
@@ -20,15 +20,17 @@ jobs:
         versions:
           # ansible-core upstream development supports 3 releases at a time
           # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
-          - ansible: stable-2.12 # EOL 2023-05-23
-            python: '3.10'
-          - ansible: stable-2.13 # EOL 2023-11-06
-            python: '3.10'
-          - ansible: stable-2.14 # EOL 2024-05-20
-            python: '3.10'
+          # - ansible: stable-2.12 # EOL 2023-05-23
+          #   python: '3.10'
+          # - ansible: stable-2.13 # EOL 2023-11-06
+          #   python: '3.10'
+          # - ansible: stable-2.14 # EOL 2024-05-20
+          #   python: '3.10'
+          - ansible: stable-2.16
+            python: "3.12"
     steps:
       - name: Check out code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up environment
         uses: ./.github/actions/ci-setup
@@ -42,5 +44,5 @@ jobs:
           echo ${PWD} &&
           molecule --version &&
           ansible --version &&
-          molecule lint
+          ansible-lint --profile production
         working-directory: ${{ inputs.role-path }}

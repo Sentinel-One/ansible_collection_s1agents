@@ -1,0 +1,12 @@
+---
+- name: Cleanup
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Include tasks to remove agent
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/remove_s1_agent.yml"
+
+    - name: Include tasks to remove work directory
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/remove_work_dir.yml"

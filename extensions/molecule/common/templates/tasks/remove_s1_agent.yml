@@ -1,0 +1,30 @@
+---
+- name: Gather required facts
+  ansible.builtin.setup:
+    gather_subset:
+      - "!all"
+      - "min"
+  ignore_unreachable: true
+
+- name: Check Connectivity
+  when: ansible_facts['os_family'] is defined
+  block:
+    - name: Check Linux Connectivity
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_unreachable: true
+      when: ansible_facts['os_family'] != "Windows"
+
+    - name: Check Windows Connectivity
+      ansible.windows.win_ping:
+      register: win_ping_result
+      ignore_unreachable: true
+      when: ansible_facts['os_family'] == "Windows"
+
+    - name: Uninstall S1 Agent
+      ansible.builtin.include_role:
+        name: s1_agent_uninstall
+      vars:
+        s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+        s1_common_skip_reboot: true
+      when: (ping_result.ping is defined and ping_result.ping == "pong") or (win_ping_result.ping is defined and win_ping_result.ping == "pong")

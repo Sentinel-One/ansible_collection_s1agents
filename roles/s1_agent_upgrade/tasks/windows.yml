@@ -3,13 +3,14 @@
 
 - name: Set SentinelOne agent path | Windows
   ansible.builtin.set_fact:
-    s1_agent_path: '{{ s1_tmp_windows }}\{{ s1_agent_src | basename }}'
+    s1_agent_path: "{{ s1_tmp_windows }}\\{{ s1_agent_src | basename }}"
     s1_agent_version: "{{ s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
 
 - name: Set SentinelOne agent parameters | Windows
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
-    s1_agent_silent_cmd: "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2'))) }}"
+    s1_agent_silent_cmd: "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2')))
+      }}"
     s1_agent_return_code: "{{ s1_install_msi | default('no') | bool | ternary(s1_msi_return_codes, s1_new_exe_return_codes) }}"
 
 - name: Upgrade Windows Agent
@@ -18,14 +19,14 @@
   block:
     - name: Approve Local Upgrade | Windows
       ansible.builtin.uri:
-        url: '{{ s1_management_console }}/web/api/v2.1/agents/actions/approve-stateless-upgrade'
+        url: "{{ s1_management_console }}/web/api/v2.1/agents/actions/approve-stateless-upgrade"
         return_content: false
         headers:
-          Authorization: 'ApiToken {{ s1_api_token }}'
+          Authorization: ApiToken {{ s1_api_token }}
         validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
         body:
           filter:
-            uuid: '{{ s1_agent_info.uuid }}'
+            uuid: "{{ s1_agent_info.uuid }}"
           data:
             expiration: 1
         body_format: json
@@ -34,9 +35,9 @@
       until: s1_local_upgrade_result is not failed and s1_local_upgrade_result.json.data | length
       retries: 10
       delay: 10
-      become: no
-      check_mode: no
-      no_log: '{{ ansible_verbosity < 3 }}'
+      become: false
+      check_mode: false
+      no_log: "{{ ansible_verbosity < 3 }}"
       delegate_to: localhost
 
     - name: Show Approve Local Upgrade results | Windows
@@ -49,24 +50,24 @@
 
     - name: Create working directory | Windows
       ansible.windows.win_file:
-        path: '{{ s1_tmp_windows }}'
+        path: "{{ s1_tmp_windows }}"
         state: directory
 
     - name: Copy SentinelOne agent | Windows
       ansible.windows.win_copy:
-        src: '{{ s1_agent_src }}'
-        dest: '{{ s1_agent_path }}'
+        src: "{{ s1_agent_src }}"
+        dest: "{{ s1_agent_path }}"
     # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
     - name: Upgrade SentinelOne | Windows
       ansible.windows.win_package:
-        path: '{{ s1_agent_path }}'
+        path: "{{ s1_agent_path }}"
         state: present
-        arguments: '{{ s1_agent_silent_cmd }}'
-        wait_for_children: yes
-        product_id: '{{ s1_agent_product_id | default(omit) }}'
-        expected_return_code: '{{ s1_agent_return_code }}'
-      become: yes
-      notify: '{{ s1_reboot_handler_name }}'
+        arguments: "{{ s1_agent_silent_cmd }}"
+        wait_for_children: true
+        product_id: "{{ s1_agent_product_id | default(omit) }}"
+        expected_return_code: "{{ s1_agent_return_code }}"
+      become: true
+      notify: "{{ s1_reboot_handler_name }}"
       register: s1_upgrade_log
 
     - name: Show s1_upgrade_log log | Windows
@@ -78,7 +79,7 @@
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:
-    path: '{{ s1_tmp_windows }}'
+    path: "{{ s1_tmp_windows }}"
     state: absent
   tags:
     - molecule-notest

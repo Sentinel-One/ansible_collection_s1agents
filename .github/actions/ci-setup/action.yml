@@ -3,17 +3,17 @@ description: Sets up Python and Ansible for jobs during CI workflow
 
 inputs:
   ansible-version:
-    description: 'Ansible Version'
+    description: "Ansible Version"
     required: true
   python-version:
-    description: 'Python Version'
+    description: "Python Version"
     required: true
 
 runs:
   using: composite
   steps:
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
 
@@ -25,5 +25,6 @@ runs:
     - name: Install requirements for molecule tests
       shell: bash
       run: |
-        pip install molecule-vagrant yamllint ansible-lint flake8 pywinrm --disable-pip-version-check
+        pip uninstall molecule-vagrant --yes
+        pip install ansible-dev-tools pywinrm molecule molecule-plugins ansible-lint flake8 --disable-pip-version-check
         if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
