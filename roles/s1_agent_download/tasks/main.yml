@@ -57,6 +57,8 @@
   delegate_to: localhost
   run_once: true
   become: false
+  vars:
+    ansible_shell_type: "{{ dynamic_shell_type }}"
 
 - name: Show s1_agent_version
   ansible.builtin.debug:
@@ -122,6 +124,8 @@
   delegate_to: localhost
   run_once: true
   become: false
+  vars:
+    ansible_shell_type: "{{ dynamic_shell_type }}"
 
 - name: Download SentinelOne agent
   ansible.builtin.get_url:
@@ -138,3 +142,5 @@
   delay: 60 # Mgmt Console API is limited to 2 pkg downloads / 60 seconds
   delegate_to: localhost
   become: false
+  vars:
+    ansible_shell_type: "{{ dynamic_shell_type }}"

@@ -61,3 +61,9 @@
     label: "{{ loop_vars | basename }}"
   tags:
     - always
+
+- name: Set shell type dynamically
+  delegate_to: localhost
+  run_once: true
+  set_fact:
+    dynamic_shell_type: "{{ 'sh' if ansible_system != 'Windows' else 'powershell' }}"
