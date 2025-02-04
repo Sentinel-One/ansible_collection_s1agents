@@ -44,5 +44,5 @@ jobs:
           echo ${PWD} &&
           molecule --version &&
           ansible --version &&
-          ansible-lint --profile production
+          ansible-lint --profile production --exclude .ansible
         working-directory: ${{ inputs.role-path }}
