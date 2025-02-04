@@ -9,6 +9,7 @@ profile: production
 exclude_paths:
   - .cache/ # implicit unless exclude_paths is defined in config
   - .github
+  - ~/.ansible/collections
 
 # Mock modules or roles in order to pass ansible-playbook --syntax-check
 # mock_modules:
