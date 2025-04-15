@@ -12,7 +12,7 @@
     that:
       - ansible_processor_vcpus >= 2
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
+    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://community.sentinelone.com/s/article/000004969
 
 - name: Assert disk meets requirements | Windows
   ansible.builtin.assert:
@@ -20,14 +20,14 @@
       # yamllint disable-line rule:line-length
       - (((ansible_facts.disks|selectattr('system_disk') | first).partitions | selectattr('drive_letter') | first).volumes | list | sort(reverse=true, attribute='size') | first)['size_remaining'] >= 2147483648
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
+    fail_msg: The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://community.sentinelone.com/s/article/000004969
 
 - name: Assert memory meets requirements | Windows
   ansible.builtin.assert:
     that:
       - ansible_memfree_mb >= 1024
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410565200151.
+    fail_msg: The SentinelOne Agent requires at least 1GB of free, non-cached, memory to be installed. Review https://community.sentinelone.com/s/article/000004969
 
 - name: Set SentinelOne agent product Id | Windows
   ansible.builtin.set_fact:

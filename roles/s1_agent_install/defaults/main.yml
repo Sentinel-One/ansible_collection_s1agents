@@ -51,7 +51,7 @@ s1_agent_site_token: "{{ undef(hint='You must specify your agent Site Token') }}
 # s1_no_config_failures: no
 
 # If true set the installer's VDI flag to true and install the SentinelOne agent for a "cold clone".
-# Note: See https://support.sentinelone.com/hc/en-us/articles/360035087333.
+# Note: See https://community.sentinelone.com/s/article/000005519
 # Default: False
 # Windows Only
 # s1_enable_vdi: false
