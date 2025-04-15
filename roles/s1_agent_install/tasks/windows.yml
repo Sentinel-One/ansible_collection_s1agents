@@ -65,7 +65,6 @@
     wait_for_children: true
     product_id: "{{ s1_agent_product_id | default(omit) }}"
     expected_return_code: "{{ s1_agent_return_code }}"
-  become: true
   notify: "{{ s1_reboot_handler_name }}"
   register: s1_install_log
   # changed_when:
