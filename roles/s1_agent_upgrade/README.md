@@ -15,15 +15,15 @@ Inventory hosts on which the agent is being installed must be running on a suppo
 
 In order to successfully set `Confirm Local Upgrade` via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Accounts View
-* Endpoints Uninstall
-* Endpoints Update Software
-* Endpoints View
-* Groups View
-* Local Upgrade Authorization Edit
-* Local Upgrade Authorization View
-* Roles View
-* Sites View
+* Endpoints > View
+* Endpoints > Update Software
+* Endpoints > Uninstall
+* Accounts > View
+* Groups > View
+* Local Upgrade Authorization > Edit
+* Local Upgrade Authorization > View
+* Roles > View
+* Sites > View
 
 Best practice is to create a new "Confirm Local Upgrade via API" role with these permissions. Then create a **Service User** and add them to the role.
 
