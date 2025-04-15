@@ -14,11 +14,11 @@ A valid SentinelOne license, access to the SentinelOne Management Console and an
 
 In order to successfully query and download packages via the API, the account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Accounts View
-* Groups View
-* Packages
-* Roles View
-* Sites View
+* Accounts > View
+* Groups > View
+* Agent Packages > View
+* Roles > View
+* Sites > View
 
 Best practice is to create a new "Download packages via API" role with these permissions. Then create a **Service User** and add them to the role.
 
