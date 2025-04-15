@@ -13,12 +13,12 @@ An endpoint with the SentinelOne agent installed and operational. A valid Sentin
 
 In order to successfully query agent passphrases via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Accounts View
-* Endpoints View
-* Endpoints Show Passphrase
-* Groups View
-* Roles View
-* Sites View
+* Endpoints > View
+* Endpoints > Show Passphrase
+* Accounts > View
+* Groups > View
+* Roles > View
+* Sites > View
 
 ## Role Variables
 
