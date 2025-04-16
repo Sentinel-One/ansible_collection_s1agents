@@ -21,7 +21,7 @@ platforms:
     memory: 4096
     cpus: 2
     instance_raw_config_args:
-      - "vm.boot_timeout = 1200"
+      - "vm.boot_timeout = 3600"
     config_options:
       synced_folder: false
     provider_options:
