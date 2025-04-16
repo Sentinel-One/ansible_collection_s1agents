@@ -9,9 +9,17 @@
 - name: Set SentinelOne agent parameters | Windows
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
-    s1_agent_silent_cmd: "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2')))
+    s1_agent_silent_cmd:
+      "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2')))
       }}"
     s1_agent_return_code: "{{ s1_install_msi | default('no') | bool | ternary(s1_msi_return_codes, s1_new_exe_return_codes) }}"
+
+- name: Show SentinelOne install parameters | Windows
+  ansible.builtin.debug:
+    var: s1_agent_silent_cmd
+  tags:
+    - never
+    - debug
 
 - name: Upgrade Windows Agent
   when:
@@ -57,6 +65,7 @@
       ansible.windows.win_copy:
         src: "{{ s1_agent_src }}"
         dest: "{{ s1_agent_path }}"
+
     # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
     - name: Upgrade SentinelOne | Windows
       ansible.windows.win_package:

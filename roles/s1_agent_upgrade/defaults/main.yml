@@ -12,3 +12,7 @@ s1_api_token: "{{ undef(hint='You must specify your SentinelOne API Token') }}"
 
 # Version of the agent package defined by s1_agent_src.
 # s1_agent_version:
+
+# If true set the installer's INSTALLATION_TELEMETRY flag to false
+# Enable when instructed by SentinelOne support, or if installing in an air-gapped network
+# s1_disable_install_telemetry: false

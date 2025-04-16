@@ -56,6 +56,10 @@ s1_agent_site_token: "{{ undef(hint='You must specify your agent Site Token') }}
 # Windows Only
 # s1_enable_vdi: false
 
+# If true set the installer's INSTALLATION_TELEMETRY flag to false
+# Enable when instructed by SentinelOne support, or if installing in an air-gapped network
+# s1_disable_install_telemetry: false
+
 # If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
 # By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
 s1_agent_management_proxy: "{{ default_proxy | default(None) }}"

@@ -46,6 +46,13 @@
     s1_agent_silent_cmd: "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2'))) }}"
     s1_agent_return_code: "{{ s1_install_msi | default('no') | bool | ternary(s1_msi_return_codes, s1_new_exe_return_codes) }}"
 
+- name: Show SentinelOne install parameters | Windows
+  ansible.builtin.debug:
+    var: s1_agent_silent_cmd
+  tags:
+    - never
+    - debug
+
 - name: Create working directory | Windows
   ansible.windows.win_file:
     path: "{{ s1_tmp_windows }}"

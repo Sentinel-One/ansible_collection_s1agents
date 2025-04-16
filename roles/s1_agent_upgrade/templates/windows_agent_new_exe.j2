@@ -1,5 +1,5 @@
 
-{#- Do not add --rebopt_on_need - Ansible will loose access to the host and mark it as failed -#}
+{#- Do not add --reboot_on_need - Ansible will loose access to the host and mark it as failed -#}
 {%- set install_arguments = [] -%}
 {#- set silent install -#}
 {{- install_arguments.append( '-q' ) -}}
@@ -25,5 +25,29 @@
 {#- set --no_initial_installation -#}
 {%- if s1_no_initial_install is defined and s1_no_initial_install | bool -%}
 {{- install_arguments.append( '--no_initial_installation' ) -}}
+{%- endif -%}
+{#- Configure Optional Agent Arguments '-a' option -#}
+{%- set agent_optional_params = [] -%}
+{%- if s1_enable_vdi is defined and s1_enable_vdi | bool -%}
+{{- agent_optional_params.append( 'VDI=true' ) -}}
+{%- endif -%}
+{%- if s1_agent_management_proxy is defined and s1_agent_management_proxy is not none and s1_agent_management_proxy | length > 0 -%}
+{{- agent_optional_params.append( 'SERVER_PROXY=' + s1_agent_management_proxy ) -}}
+{%- endif -%}
+{%- if s1_agent_dv_proxy is defined and s1_agent_dv_proxy is not none and s1_agent_dv_proxy | length > 0 -%}
+{{- agent_optional_params.append( 'IOC_PROXY=' + s1_agent_dv_proxy ) -}}
+{%- endif -%}
+{%- if s1_agent_customer_id is defined and s1_agent_customer_id is not none and s1_agent_customer_id | length > 0 -%}
+{{- agent_optional_params.append( 'CUSTOMER_ID="""' + s1_agent_customer_id + '"""' ) -}}
+{%- endif -%}
+{%- if s1_agent_custom_install_path is defined and s1_agent_custom_install_path is not none and s1_agent_custom_install_path | length > 0 -%}
+{{- agent_optional_params.append( 'INSTALL_PATH_DATA="""' + s1_agent_custom_install_path + '"""' ) -}}
+{%- endif -%}
+{%- if s1_disable_install_telemetry is defined and s1_disable_install_telemetry | bool -%}
+{{- agent_optional_params.append( 'INSTALLATION_TELEMETRY=FALSE' ) -}}
+{%- endif -%}
+{#- pass in Optional Agent Arguments -#}
+{%- if agent_optional_params | length -%}
+{{- install_arguments.append( '-a="' + agent_optional_params | join(' ') + '"' ) -}}
 {%- endif -%}
 {{- install_arguments | join(' ') -}}
