@@ -15,6 +15,20 @@
       when:
         - ansible_system == 'Linux'
 
+    - name: Include tasks to set agent version | Windows
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/set_agent_version.yml"
+      vars:
+        s1_product_id_index: 1
+
     - name: Include tasks to install agent
       ansible.builtin.include_tasks:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/install_s1_agent.yml"
+
+    - name: Include tasks to set agent version | Windows
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/set_agent_version.yml"
+      vars:
+        s1_product_id_index: 0
+      when:
+        - ansible_os_family == 'Windows'
