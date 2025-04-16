@@ -11,12 +11,15 @@ s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }}
 s1_agent_win_file_ver: '{{ "v" + (s1_agent_version + "_" + ansible_facts.architecture) | regex_replace("[\.-]", "_") }}'
 
 # Return codes from SentinelOneInstaller.exe that indicate a successful install or upgrade (a reboot may still be required)
+# See: https://community.sentinelone.com/s/article/000008704
 s1_new_exe_return_codes:
   - 0
   - 12
   - 100
   - 101
+  - 102
   - 103
+  - 104
   - 1000
 
 s1_msi_return_codes:
@@ -25,6 +28,13 @@ s1_msi_return_codes:
 
 # The same Product ID is used for MSI and SentinelOneInstaller packages
 s1_product_id:
+  v24_2_3_471_64_bit: "{A5AF5827-A2A0-4C8B-8ED1-48A148346399}"
+  v24_1_5_277_64_bit: "{38CCB1A1-E333-4D19-A6FA-C4CE60A2EAD3}"
+  v24_1_4_257_64_bit: "{EA080DF7-C45B-4BAF-AAD7-16FB66D11F92}"
+  v23_4_6_347_64_bit: "{9627E5DD-DA35-4A04-B2D6-A996A5A112C9}"
+  v23_4_6_347_32_bit: "{33FBF92A-8041-42F8-84EE-985FC9E4F418}"
+  v23_4_5_337_64_bit: "{7A1543A2-CF5C-45B2-855F-EA52A2D96B39}"
+  v23_4_5_337_32_bit: "{8D06246A-6F57-470F-83D0-F26048983874}"
   v23_4_4_223_64_bit: "{40CB8880-CA0E-416E-8C0D-9C3015E0EEA8}"
   v23_4_4_223_32_bit: "{5EAD8636-B65F-469B-BB60-E1FB33B1C8DC}"
   v23_3_4_320_64_bit: "{25F6C9CB-D50A-474B-9358-E94A6C444BAC}"
