@@ -20,6 +20,8 @@ platforms:
     box: ${S1_VAGRANT_REPO:-roboxes}/${S1_VAGRANT_DISTRO:-rocky8}
     memory: 4096
     cpus: 2
+    instance_raw_config_args:
+      - "vm.boot_timeout = 1200"
     config_options:
       synced_folder: false
     provider_options:
