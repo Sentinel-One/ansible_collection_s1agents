@@ -80,17 +80,17 @@ The various roles in this collection access the SentinelOne Management Console v
 
 Create a `Ansible Service Accounts` role in the SentinelOne Management console and grant it the permissions:[^2]
 
-* Accounts View
-* Endpoints Show Passphrase
-* Endpoints Uninstall
-* Endpoints Update Software
-* Endpoints View
-* Groups View
-* Local Upgrade Authorization Edit
-* Local Upgrade Authorization View
-* Packages
-* Roles View
-* Sites View
+* Endpoints > Show Passphrase
+* Endpoints > Uninstall
+* Endpoints > Update Software
+* Endpoints > View
+* Accounts > View
+* Agent Packages > View
+* Groups > View
+* Local Upgrade Authorization > Edit
+* Local Upgrade Authorization > View
+* Roles > View
+* Sites > View
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
 [^2]: This is a cumulative list of permissions required by the collection as a whole. If you wish to use a separate Service Account for each Ansible Role, see that role's README for a list of required permissions.
