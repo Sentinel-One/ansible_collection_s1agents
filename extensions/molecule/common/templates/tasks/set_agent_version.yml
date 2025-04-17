@@ -1,0 +1,26 @@
+---
+- name: Include Windows vars | Windows
+  ansible.builtin.include_vars:
+    file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/vars/windows.yml"
+
+- name: Set s1_agent_version to a version supported by the collection | Windows
+  set_fact:
+    s1_agent_version: >-
+      {{
+        (
+          s1_product_id
+          | dict2items
+          | selectattr('key', 'search', ansible_facts.architecture | replace('-','_'))
+          | map(attribute="key")
+          | map('regex_replace', '^v', '')
+          | map('regex_replace', '_(64|32)_bit$', '')
+          | map('regex_replace', '_', '.')
+          | sort(reverse=true)
+          | list
+        )[s1_product_id_index | default(0)]
+      }}
+    cacheable: true
+
+- name: Desired Agent Version | Windows
+  ansible.builtin.debug:
+    var: s1_agent_version

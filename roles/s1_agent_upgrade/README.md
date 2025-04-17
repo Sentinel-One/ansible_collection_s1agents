@@ -9,21 +9,21 @@ The `s1_agent_upgrade` role upgrades an existing SentinelOne Agent installed on 
 
 A valid SentinelOne license, access to the SentinelOne Management Console and access to the SentinelOne installation packages are required.
 
-Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://support.sentinelone.com/hc/en-us/articles/360004196614-System-Requirements).
+Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://community.sentinelone.com/s/topic/0TO69000000as1iGAA/system-requirements).
 
 ### Permissions required to upgrade Windows Agents
 
 In order to successfully set `Confirm Local Upgrade` via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Accounts View
-* Endpoints Uninstall
-* Endpoints Update Software
-* Endpoints View
-* Groups View
-* Local Upgrade Authorization Edit
-* Local Upgrade Authorization View
-* Roles View
-* Sites View
+* Endpoints > View
+* Endpoints > Update Software
+* Endpoints > Uninstall
+* Accounts > View
+* Groups > View
+* Local Upgrade Authorization > Edit
+* Local Upgrade Authorization > View
+* Roles > View
+* Sites > View
 
 Best practice is to create a new "Confirm Local Upgrade via API" role with these permissions. Then create a **Service User** and add them to the role.
 
@@ -41,7 +41,7 @@ s1_api_token:
 
 This is mandatory and is the API token[^1] associated with the user which will running the role.
 
-[^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://support.sentinelone.com/hc/en-us/articles/360004195934).
+[^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
 
 ```yaml
 s1_agent_site_token:

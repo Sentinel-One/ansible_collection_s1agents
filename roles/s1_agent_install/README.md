@@ -9,7 +9,7 @@ The `s1_agent_install` role installs the SentinelOne Agent on endpoints.
 
 A valid SentinelOne license, access to the SentinelOne Management Console and access to the SentinelOne installation packages are required.
 
-Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://support.sentinelone.com/hc/en-us/articles/360004196614-System-Requirements).
+Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://community.sentinelone.com/s/topic/0TO69000000as1iGAA/system-requirements).
 
 ## Role Variables
 
@@ -25,7 +25,7 @@ s1_api_token:
 
 This is mandatory and is the API token[^1] associated with the user which will running the role.
 
-[^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://support.sentinelone.com/hc/en-us/articles/360004195934).
+[^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
 
 ```yaml
 s1_agent_site_token:
@@ -112,7 +112,8 @@ s1_no_config_failures: false
 Set the SentinelOneInstaller package `--dont_fail_on_config_preserving_failures` flag for the upgrade.
 
 When set to true set the installer packages VDI flag to true and install the SentinelOne agent for a "cold clone".
-Note: See [https://support.sentinelone.com/hc/en-us/articles/360035087333](https://support.sentinelone.com/hc/en-us/articles/360035087333.).
+Note: See [https://community.sentinelone.com/s/article/000005519](https://community.sentinelone.com/s/article/000005519.).
+Note: See [https://community.sentinelone.com/s/article/000005519(https://community.sentinelone.com/s/article/000005519).
 
 ### Variables from dependencies
 

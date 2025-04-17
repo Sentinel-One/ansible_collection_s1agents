@@ -26,7 +26,7 @@
       - "'popcnt' in s1_cpu_flags"
       - ansible_facts.architecture == 'x86_64'
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
+    fail_msg: The SentinelOne Agent requires a 64-bit dual core processor to be installed. Review https://community.sentinelone.com/s/article/000008828
   when: ansible_architecture != 'aarch64'
 
 - name: Assert disk meets requirements | Linux
@@ -35,14 +35,14 @@
       # yamllint disable-line rule:line-length
       - ((ansible_mounts | selectattr('mount', 'in', s1_agent_custom_install_path|default('/opt/sentinelone')) | list | sort(attribute='mount'))[-1]['size_available']) >= 2147483648
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires 2GB of free space on the {{ s1_agent_custom_install_path | default('/opt') }} partition. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
+    fail_msg: The SentinelOne Agent requires 2GB of free space on the {{ s1_agent_custom_install_path | default('/opt') }} partition. Review https://community.sentinelone.com/s/article/000008828
 
 - name: Assert memory meets requirements | Linux
   ansible.builtin.assert:
     that:
       - ansible_memfree_mb >= 800
     # yamllint disable-line rule:line-length
-    fail_msg: The SentinelOne Agent requires at least 800MB of free, non-cached, memory to be installed. Review https://support.sentinelone.com/hc/en-us/articles/4410580891543.
+    fail_msg: The SentinelOne Agent requires at least 800MB of free, non-cached, memory to be installed. Review https://community.sentinelone.com/s/article/000008828
 
 - name: Assert host is stable | Linux
   ansible.builtin.assert:

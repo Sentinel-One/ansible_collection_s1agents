@@ -12,3 +12,9 @@
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/prepare_package_manager.yml"
       when:
         - ansible_system == 'Linux'
+
+    - name: Include tasks to set agent version | Windows
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/set_agent_version.yml"
+      when:
+        - ansible_os_family == 'Windows'
