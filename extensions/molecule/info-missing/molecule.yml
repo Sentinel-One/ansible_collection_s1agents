@@ -22,6 +22,8 @@ platforms:
     cpus: 2
     config_options:
       synced_folder: false
+    instance_raw_config_args:
+      - "vm.boot_timeout = 1800"
     provider_options:
       linked_clone: true
 
