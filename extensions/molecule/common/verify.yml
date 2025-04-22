@@ -94,7 +94,7 @@
           ansible.builtin.assert:
             that:
               - s1_new_exe_return_codes is defined
-              - s1_new_exe_return_codes | length == 6
+              - s1_new_exe_return_codes | length == 8
 
         - name: Assert s1_msi_return_codes is defined
           ansible.builtin.assert:
