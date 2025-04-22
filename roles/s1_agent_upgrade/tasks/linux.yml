@@ -5,7 +5,7 @@
   ansible.builtin.assert:
     that:
       - s1_prior_version is version('22.2.2.2', '>=')
-    fail_msg: You must upgrade to agent version 22.2.2.2 before you can upgrade to {{ s1_agent_version }}
+    fail_msg: "You must upgrade to agent version 22.3 before you can upgrade to {{ s1_agent_version }}: https://community.sentinelone.com/s/article/000005408"
     success_msg: Agent can be upgraded in-place
   when:
     - s1_agent_version is version('22.3', '>=')
