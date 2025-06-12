@@ -15,7 +15,7 @@
   ansible.builtin.include_role:
     name: s1_mgmt_get_passphrase
   when:
-    - s1_prior_version is version('22.3', '<')
+    - (s1_prior_version is version('22.3', '<')) or (s1_prior_version is version('25.1.3', '>='))
     - s1_agent_passphrase is undefined
     - not s1_forced_remove | default('false') | bool
 
@@ -56,7 +56,7 @@
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_pass_result.stdout'
       when:
-        - s1_prior_version is version('22.3', '<')
+        - (s1_prior_version is version('22.3', '<')) or (s1_prior_version is version('25.1.3', '>='))
         - not s1_install_gpg_signed_rpm | default('no') | bool
 
     - name: Show s1_upgrade_pass_result
@@ -74,7 +74,7 @@
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_results.stdout'
       when:
-        - s1_prior_version is version('22.3', '>=')
+        - (s1_prior_version is version('22.3', '>=')) or (s1_prior_version is version('25.1.3', '<'))
 
     - name: Show s1_upgrade_results
       ansible.builtin.debug:
