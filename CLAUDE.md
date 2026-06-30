@@ -43,6 +43,16 @@ trunk fmt            # auto-format
 
 Active linters: `yamllint`, `markdownlint`, `prettier`, `ansible-lint` (via checkov), `actionlint`, `trufflehog`.
 
+## Python Environment
+
+Use the `ansible-2.16` pyenv environment for all molecule and ansible commands in this project:
+
+```bash
+pyenv shell ansible-2.16
+```
+
+Or prefix commands with `PYENV_VERSION=ansible-2.16`.
+
 ## Testing with Molecule
 
 Molecule scenarios live in `extensions/molecule/<scenario>/`. All scenarios use the **Vagrant driver** (VirtualBox or libvirt) and require a live SentinelOne Management Console.
@@ -133,3 +143,17 @@ When adding support for new Windows agent versions, update the `s1_product_id` m
 ## Linux 2-Step Upgrade
 
 Agents older than 22.2.2.2 cannot be upgraded directly to versions newer than 22.2.2.2 when using GPG-signed RPMs. The `upgrade` role handles the ≥25.1.3 passphrase requirement. See `playbooks/example_upgrade_linux_with_gpg_signed_package.yml` for the 2-step upgrade pattern.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs live as local markdown under `.scratch/<feature>/` (no external PR triage surface). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical states with default strings (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
