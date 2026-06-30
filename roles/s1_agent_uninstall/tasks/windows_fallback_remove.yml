@@ -20,6 +20,7 @@
       - "{{ s1_agent_passphrase }}"
     wait_for_children: true
   become: true
+  no_log: true
   register: s1_uninstall_log
   when: s1_image_path.exists | bool
   notify: "{{ s1_reboot_handler_name }}"

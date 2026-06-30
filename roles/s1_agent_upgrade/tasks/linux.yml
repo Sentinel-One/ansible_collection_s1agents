@@ -48,7 +48,9 @@
       become: true
 
     - name: Upgrade SentinelOne agent with passphrase | Linux
-      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"
+      ansible.builtin.command:
+        cmd: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
+        stdin: "{{ s1_agent_passphrase }}"
       notify: "{{ s1_service_handler_name }}"
       become: true
       no_log: true

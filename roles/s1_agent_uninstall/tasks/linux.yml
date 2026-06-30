@@ -6,8 +6,11 @@
     - not s1_forced_remove | default('false') | bool
   block:
     - name: Uninstall SentinelOne agent | Linux
-      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control uninstall --passphrase "{{ s1_agent_passphrase }}"
+      ansible.builtin.command:
+        cmd: /opt/sentinelone/bin/sentinelctl control uninstall
+        stdin: "{{ s1_agent_passphrase }}"
       become: true
+      no_log: true
       register: s1_sentinelctl_uninstall
       retries: 3
       delay: 30
