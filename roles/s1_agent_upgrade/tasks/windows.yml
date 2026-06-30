@@ -42,12 +42,12 @@
       delay: 10
       become: false
       check_mode: false
-      no_log: "{{ ansible_verbosity < 3 }}"
+      no_log: true
       delegate_to: localhost
 
     - name: Show Approve Local Upgrade results | Windows
       ansible.builtin.debug:
-        var: s1_local_upgrade_result
+        msg: "status={{ s1_local_upgrade_result.status }}, data={{ s1_local_upgrade_result.json.data | length }}"
       delegate_to: localhost
       tags:
         - never

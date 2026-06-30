@@ -52,11 +52,11 @@
       delay: 10
       become: false
       check_mode: false
-      no_log: "{{ ansible_verbosity < 3 }}"
+      no_log: true
 
     - name: Show API results
       ansible.builtin.debug:
-        var: s1_passphrase_result
+        msg: "status={{ s1_passphrase_result.status }}, results={{ s1_passphrase_result.json.data | length }}"
       tags:
         - never
         - debug
@@ -64,7 +64,7 @@
 - name: Set agent passphrase
   ansible.builtin.set_fact:
     s1_agent_passphrase: "{{ (s1_passphrase_result.json.data | list | first).passphrase }}"
-  no_log: "{{ ansible_verbosity < 3 }}"
+  no_log: true
 
 - name: Gather network facts
   when:

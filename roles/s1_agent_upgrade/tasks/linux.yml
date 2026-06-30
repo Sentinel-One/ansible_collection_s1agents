@@ -51,7 +51,7 @@
       ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"
       notify: "{{ s1_service_handler_name }}"
       become: true
-      no_log: "{{ ansible_verbosity < 3 }}"
+      no_log: true
       register: s1_upgrade_pass_result
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_pass_result.stdout'
@@ -61,7 +61,7 @@
 
     - name: Show s1_upgrade_pass_result
       ansible.builtin.debug:
-        var: s1_upgrade_pass_result
+        msg: "rc={{ s1_upgrade_pass_result.rc | default('') }}, changed={{ s1_upgrade_pass_result.changed | default('') }}"
       tags:
         - never
         - debug
