@@ -114,8 +114,14 @@
         - never
         - debug
 
-    - name: Install SentinelOne RPM package | Linux
-      ansible.builtin.command: rpm -i --nodigest '{{ s1_agent_path }}' # noqa command-instead-of-module
+    - name: Install SentinelOne RPM package | Linux  # noqa command-instead-of-module
+      ansible.builtin.command:
+        # --nodigest was an EOL accommodation for pre-23.3 unsigned RPMs.
+        # Pre-23.3 unsigned installs are no longer supported. See ADR 0002.
+        argv:
+          - rpm
+          - -i
+          - "{{ s1_agent_path }}"
       environment:
         S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
       become: true
