@@ -82,3 +82,21 @@ recent (non-EOL) packages.
 **2-step upgrade**: A Linux upgrade from Agent version 22.2 or below requires
 two upgrades — an intermediate hop (e.g. to 22.3) before the target version
 (e.g. 21.7 → 22.3 → 23.3).
+
+### Testing & environment
+
+**Test harness**: `scripts/molecule.py` — the thin Python orchestrator over
+molecule (run on the `ansible-2.16` pyenv) that provides one stable,
+allowlistable command, file-based logs under `.molecule-logs/`, and a compact
+summary. The single entry point for the agent, end users, and CI. See
+[ADR 0005](./docs/adr/0005-molecule-test-harness.md).
+
+**Proxy**: The corporate TLS-inspecting egress proxy between the controller and
+the Management Console. When its auth token expires it resets inspected TLS
+connections, surfacing as `SSL: UNEXPECTED_EOF` on console API calls — a
+*transient infrastructure* error, not a playbook failure. _Avoid_: naming the
+specific vendor product in committed artifacts.
+
+**Transient infrastructure error**: A non-deterministic environmental failure
+(proxy TLS reset, SSH `Connection reset` during VM boot) distinct from a real
+test failure. The test harness signals it with exit code `75`.
