@@ -94,6 +94,9 @@ def build_env(platform: str, env_file: Path) -> dict[str, str]:
     env.update(os.environ)                    # process env / CI secrets win
     env.update(preset_for(platform))          # explicit platform wins for VM cfg
     env["PYENV_VERSION"] = PYENV
+    # Disable ANSI color so the streamed .log is clean (matches ANSIBLE_LOG_PATH).
+    env["ANSIBLE_NOCOLOR"] = "1"
+    env["PY_COLORS"] = "0"
     return env
 
 
