@@ -1,0 +1,13 @@
+---
+# Merge-gating matrix for `molecule.py gate` — scenarios x platforms.
+# Edit this (not the script) to change what the gate runs. See ADR 0005.
+- scenario: default
+  platforms: [rocky8, ubuntu2204, windows]
+- scenario: upgrade
+  platforms: [rocky8, windows]
+- scenario: uninstall
+  platforms: [rocky8, windows]
+- scenario: gpgkey
+  platforms: [rocky8]
+- scenario: common
+  platforms: [rocky8]

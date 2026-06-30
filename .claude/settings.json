@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYENV_VERSION=ansible-2.16 python scripts/molecule.py:*)"
+    ]
+  }
+}
