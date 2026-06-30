@@ -1,0 +1,71 @@
+---
+# Conditional input validation. Every assert is guarded by defined-and-not-none
+# so runs without the variable set (e.g. info/uuid-only runs) are unaffected.
+# See docs/adr/0001-trust-model.md.
+
+- name: Validate s1_agent_management_proxy shape
+  ansible.builtin.assert:
+    that:
+      - s1_agent_management_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
+      - s1_agent_management_proxy is not search('[;|&`$\s]')
+    fail_msg: >-
+      s1_agent_management_proxy must be a URL or host:port with no shell
+      metacharacters or whitespace. Rejected: {{ s1_agent_management_proxy }}
+  when:
+    - s1_agent_management_proxy is defined
+    - s1_agent_management_proxy is not none
+    - s1_agent_management_proxy | string | length > 0
+
+- name: Validate s1_agent_dv_proxy shape
+  ansible.builtin.assert:
+    that:
+      - s1_agent_dv_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
+      - s1_agent_dv_proxy is not search('[;|&`$\s]')
+    fail_msg: >-
+      s1_agent_dv_proxy must be a URL or host:port with no shell
+      metacharacters or whitespace. Rejected: {{ s1_agent_dv_proxy }}
+  when:
+    - s1_agent_dv_proxy is defined
+    - s1_agent_dv_proxy is not none
+    - s1_agent_dv_proxy | string | length > 0
+
+- name: Validate s1_agent_customer_id
+  ansible.builtin.assert:
+    that:
+      - s1_agent_customer_id is match('^[A-Za-z0-9_.-]+$')
+    fail_msg: >-
+      s1_agent_customer_id must contain only alphanumerics, underscores, dots,
+      and hyphens. Rejected: {{ s1_agent_customer_id }}
+  when:
+    - s1_agent_customer_id is defined
+    - s1_agent_customer_id is not none
+    - s1_agent_customer_id | string | length > 0
+
+- name: Validate s1_agent_custom_install_path
+  ansible.builtin.assert:
+    that:
+      # Absolute path with at least two path components (rejects '/', '/usr', etc.)
+      - s1_agent_custom_install_path is match('^/[^/\s"\']+/[^/\s"\']+')
+      # No traversal
+      - s1_agent_custom_install_path is not search('\.\.')
+    fail_msg: >-
+      s1_agent_custom_install_path must be an absolute path with at least two
+      path components, no '..' traversal, no quotes, and no whitespace.
+      Rejected: {{ s1_agent_custom_install_path }}
+  when:
+    - s1_agent_custom_install_path is defined
+    - s1_agent_custom_install_path is not none
+    - s1_agent_custom_install_path | string | length > 0
+
+- name: Validate s1_agent_src path shape
+  ansible.builtin.assert:
+    that:
+      - s1_agent_src is match('^/')
+      - s1_agent_src is not search('[;|&`$"\'\\s]')
+    fail_msg: >-
+      s1_agent_src must be an absolute path with no shell metacharacters,
+      quotes, or whitespace. Rejected: {{ s1_agent_src }}
+  when:
+    - s1_agent_src is defined
+    - s1_agent_src is not none
+    - s1_agent_src | string | length > 0
