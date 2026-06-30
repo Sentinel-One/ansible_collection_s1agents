@@ -12,21 +12,14 @@
           - s1_download_path is not none
           - s1_download_path | length
 
-    - name: Assert s1_tmp_linux is defined
+    # s1_tmp_linux / s1_tmp_windows are now optional overrides (undefined by
+    # default); the work directory is resolved at install/upgrade time into the
+    # cacheable s1_work_dir fact. See docs/adr/0004-tempfile-work-dirs.md.
+    - name: Assert work-dir overrides are not set by default
       ansible.builtin.assert:
         that:
-          - s1_tmp_linux is defined
-          - s1_tmp_linux is not none
-          - s1_tmp_linux | length
-      when: ansible_system == "Linux"
-
-    - name: Assert s1_tmp_windows is defined
-      ansible.builtin.assert:
-        that:
-          - s1_tmp_windows is defined
-          - s1_tmp_windows is not none
-          - s1_tmp_windows | length
-      when: ansible_os_family == "Windows"
+          - s1_tmp_linux is not defined
+          - s1_tmp_windows is not defined
 
     - name: Assert s1_supported_os_family is defined
       ansible.builtin.assert:

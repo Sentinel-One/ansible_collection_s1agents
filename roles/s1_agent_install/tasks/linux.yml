@@ -50,27 +50,28 @@
       - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
     fail_msg: System Instability Detected
 
+- name: Create working directory | Linux
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: create_work_dir.yml
+
 - name: Set SentinelOne agent path | Linux
   ansible.builtin.set_fact:
-    s1_agent_path: "{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}"
-
-- name: Create working directory | Linux
-  ansible.builtin.file:
-    path: "{{ s1_tmp_linux }}"
-    state: directory
-    mode: "0755"
+    s1_agent_path: "{{ s1_work_dir }}/{{ s1_agent_src | basename }}"
 
 - name: Copy SentinelOne agent | Linux
   ansible.builtin.copy:
     src: "{{ s1_agent_src }}"
     dest: "{{ s1_agent_path }}"
     mode: "0755"
+  become: true
 
 - name: Create configuration file | Linux
   ansible.builtin.template:
     src: linux_agent_config.cfg.j2
-    dest: "{{ s1_tmp_linux }}/s1_config.cfg"
+    dest: "{{ s1_work_dir }}/s1_config.cfg"
     mode: "0744"
+  become: true
 
 - name: Import the SentinelOne GPG Key | Red Hat Family
   ansible.builtin.include_role:
@@ -86,7 +87,7 @@
     state: present
     use_backend: '{{ (ansible_pkg_mgr == "zypper") | ternary("yum4", "auto") }}'
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
   become: true
   notify: "{{ s1_service_handler_name }}"
   when:
@@ -116,7 +117,7 @@
     - name: Install SentinelOne RPM package | Linux
       ansible.builtin.command: rpm -i --nodigest '{{ s1_agent_path }}' # noqa command-instead-of-module
       environment:
-        S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+        S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
       become: true
       notify: "{{ s1_service_handler_name }}"
       register: s1_rpm_install_result
@@ -135,14 +136,16 @@
     deb: "{{ s1_agent_path }}"
     state: present
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
   become: true
   notify: "{{ s1_service_handler_name }}"
   when: ansible_pkg_mgr in apt_pkg_mgrs
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: "{{ s1_tmp_linux }}"
+    path: "{{ s1_work_dir }}"
     state: absent
+    follow: false
+  become: true
   tags:
     - molecule-notest

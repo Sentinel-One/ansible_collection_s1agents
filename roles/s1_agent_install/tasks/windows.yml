@@ -36,20 +36,20 @@
     - s1_product_id[s1_agent_win_file_ver] is defined
     - s1_agent_product_id is undefined
 
+- name: Create working directory | Windows
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: create_work_dir.yml
+
 - name: Set SentinelOne agent path | Windows
   ansible.builtin.set_fact:
-    s1_agent_path: "{{ s1_tmp_windows }}\\{{ s1_agent_src | basename }}"
+    s1_agent_path: "{{ s1_work_dir }}\\{{ s1_agent_src | basename }}"
 
 - name: Set SentinelOne agent parameters | Windows
   ansible.builtin.set_fact:
     # yamllint disable-line rule:line-length
     s1_agent_silent_cmd: "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2'))) }}"
     s1_agent_return_code: "{{ s1_install_msi | default('no') | bool | ternary(s1_msi_return_codes, s1_new_exe_return_codes) }}"
-
-- name: Create working directory | Windows
-  ansible.windows.win_file:
-    path: "{{ s1_tmp_windows }}"
-    state: directory
 
 - name: Copy SentinelOne agent | Windows
   ansible.windows.win_copy:
@@ -81,7 +81,7 @@
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:
-    path: "{{ s1_tmp_windows }}"
+    path: "{{ s1_work_dir }}"
     state: absent
   tags:
     - molecule-notest

@@ -19,6 +19,11 @@
     - s1_agent_passphrase is undefined
     - not s1_forced_remove | default('false') | bool
 
+- name: Create working directory | Linux
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: create_work_dir.yml
+
 - name: Import the SentinelOne GPG Key | Red Hat Family
   ansible.builtin.include_role:
     name: s1_import_gpg_key
@@ -29,23 +34,18 @@
 
 - name: Set SentinelOne agent path | Linux
   ansible.builtin.set_fact:
-    s1_agent_path: "{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}"
+    s1_agent_path: "{{ s1_work_dir }}/{{ s1_agent_src | basename }}"
 
 - name: Upgrade Linux Agent
   when:
     - s1_prior_version|default('0') is version(s1_agent_version, '<')
   block:
-    - name: Create working directory | Linux
-      ansible.builtin.file:
-        path: "{{ s1_tmp_linux }}"
-        state: directory
-        mode: "0755"
-
     - name: Copy SentinelOne agent | Linux
       ansible.builtin.copy:
         src: "{{ s1_agent_src }}"
         dest: "{{ s1_agent_path }}"
         mode: "0755"
+      become: true
 
     - name: Upgrade SentinelOne agent with passphrase | Linux
       ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }} --passphrase "{{ s1_agent_passphrase }}"
@@ -74,7 +74,7 @@
       changed_when:
         - '"Agent upgrade successful" in s1_upgrade_results.stdout'
       when:
-        - (s1_prior_version is version('22.3', '>=')) or (s1_prior_version is version('25.1.3', '<'))
+        - (s1_prior_version is version('22.3', '>=')) and (s1_prior_version is version('25.1.3', '<'))
 
     - name: Show s1_upgrade_results
       ansible.builtin.debug:
@@ -85,7 +85,9 @@
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: "{{ s1_tmp_linux }}"
+    path: "{{ s1_work_dir }}"
     state: absent
+    follow: false
+  become: true
   tags:
     - molecule-notest
