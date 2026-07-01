@@ -114,7 +114,7 @@
         - never
         - debug
 
-    - name: Install SentinelOne RPM package | Linux  # noqa command-instead-of-module
+    - name: Install SentinelOne RPM package | Linux # noqa command-instead-of-module
       ansible.builtin.command:
         # --nodigest was an EOL accommodation for pre-23.3 unsigned RPMs.
         # Pre-23.3 unsigned installs are no longer supported. See ADR 0002.

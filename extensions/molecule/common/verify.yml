@@ -33,12 +33,6 @@
           - s1_supported_linux_distribution is defined
           - s1_supported_linux_distribution | length == 13
 
-    - name: Assert s1_supported_linux_distribution is defined
-      ansible.builtin.assert:
-        that:
-          - s1_supported_linux_distribution is defined
-          - s1_supported_linux_distribution | length == 13
-
     - name: Assert rpm_pkg_mgrs is defined
       ansible.builtin.assert:
         that:
