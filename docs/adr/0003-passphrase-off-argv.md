@@ -18,7 +18,7 @@ before merge.
 
 - The producer/consumer tasks that handle the passphrase and API token carry
   **unconditional `no_log: true`** (replacing the `no_log: "{{ ansible_verbosity
-  < 3 }}"` anti-pattern, which disabled redaction at the routine `-vvv`). Debug
+< 3 }}"` anti-pattern, which disabled redaction at the routine `-vvv`). Debug
   `Show …` tasks are changed to print structure/status, never the raw secret.
 - Windows places the value in `Win32_Process.CommandLine`, which is not
   world-exposed the way `/proc` is; right-sized to Low and handled with

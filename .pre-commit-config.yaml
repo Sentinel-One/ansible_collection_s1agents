@@ -1,0 +1,25 @@
+# Linting is split by domain (see docs/adr/0006-linting-toolchain.md):
+#   - prettier    -> Markdown + JSON formatting (YAML is excluded, see .prettierignore)
+#   - trufflehog  -> committed-secret scanning (uses the locally installed binary)
+#   - ansible-lint -> YAML/playbook correctness; run separately, see CLAUDE.md
+#
+# Hooks are NOT auto-installed. Run on demand:
+#   pre-commit run --all-files
+---
+repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: "v3.1.0"
+    hooks:
+      - id: prettier
+        # pre-commit provisions its own Node runtime for this hook.
+        types_or: [markdown, json]
+        additional_dependencies:
+          - prettier@3.5.3
+
+  - repo: local
+    hooks:
+      - id: trufflehog
+        name: trufflehog secret scan
+        entry: trufflehog git file://. --since-commit HEAD --results=verified,unknown --fail
+        language: system
+        pass_filenames: false

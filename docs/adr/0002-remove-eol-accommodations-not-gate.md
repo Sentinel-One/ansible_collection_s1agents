@@ -1,7 +1,7 @@
 # Drop EOL support by removing accommodations, not by gating versions
 
 The `rpm -i --nodigest` flag (install/linux.yml) disables digest verification.
-It exists *only* to let pre-23.3 unsigned RPMs — which carry no header digest —
+It exists _only_ to let pre-23.3 unsigned RPMs — which carry no header digest —
 install at all; modern/supported packages have digests. Rather than add a
 minimum-version assertion that actively blocks End-of-Life installs, we **remove
 the accommodation**: drop `--nodigest` so rpm's own digest verification is
@@ -24,12 +24,12 @@ do **not** add forced version gates.
 
 ## Consequences
 
-- An inline comment + docs note records *why* `--nodigest` was removed, so it is
+- An inline comment + docs note records _why_ `--nodigest` was removed, so it is
   not "helpfully" re-added later for old agents.
 - This change is Linux-RPM-only; `--nodigest` exists in exactly one task — the
   fresh `rpm -i` install path.
 - **Breaking change, narrowly scoped.** The only thing that stops working is a
-  *fresh install* of a pre-23.3 *unsigned* RPM. Upgrades *from* old versions are
+  _fresh install_ of a pre-23.3 _unsigned_ RPM. Upgrades _from_ old versions are
   unaffected: they run through `sentinelctl control upgrade` (not `rpm -i`), and
   the documented two-step upgrade additionally uses the GPG-signed branch — so
   the intermediate hop never relied on `--nodigest`. A signed pre-23.3 package

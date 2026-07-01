@@ -127,10 +127,10 @@ s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
 s1_validate_certs: true
 s1_product_id:
-  v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
-  v22_3_1_185_32_bit: '{5548CA13-E999-4066-8F6E-D31776C2143C}'
-  v22_2_4_558_64_bit: '{5A990909-DD22-48FA-BD8B-F564AFC81C4B}'
-  v22_2_4_558_32_bit: '{009923EA-54DD-4CF5-BF76-BE5C7EA048EE}'
+  v22_3_1_185_64_bit: "{547BC474-095C-4BFF-9D4E-7B6D2805C890}"
+  v22_3_1_185_32_bit: "{5548CA13-E999-4066-8F6E-D31776C2143C}"
+  v22_2_4_558_64_bit: "{5A990909-DD22-48FA-BD8B-F564AFC81C4B}"
+  v22_2_4_558_32_bit: "{009923EA-54DD-4CF5-BF76-BE5C7EA048EE}"
 ```
 
 #### s1_agent_download
@@ -139,16 +139,16 @@ s1_product_id:
 s1_agent_version:
 s1_release_n_minus: 1
 s1_package_availability:
-    - Ga
+  - Ga
 ```
 
 ## Dependencies
 
-* [s1_agent_download](../s1_agent_download/) role: automatically downloads the SentinelOne agent if `s1_agent_src` is unset. Requires that the `s1_management_console` and `s1_api_token` variables are defined.
-* [s1_import_gpg_key](../s1_import_gpg_key/) role: only executed on the Red Hat family of operating systems.
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
-* [community.windows](https://docs.ansible.com/ansible/latest/collections/community/windows/index.html)
+- [s1_agent_download](../s1_agent_download/) role: automatically downloads the SentinelOne agent if `s1_agent_src` is unset. Requires that the `s1_management_console` and `s1_api_token` variables are defined.
+- [s1_import_gpg_key](../s1_import_gpg_key/) role: only executed on the Red Hat family of operating systems.
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [community.windows](https://docs.ansible.com/ansible/latest/collections/community/windows/index.html)
 
 ## Example Playbooks
 

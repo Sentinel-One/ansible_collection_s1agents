@@ -1,51 +1,73 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with
+code in this repository.
 
 ## Collection Overview
 
-This is the `sentinelone.s1agents` Ansible collection (`galaxy.yml`) that manages the full lifecycle of the SentinelOne agent on Linux and Windows endpoints. It interacts with both target endpoints (via Ansible modules) and the SentinelOne Management Console (via REST API using `s1_api_token`).
+This is the `sentinelone.s1agents` Ansible collection (`galaxy.yml`) that
+manages the full lifecycle of the SentinelOne agent on Linux and Windows
+endpoints. It interacts with both target endpoints (via Ansible modules) and the
+SentinelOne Management Console (via REST API using `s1_api_token`).
 
 ## Roles
 
-| Role | Purpose |
-|------|---------|
-| `s1_agent_common` | Loads OS-specific vars (distro package names, product IDs); must run before all other roles |
-| `s1_agent_info` | Gathers installed agent status without making changes |
-| `s1_agent_download` | Downloads agent packages from the Management Console API to `s1_download_path` on the controller |
-| `s1_agent_install` | Installs the agent package on endpoints |
-| `s1_agent_upgrade` | Upgrades an existing agent; handles the 2-step upgrade path required for Linux ≥25.1.3 |
-| `s1_agent_uninstall` | Removes the agent; requires passphrase retrieval on newer agents |
-| `s1_agent_uuid` | Reports agent UUIDs from the management console |
-| `s1_import_gpg_key` | Imports the SentinelOne GPG key on RPM-based systems |
-| `s1_mgmt_get_passphrase` | Fetches per-endpoint uninstall/upgrade passphrase from the Management Console API |
+| Role                     | Purpose                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| `s1_agent_common`        | Loads OS-specific vars (distro package names, product IDs); must run before all other roles      |
+| `s1_agent_info`          | Gathers installed agent status without making changes                                            |
+| `s1_agent_download`      | Downloads agent packages from the Management Console API to `s1_download_path` on the controller |
+| `s1_agent_install`       | Installs the agent package on endpoints                                                          |
+| `s1_agent_upgrade`       | Upgrades an existing agent; handles the 2-step upgrade path required for Linux ≥25.1.3           |
+| `s1_agent_uninstall`     | Removes the agent; requires passphrase retrieval on newer agents                                 |
+| `s1_agent_uuid`          | Reports agent UUIDs from the management console                                                  |
+| `s1_import_gpg_key`      | Imports the SentinelOne GPG key on RPM-based systems                                             |
+| `s1_mgmt_get_passphrase` | Fetches per-endpoint uninstall/upgrade passphrase from the Management Console API                |
 
-`s1_agent_common` loads vars from `roles/s1_agent_common/vars/<os_family>.yml` (e.g. `redhat.yml`, `debian.yml`, `windows.yml`, `suse.yml`). The `windows.yml` file contains the `s1_product_id` map (version→GUID) that drives Windows idempotence — this needs periodic updates as new agent versions release.
+`s1_agent_common` loads vars from `roles/s1_agent_common/vars/<os_family>.yml`
+(e.g. `redhat.yml`, `debian.yml`, `windows.yml`, `suse.yml`). The `windows.yml`
+file contains the `s1_product_id` map (version→GUID) that drives Windows
+idempotence — this needs periodic updates as new agent versions release.
 
 ## Key Variables
 
 - `s1_management_console` — URL of the SentinelOne console
 - `s1_api_token` — API token (never commit; pass via vault or env)
 - `s1_agent_site_token` — Site token for registering new agents
-- `s1_download_path` — Controller-local cache dir (default `/tmp/s1_agent_cache`)
+- `s1_download_path` — Controller-local cache dir (default
+  `/tmp/s1_agent_cache`)
 - `s1_agent_version` — Specific agent version to install/upgrade to
 - `s1_validate_certs` — Set `false` for on-prem consoles with self-signed certs
 
 ## Linting
 
-The project uses [Trunk](https://docs.trunk.io) to manage linters.
+Linting is split by domain — see `docs/adr/0006-linting-toolchain.md`. Run both
+before committing.
+
+**pre-commit** drives prettier (Markdown + JSON formatting) and trufflehog
+(committed-secret scanning). The git hooks are intentionally **not** installed;
+run on demand. pre-commit provisions its own Node runtime for prettier, so no
+system Node is required. trufflehog must be installed locally.
 
 ```bash
-trunk check          # lint all changed files
-trunk check --all    # lint entire repo
-trunk fmt            # auto-format
+pre-commit run --all-files   # prettier (md/json) + trufflehog secret scan
 ```
 
-Active linters: `yamllint`, `markdownlint`, `prettier`, `ansible-lint` (via checkov), `actionlint`, `trufflehog`.
+Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`)
+and owned by ansible-lint.
+
+**ansible-lint** checks Ansible correctness (FQCN, task naming, idempotence,
+`production` profile) and bundles yamllint for YAML style. Requires the
+`ansible-2.16` pyenv environment:
+
+```bash
+PYENV_VERSION=ansible-2.16 ansible-lint
+```
 
 ## Python Environment
 
-Use the `ansible-2.16` pyenv environment for all molecule and ansible commands in this project:
+Use the `ansible-2.16` pyenv environment for all molecule and ansible commands
+in this project:
 
 ```bash
 pyenv shell ansible-2.16
@@ -55,7 +77,9 @@ Or prefix commands with `PYENV_VERSION=ansible-2.16`.
 
 ## Testing with Molecule
 
-Molecule scenarios live in `extensions/molecule/<scenario>/`. All scenarios use the **Vagrant driver** (VirtualBox or libvirt) and require a live SentinelOne Management Console.
+Molecule scenarios live in `extensions/molecule/<scenario>/`. All scenarios use
+the **Vagrant driver** (VirtualBox or libvirt) and require a live SentinelOne
+Management Console.
 
 ### Required Environment Variables
 
@@ -75,7 +99,8 @@ export VAGRANT_DEFAULT_PROVIDER=virtualbox   # or libvirt
 
 ### Running Tests
 
-All tests run through `scripts/molecule.py`. Run from the repo root with the `ansible-2.16` pyenv environment active.
+All tests run through `scripts/molecule.py`. Run from the repo root with the
+`ansible-2.16` pyenv environment active.
 
 ```bash
 # Run all gate scenarios (same as CI)
@@ -90,16 +115,19 @@ python scripts/molecule.py test <scenario>
 
 **Platform presets:**
 
-| Preset | Distro | Notes |
-|--------|--------|-------|
-| `rocky8` | Rocky Linux 8 | Default Linux (roboxes) |
-| `ubuntu2204` | Ubuntu 22.04 | (roboxes) |
-| `opensuse15` | OpenSUSE Leap 15 | (roboxes) |
-| `windows` | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
+| Preset       | Distro              | Notes                                |
+| ------------ | ------------------- | ------------------------------------ |
+| `rocky8`     | Rocky Linux 8       | Default Linux (roboxes)              |
+| `ubuntu2204` | Ubuntu 22.04        | (roboxes)                            |
+| `opensuse15` | OpenSUSE Leap 15    | (roboxes)                            |
+| `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
 
-**Logs** are written to `.molecule-logs/<scenario>-<platform>.log`. Exit code 75 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and retry rather than treating it as a test failure.
+**Logs** are written to `.molecule-logs/<scenario>-<platform>.log`. Exit code 75
+means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
+retry rather than treating it as a test failure.
 
-**macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` automatically.
+**macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
+automatically.
 
 To run raw molecule steps for development (from `extensions/`):
 
@@ -111,22 +139,25 @@ S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
 
 ### Molecule Scenarios
 
-All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in `scripts/gate.yml`.
+All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in
+`scripts/gate.yml`.
 
-| Scenario | Platforms | Tests |
-|----------|-----------|-------|
-| `common` | Linux + Windows | `s1_agent_common` var loading |
-| `default` | Linux + Windows | Full install → verify |
-| `download` | Linux + Windows | Package download from console |
-| `gpgkey` | Linux (RPM) | GPG key import |
-| `info-installed` | Linux + Windows | `s1_agent_info` with agent present |
-| `info-missing` | Linux + Windows | `s1_agent_info` without agent present |
-| `passphrase` | Linux + Windows | Passphrase retrieval from console |
-| `uninstall` | Linux + Windows | Agent removal with passphrase |
-| `upgrade` | Linux + Windows | Agent upgrade flow |
-| `uuid` | Linux + Windows | UUID report from console |
+| Scenario         | Platforms       | Tests                                 |
+| ---------------- | --------------- | ------------------------------------- |
+| `common`         | Linux + Windows | `s1_agent_common` var loading         |
+| `default`        | Linux + Windows | Full install → verify                 |
+| `download`       | Linux + Windows | Package download from console         |
+| `gpgkey`         | Linux (RPM)     | GPG key import                        |
+| `info-installed` | Linux + Windows | `s1_agent_info` with agent present    |
+| `info-missing`   | Linux + Windows | `s1_agent_info` without agent present |
+| `passphrase`     | Linux + Windows | Passphrase retrieval from console     |
+| `uninstall`      | Linux + Windows | Agent removal with passphrase         |
+| `upgrade`        | Linux + Windows | Agent upgrade flow                    |
+| `uuid`           | Linux + Windows | UUID report from console              |
 
-`extensions/molecule/common/` also provides shared Jinja2 templates (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other scenarios.
+`extensions/molecule/common/` also provides shared Jinja2 templates
+(`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other
+scenarios.
 
 ## Building the Collection
 
@@ -143,22 +174,29 @@ ansible-galaxy collection install -r requirements.yml
 
 ## Windows Idempotence Note
 
-When adding support for new Windows agent versions, update the `s1_product_id` map in `roles/s1_agent_common/vars/windows.yml` with the new version's GUID. Without this, molecule idempotence tests will falsely fail on the install task.
+When adding support for new Windows agent versions, update the `s1_product_id`
+map in `roles/s1_agent_common/vars/windows.yml` with the new version's GUID.
+Without this, molecule idempotence tests will falsely fail on the install task.
 
 ## Linux 2-Step Upgrade
 
-Agents older than 22.2.2.2 cannot be upgraded directly to versions newer than 22.2.2.2 when using GPG-signed RPMs. The `upgrade` role handles the ≥25.1.3 passphrase requirement. See `playbooks/example_upgrade_linux_with_gpg_signed_package.yml` for the 2-step upgrade pattern.
+Agents 22.2 and older cannot be upgraded directly to newer versions. See
+`playbooks/example_upgrade_linux_with_gpg_signed_package.yml` for the 2-step
+upgrade pattern.
 
 ## Agent skills
 
 ### Issue tracker
 
-Issues and PRDs live as local markdown under `.scratch/<feature>/` (no external PR triage surface). See `docs/agents/issue-tracker.md`.
+Issues and PRDs live as local markdown under `.scratch/<feature>/` (no external
+PR triage surface). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
-Five canonical states with default strings (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+Five canonical states with default strings (needs-triage, needs-info,
+ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
-Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See
+`docs/agents/domain.md`.

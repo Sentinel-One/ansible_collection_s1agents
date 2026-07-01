@@ -44,11 +44,12 @@ and runs it on the same runner that holds secrets. A malicious PR can exfiltrate
 all secrets accessible to the runner.
 
 **Fix.**
+
 - Use **ephemeral runners** for untrusted code (each run gets a clean VM).
 - Require maintainer approval before running CI on PRs from outside
   collaborators (`pull_request_target` with environment protection, or
   the "Require approval for first-time contributors" setting).
 - Pin all third-party actions to a full commit SHA (not a mutable tag):
   ```yaml
-  uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+  uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
   ```

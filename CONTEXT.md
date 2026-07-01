@@ -13,8 +13,8 @@ release, during which the version still receives limited support. Per the
 SentinelOne agent lifecycle (GA 0–9 months, EOS 9–15 months, EOL 15+ months).
 
 **End of Life (EOL)**: Lifecycle phase 15+ months after release. The collection
-no longer supports *installing* versions that have been EOL for more than a
-year, though *upgrading from* an EOL version remains supported. _Avoid_:
+no longer supports _installing_ versions that have been EOL for more than a
+year, though _upgrading from_ an EOL version remains supported. _Avoid_:
 deprecated, unsupported (too vague — name the phase).
 
 **Legacy Plus** (Windows-only): A SentinelOne category of older Windows OSes
@@ -61,7 +61,7 @@ are part of the trusted control plane, so "inject via host_var" crosses no
 privilege boundary.
 
 **AWX/survey model**: Deployment under AWX/AAP where lower-privileged users
-supply variables via job-template surveys. Here the variable-setter is *not* the
+supply variables via job-template surveys. Here the variable-setter is _not_ the
 play author, so unvalidated operator inputs become a real hardening obligation
 for this collection as a vendor — see
 [ADR 0001](./docs/adr/0001-trust-model.md).
@@ -94,7 +94,7 @@ summary. The single entry point for the agent, end users, and CI. See
 **Proxy**: The corporate TLS-inspecting egress proxy between the controller and
 the Management Console. When its auth token expires it resets inspected TLS
 connections, surfacing as `SSL: UNEXPECTED_EOF` on console API calls — a
-*transient infrastructure* error, not a playbook failure. _Avoid_: naming the
+_transient infrastructure_ error, not a playbook failure. _Avoid_: naming the
 specific vendor product in committed artifacts.
 
 **Transient infrastructure error**: A non-deterministic environmental failure
