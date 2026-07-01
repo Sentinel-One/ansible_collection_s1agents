@@ -32,3 +32,8 @@ was used before. Editor integration lives in `.vscode/settings.json`
 - Markdown is prose-wrapped by prettier. Doc edits should be run through
   `pre-commit run --all-files` (or format-on-save) to avoid reflow churn in
   review.
+- The toolchain (including `pre-commit` itself) is declared in
+  `requirements-dev.txt` and installed via **uv** into a single repo-local
+  `.venv` (see
+  [ADR 0007](./0007-uv-managed-venv-toolchain.md)), so every tool here runs as
+  `.venv/bin/<tool>` with no personal environment setup required.

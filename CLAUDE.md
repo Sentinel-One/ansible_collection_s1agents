@@ -57,23 +57,47 @@ Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`
 and owned by ansible-lint.
 
 **ansible-lint** checks Ansible correctness (FQCN, task naming, idempotence,
-`production` profile) and bundles yamllint for YAML style. Requires the
-`ansible-2.16` pyenv environment:
+`production` profile) and bundles yamllint for YAML style. Runs from the
+project `.venv` (see below):
 
 ```bash
-PYENV_VERSION=ansible-2.16 ansible-lint
+.venv/bin/ansible-lint
 ```
 
 ## Python Environment
 
-Use the `ansible-2.16` pyenv environment for all molecule and ansible commands
-in this project:
+The dev/test toolchain (ansible-core, ansible-lint, yamllint, molecule,
+pre-commit, etc.) is declared in `requirements-dev.txt` at the repo root and
+installed into a single repo-local `.venv` with **uv** (used as a fast,
+pip-compatible installer — not uv project mode). See
+`docs/adr/0007-uv-managed-venv-toolchain.md` for the rationale.
+
+Bootstrap a fresh clone:
 
 ```bash
-pyenv shell ansible-2.16
+# prerequisites (once per machine): uv + trufflehog
+#   uv:         curl -LsSf https://astral.sh/uv/install.sh | sh
+#   trufflehog: brew install trufflehog   (or per-OS install)
+
+uv venv --python 3.12
+uv pip install -r requirements-dev.txt
+.venv/bin/ansible-galaxy collection install -r requirements.yml
+.venv/bin/pre-commit install-hooks    # provisions prettier's Node runtime
 ```
 
-Or prefix commands with `PYENV_VERSION=ansible-2.16`.
+Every tool then runs as `.venv/bin/<tool>` (`.venv/bin/ansible-lint`,
+`.venv/bin/yamllint`, `.venv/bin/molecule`, `.venv/bin/pre-commit`) — no
+activation needed. `.venv/` is gitignored; never commit it.
+
+To confirm the manifest still installs cleanly and every tool resolves, without
+spinning up any molecule VMs:
+
+```bash
+uv run scripts/smoke_check.py
+```
+
+This builds a throwaway venv, checks each pinned tool reports a version, and
+deletes the throwaway venv when done — it never touches your working `.venv`.
 
 ## Testing with Molecule
 

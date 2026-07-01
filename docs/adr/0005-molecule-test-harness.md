@@ -1,5 +1,12 @@
 # Molecule test harness: a thin Python orchestrator run on the existing pyenv
 
+**Status update:** the harness _design_ below (thin orchestrator, config
+precedence, gate matrix, exit-75 transient signalling) still stands. The
+**Python-environment** choice — "run on the existing `ansible-2.16` pyenv,
+deliberately not uv" — is **superseded by [ADR 0007](./0007-uv-managed-venv-toolchain.md)**:
+the toolchain is now declared in `requirements-dev.txt` and installed with uv into
+one repo-local `.venv`, and `scripts/molecule.py` sets `PATH` (not `PYENV_VERSION`).
+
 Testing is driven through molecule, but invoking it ad hoc produces a different
 shell command every time (scenario, env vars, `cd`, `source`, output piping),
 which can't be permission-allowlisted, floods stdout, and drifts between the
