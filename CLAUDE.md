@@ -75,53 +75,58 @@ export VAGRANT_DEFAULT_PROVIDER=virtualbox   # or libvirt
 
 ### Running Tests
 
-Each role has a `makefile` with platform-specific targets. Run from within the role directory:
+All tests run through `scripts/molecule.py`. Run from the repo root with the `ansible-2.16` pyenv environment active.
 
 ```bash
-cd roles/s1_agent_install
+# Run all gate scenarios (same as CI)
+python scripts/molecule.py gate
 
-make test           # all platforms (RHEL, RHEL6, Ubuntu, SUSE, Windows 2022, Windows 2012R2)
-make rhel-test      # Rocky 8 only
-make ubuntu-test    # Ubuntu 22.04 only
-make suse-test      # OpenSUSE 15 only
-make srv2022-test   # Windows Server 2022 (uses winrm_default scenario)
-make srv2012r2-test # Windows Server 2012 R2
-make clean          # destroy all VMs
+# Run a single scenario against one platform preset
+python scripts/molecule.py test <scenario> --platform <preset>
+
+# Run a single scenario against all its gate platforms
+python scripts/molecule.py test <scenario>
 ```
 
-To run individual molecule steps directly:
+**Platform presets:**
+
+| Preset | Distro | Notes |
+|--------|--------|-------|
+| `rocky8` | Rocky Linux 8 | Default Linux (roboxes) |
+| `ubuntu2204` | Ubuntu 22.04 | (roboxes) |
+| `opensuse15` | OpenSUSE Leap 15 | (roboxes) |
+| `windows` | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
+
+**Logs** are written to `.molecule-logs/<scenario>-<platform>.log`. Exit code 75 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and retry rather than treating it as a test failure.
+
+**macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` automatically.
+
+To run raw molecule steps for development (from `extensions/`):
 
 ```bash
-# Linux — uses the scenario matching the role (e.g. "default", "upgrade", "uninstall")
 cd extensions
-S1_VAGRANT_DISTRO=rocky8 molecule test -s default
-S1_VAGRANT_DISTRO=ubuntu2204 molecule converge -s upgrade
-S1_VAGRANT_DISTRO=opensuse15 molecule verify -s default
-
-# Windows — uses the "winrm_default" scenario, not "default"
-cd extensions
-S1_VAGRANT_DISTRO=windows-server-2022-standard S1_VAGRANT_REPO=gusztavvargadr \
-  S1_VAGRANT_GROUP=Windows OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES \
-  molecule test -s winrm_default
+S1_VAGRANT_DISTRO=rocky8 molecule converge -s default
+S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
 ```
-
-> **macOS note:** Windows tests require `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES` to avoid a fork-safety crash in the WinRM connection plugin.
 
 ### Molecule Scenarios
 
-| Scenario | Tests |
-|----------|-------|
-| `common` | `s1_agent_common` var loading |
-| `default` | Full install → verify |
-| `info-installed` / `info-missing` | `s1_agent_info` with/without agent present |
-| `download` | Package download from console |
-| `upgrade` | Agent upgrade flow |
-| `uninstall` | Agent removal with passphrase |
-| `uuid` | UUID report generation |
-| `gpgkey` | GPG key import on RPM systems |
-| `passphrase` | Passphrase retrieval from console |
+All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in `scripts/gate.yml`.
 
-The `common` scenario (`extensions/molecule/common/`) contains shared Jinja2 templates used by other scenarios (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`).
+| Scenario | Platforms | Tests |
+|----------|-----------|-------|
+| `common` | Linux + Windows | `s1_agent_common` var loading |
+| `default` | Linux + Windows | Full install → verify |
+| `download` | Linux + Windows | Package download from console |
+| `gpgkey` | Linux (RPM) | GPG key import |
+| `info-installed` | Linux + Windows | `s1_agent_info` with agent present |
+| `info-missing` | Linux + Windows | `s1_agent_info` without agent present |
+| `passphrase` | Linux + Windows | Passphrase retrieval from console |
+| `uninstall` | Linux + Windows | Agent removal with passphrase |
+| `upgrade` | Linux + Windows | Agent upgrade flow |
+| `uuid` | Linux + Windows | UUID report from console |
+
+`extensions/molecule/common/` also provides shared Jinja2 templates (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other scenarios.
 
 ## Building the Collection
 
