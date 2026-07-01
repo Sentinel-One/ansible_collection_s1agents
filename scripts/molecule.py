@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """Thin orchestrator over molecule — the single test entry point.
 
-Run on the project's existing pyenv (no uv):
+Run on the project's uv-managed .venv (see requirements-dev.txt):
 
-    PYENV_VERSION=ansible-2.16 python scripts/molecule.py <action> <scenario> [--platform P]
-    PYENV_VERSION=ansible-2.16 python scripts/molecule.py gate
+    .venv/bin/python scripts/molecule.py <action> <scenario> [--platform P]
+    .venv/bin/python scripts/molecule.py gate
 
 Actions: test | converge | verify | destroy | create | login | gate
 Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | <raw distro>
@@ -33,7 +33,6 @@ EXTENSIONS_DIR = REPO_ROOT / "extensions"
 LOG_DIR = REPO_ROOT / ".molecule-logs"
 GATE_FILE = REPO_ROOT / "scripts" / "gate.yml"
 DEFAULT_ENV_FILE = REPO_ROOT / "molecule.env"
-PYENV = "ansible-2.16"
 
 EXIT_TRANSIENT = 75  # EX_TEMPFAIL — transient infra, safe to retry
 
@@ -93,7 +92,12 @@ def build_env(platform: str, env_file: Path) -> dict[str, str]:
     env = dict(parse_env_file(env_file))      # lowest precedence
     env.update(os.environ)                    # process env / CI secrets win
     env.update(preset_for(platform))          # explicit platform wins for VM cfg
-    env["PYENV_VERSION"] = PYENV
+    # molecule (provisioner.name: ansible) resolves ansible-playbook/ansible by
+    # bare name via PATH — there's no ansible.cfg or pinned interpreter anywhere
+    # in the repo — so .venv/bin must lead PATH for both molecule and its
+    # ansible children to resolve to the pinned toolchain.
+    venv_bin = Path(sys.executable).parent
+    env["PATH"] = f"{venv_bin}{os.pathsep}{env.get('PATH', '')}"
     # Disable ANSI color so the streamed .log is clean (matches ANSIBLE_LOG_PATH).
     env["ANSIBLE_NOCOLOR"] = "1"
     env["PY_COLORS"] = "0"
@@ -168,7 +172,7 @@ def run_one(action: str, scenario: str, platform: str, env_file: Path) -> tuple[
 
 
 def load_gate() -> list[dict]:
-    import yaml  # ships with ansible in the ansible-2.16 pyenv
+    import yaml  # ansible-core dependency, resolves in the .venv
     data = yaml.safe_load(GATE_FILE.read_text())
     return data if isinstance(data, list) else data.get("gate", [])
 

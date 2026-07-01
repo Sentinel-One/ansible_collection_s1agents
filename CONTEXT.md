@@ -86,9 +86,10 @@ two upgrades — an intermediate hop (e.g. to 22.3) before the target version
 ### Testing & environment
 
 **Test harness**: `scripts/molecule.py` — the thin Python orchestrator over
-molecule (run on the `ansible-2.16` pyenv) that provides one stable,
-allowlistable command, file-based logs under `.molecule-logs/`, and a compact
-summary. The single entry point for the agent, end users, and CI. See
+molecule (run on the uv-managed `.venv`, see
+[ADR 0007](./docs/adr/0007-uv-managed-venv-toolchain.md)) that provides one
+stable, allowlistable command, file-based logs under `.molecule-logs/`, and a
+compact summary. The single entry point for the agent, end users, and CI. See
 [ADR 0005](./docs/adr/0005-molecule-test-harness.md).
 
 **Proxy**: The corporate TLS-inspecting egress proxy between the controller and

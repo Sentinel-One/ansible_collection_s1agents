@@ -123,18 +123,18 @@ export VAGRANT_DEFAULT_PROVIDER=virtualbox   # or libvirt
 
 ### Running Tests
 
-All tests run through `scripts/molecule.py`. Run from the repo root with the
-`ansible-2.16` pyenv environment active.
+All tests run through `scripts/molecule.py`. Run from the repo root through the
+project `.venv` (see [Python Environment](#python-environment)).
 
 ```bash
 # Run all gate scenarios (same as CI)
-python scripts/molecule.py gate
+.venv/bin/python scripts/molecule.py gate
 
 # Run a single scenario against one platform preset
-python scripts/molecule.py test <scenario> --platform <preset>
+.venv/bin/python scripts/molecule.py test <scenario> --platform <preset>
 
 # Run a single scenario against all its gate platforms
-python scripts/molecule.py test <scenario>
+.venv/bin/python scripts/molecule.py test <scenario>
 ```
 
 **Platform presets:**
@@ -153,7 +153,8 @@ retry rather than treating it as a test failure.
 **macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
 automatically.
 
-To run raw molecule steps for development (from `extensions/`):
+To run raw molecule steps for development (from `extensions/`, with the `.venv`
+activated so bare `molecule` resolves — `source ../.venv/bin/activate`):
 
 ```bash
 cd extensions
