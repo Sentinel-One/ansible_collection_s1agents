@@ -3,7 +3,7 @@
 *.env
 *.env.yml
 .scratch/
-.molecule-logs/
+scripts/logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

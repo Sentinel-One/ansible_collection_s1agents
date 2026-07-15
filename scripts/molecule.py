@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -96,9 +97,10 @@ def preflight_check(force: bool = False) -> None:
         sys.exit(1)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+SCRIPTS_DIR = REPO_ROOT / "scripts"
 EXTENSIONS_DIR = REPO_ROOT / "extensions"
-LOG_DIR = REPO_ROOT / ".molecule-logs"
-GATE_FILE = REPO_ROOT / "scripts" / "gate.yml"
+LOG_DIR = SCRIPTS_DIR / "logs" / "molecule"
+GATE_FILE = SCRIPTS_DIR / "gate.yml"
 DEFAULT_ENV_FILE = REPO_ROOT / "molecule.env"
 
 EXIT_TRANSIENT = 75  # EX_TEMPFAIL — transient infra, safe to retry
@@ -238,6 +240,20 @@ def run_one(action: str, scenario: str, platform: str, env_file: Path) -> tuple[
     return result, rc, logpath
 
 
+def rotate_logs() -> None:
+    """Rotate scripts/logs/molecule → molecule.1 → molecule.2; keep at most 3 runs."""
+    base = LOG_DIR.parent  # scripts/logs/
+    slot2 = base / "molecule.2"
+    slot1 = base / "molecule.1"
+    if slot2.exists():
+        shutil.rmtree(slot2)
+    if slot1.exists():
+        slot1.rename(slot2)
+    if LOG_DIR.exists():
+        LOG_DIR.rename(slot1)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+
 def load_gate() -> list[dict]:
     import yaml  # ansible-core dependency, resolves in the .venv
     data = yaml.safe_load(GATE_FILE.read_text())
@@ -269,6 +285,7 @@ def main() -> int:
         preflight_check(force=args.force)
 
     if args.action == "gate":
+        rotate_logs()
         results, rcs = [], []
         for entry in load_gate():
             scenario = entry["scenario"]
@@ -282,6 +299,7 @@ def main() -> int:
     if not args.scenario:
         parser.error(f"action '{args.action}' requires a scenario")
 
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
     results, rcs = [], []
     for platform in [p.strip() for p in args.platform.split(",") if p.strip()]:
         result, rc, _ = run_one(args.action, args.scenario, platform, args.env_file)

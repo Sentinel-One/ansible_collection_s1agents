@@ -146,7 +146,7 @@ project `.venv` (see [Python Environment](#python-environment)).
 | `opensuse15` | OpenSUSE Leap 15    | (roboxes)                            |
 | `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
 
-**Logs** are written to `.molecule-logs/<scenario>-<platform>.log`. Exit code 75
+**Logs** are written to `scripts/logs/molecule/<scenario>-<platform>.log`. Exit code 75
 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
 retry rather than treating it as a test failure.
 
