@@ -6,3 +6,11 @@
   run_once: true
   delegate_to: localhost
   become: no
+
+- name: Remove molecule fact cache # noqa: run-once[task]
+  ansible.builtin.file:
+    path: /tmp/s1_fact_cache
+    state: absent
+  run_once: true
+  delegate_to: localhost
+  become: no

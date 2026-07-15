@@ -28,6 +28,73 @@ import subprocess
 import sys
 from pathlib import Path
 
+
+def _running_molecule_pids() -> list[int]:
+    """Return PIDs of molecule subprocesses that are not the current process."""
+    our_pid = os.getpid()
+    # Match 'molecule <action>' invocations; avoids matching 'scripts/molecule.py' itself.
+    pattern = r"molecule\s+(test|gate|converge|verify|destroy|create|login)"
+    try:
+        r = subprocess.run(["pgrep", "-f", pattern], capture_output=True, text=True)
+        return [int(p) for p in r.stdout.strip().splitlines() if p.strip() and int(p.strip()) != our_pid]
+    except (FileNotFoundError, ValueError):
+        return []
+
+
+def _running_vms() -> list[str]:
+    """Return display names of currently running VirtualBox VMs, or [] if unavailable."""
+    for cmd in (["VBoxManage", "list", "runningvms"], ["vboxmanage", "list", "runningvms"]):
+        try:
+            r = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if r.returncode != 0:
+                return []
+            return [ln.strip() for ln in r.stdout.splitlines() if ln.strip()]
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+    return []
+
+
+def preflight_check(force: bool = False) -> None:
+    """Warn or abort if another molecule session is running or stale VMs are found.
+
+    Concurrent molecule runs share /tmp/s1_fact_cache and Vagrant VM names, which
+    produces corrupt fact caches and SSH collisions.  Pass force=True (--force) to
+    demote the abort to a warning when you know it is safe to proceed.
+    """
+    issues: list[str] = []
+
+    pids = _running_molecule_pids()
+    if pids:
+        pid_str = ", ".join(str(p) for p in pids)
+        issues.append(
+            f"molecule is already running (PID {pid_str}).\n"
+            f"    Concurrent runs corrupt the shared fact cache and VM names.\n"
+            f"    Stop them first:  kill {pid_str}"
+        )
+
+    vms = _running_vms()
+    if vms:
+        vm_list = "\n".join(f"    {vm}" for vm in vms)
+        issues.append(
+            f"{len(vms)} VirtualBox VM(s) are already running and may block creation:\n"
+            f"{vm_list}\n"
+            f"    Destroy strays:  VBoxManage controlvm <uuid> poweroff"
+        )
+
+    if not issues:
+        return
+
+    sep = "-" * 64
+    header = f"\n{sep}\n  PRE-FLIGHT CHECK FAILED\n{sep}"
+    body = "\n".join(f"\n  ! {issue}" for issue in issues)
+    if force:
+        footer = f"\n  --force passed: proceeding anyway.\n{sep}"
+        print(header + body + footer, file=sys.stderr)
+    else:
+        footer = f"\n  Rerun with --force to bypass these checks.\n{sep}"
+        print(header + body + footer, file=sys.stderr)
+        sys.exit(1)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 EXTENSIONS_DIR = REPO_ROOT / "extensions"
 LOG_DIR = REPO_ROOT / ".molecule-logs"
@@ -191,7 +258,15 @@ def main() -> int:
     parser.add_argument("scenario", nargs="?", help="molecule scenario (omit for 'gate')")
     parser.add_argument("--platform", default="linux", help="preset(s) or raw distro, comma-separated")
     parser.add_argument("--env-file", default=str(DEFAULT_ENV_FILE), type=Path)
+    parser.add_argument(
+        "--force", action="store_true",
+        help="bypass pre-flight checks (running molecule/VMs); results may be unreliable",
+    )
     args = parser.parse_args()
+
+    # Run pre-flight for actions that provision VMs and share the fact cache.
+    if args.action in ("gate", "test"):
+        preflight_check(force=args.force)
 
     if args.action == "gate":
         results, rcs = [], []

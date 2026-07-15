@@ -33,7 +33,7 @@ provisioner:
     defaults:
       gathering: explicit
       fact_caching: jsonfile
-      fact_caching_connection: ${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}
+      fact_caching_connection: /tmp/s1_fact_cache
       fact_caching_timeout: 900
       retry_files_enabled: false
     ssh_connection:
