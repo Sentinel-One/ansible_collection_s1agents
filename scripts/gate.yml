@@ -7,23 +7,30 @@
 #   as molecule scenarios (were stale Makefile targets with no backing directory).
 # Windows uses the `default` scenario with the `windows` platform preset;
 #   the old `winrm_default` scenario name is gone. See ADR 0005.
-- scenario: common
-  platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: default
-  platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: download
-  platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: gpgkey
-  platforms: [rocky8, opensuse15]
-- scenario: info-installed
-  platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: info-missing
-  platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: passphrase
+#
+# Consolidated matrix (18 runs vs 38 exhaustive).  Several scenarios are
+# fully exercised as sub-steps of a more comprehensive scenario and are
+# omitted from the default gate to reduce wall-clock time.
+#
+#   upgrade   → s1_agent_common, s1_agent_download (×2), s1_agent_install,
+#               s1_agent_info (installed path), s1_mgmt_get_passphrase (Linux)
+#   uninstall → s1_agent_uninstall, s1_mgmt_get_passphrase (Windows + Linux)
+#
+# Omitted (covered transitively by the scenarios above):
+#   common, default, download, info-installed, passphrase
+#
+# Kept as standalone because they are not reached by any other scenario:
+#   info-missing  — "agent absent" info path
+#   gpgkey        — s1_import_gpg_key is gated out of upgrade
+#                   (s1_install_gpg_signed_rpm: false)
+#   uuid          — s1_agent_uuid is not called by any other scenario
+- scenario: upgrade
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
 - scenario: uninstall
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
-- scenario: upgrade
+- scenario: info-missing
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
+- scenario: gpgkey
+  platforms: [rocky8, opensuse15]
 - scenario: uuid
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
