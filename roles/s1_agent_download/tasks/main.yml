@@ -57,6 +57,7 @@
   delegate_to: localhost
   run_once: true
   become: false
+  no_log: true
 
 - name: Show s1_agent_version
   ansible.builtin.debug:
@@ -139,3 +140,4 @@
   delay: 60 # Mgmt Console API is limited to 2 pkg downloads / 60 seconds
   delegate_to: localhost
   become: false
+  no_log: true
