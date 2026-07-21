@@ -26,6 +26,20 @@ s1_msi_return_codes:
   - 0
   - 3010
 
+# Windows support-tier classification (s1_windows_tier, see
+# docs/adr/0008-windows-support-tier-routing.md). 64-bit editions whose
+# Caption (ansible_distribution) identifies them as Legacy Plus - Agent 23.4
+# is their last supported version. Entries carrying `not_match` exclude a
+# same-NT-version sibling that is NOT on the Legacy Plus list (Windows 8.1
+# 64-bit shares NT 6.3 with Server 2012 R2; both are Modern, not Legacy Plus).
+s1_legacy_plus_x64_editions:
+  - match: "Windows 7"
+  - match: "Windows 8"
+    not_match: "Windows 8.1"
+  - match: "Server 2008 R2"
+  - match: "Server 2012"
+    not_match: "Server 2012 R2"
+
 # The same Product ID is used for MSI and SentinelOneInstaller packages
 s1_product_id:
   v26_1_2_177_64_bit: '{7EF19502-697A-4014-B6F4-25B7EA86F6C2}'

@@ -1,18 +1,20 @@
 ---
 - name: Converge
   hosts: all
-  gather_facts: true
-  gather_subset:
-    - "!all"
-    - "!hardware"
-    - min
+  gather_facts: false
   tasks:
-    - name: Show OS facts the Windows support-tier classification will key off
+    - name: Include s1_agent_common
+      ansible.builtin.include_role:
+        name: s1_agent_common
+
+    - name: Show OS facts and resolved tier the classification produced
       ansible.builtin.debug:
         msg:
           ansible_distribution: "{{ ansible_distribution }}"
           ansible_distribution_version: "{{ ansible_distribution_version }}"
           ansible_architecture: "{{ ansible_architecture }}"
+          s1_os_bitness: "{{ s1_os_bitness }}"
+          s1_windows_tier: "{{ s1_windows_tier }}"
 
     - name: Persist facts
       ansible.builtin.set_fact:
@@ -20,4 +22,6 @@
           distribution: "{{ ansible_distribution }}"
           distribution_version: "{{ ansible_distribution_version }}"
           architecture: "{{ ansible_architecture }}"
+          os_bitness: "{{ s1_os_bitness }}"
+          windows_tier: "{{ s1_windows_tier }}"
         cacheable: true

@@ -1,0 +1,22 @@
+---
+# Mock the three inputs the Windows support-tier classification keys off, then
+# re-run only the classification (roles/s1_agent_common/tasks/windows_tier.yml)
+# and persist the resolved tier for this case. s1_os_bitness is pre-set here,
+# so windows_tier.yml's win_command bitness probe is skipped in favor of the
+# mocked value. See docs/adr/0008-windows-support-tier-routing.md.
+
+- name: "Mock facts for tier case: {{ s1_tier_case.case }}"
+  ansible.builtin.set_fact:
+    ansible_distribution: "{{ s1_tier_case.ansible_distribution }}"
+    ansible_distribution_version: "{{ s1_tier_case.ansible_distribution_version }}"
+    s1_os_bitness: "{{ s1_tier_case.s1_os_bitness }}"
+
+- name: "Resolve Windows support tier: {{ s1_tier_case.case }}"
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: windows_tier.yml
+
+- name: "Persist resolved tier: {{ s1_tier_case.case }}"
+  ansible.builtin.set_fact:
+    s1_molecule_tier_cases: "{{ s1_molecule_tier_cases | default({}) | combine({s1_tier_case.case: s1_windows_tier}) }}"
+    cacheable: true

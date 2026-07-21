@@ -17,9 +17,23 @@
           from a booted Server 2012 R2 host; see the Converge output above for
           what was actually gathered.
 
+    - name: Assert Server 2012 R2 classifies as modern, not legacy_plus
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_2012r2_facts.windows_tier == 'modern'
+        fail_msg: >-
+          Server 2012 R2 (Caption={{ s1_molecule_2012r2_facts.distribution }})
+          must classify as 'modern' despite sharing NT
+          {{ s1_molecule_2012r2_facts.distribution_version }} with Windows 8.1
+          (a Legacy Plus sibling) - got
+          {{ s1_molecule_2012r2_facts.windows_tier }}. See ADR 0008's
+          not_match: "Server 2012 R2" exclusion clause.
+
     - name: Report gathered facts for the tier-classification design
       ansible.builtin.debug:
         msg: >-
           ansible_distribution={{ s1_molecule_2012r2_facts.distribution }}
           ansible_distribution_version={{ s1_molecule_2012r2_facts.distribution_version }}
           ansible_architecture={{ s1_molecule_2012r2_facts.architecture }}
+          s1_os_bitness={{ s1_molecule_2012r2_facts.os_bitness }}
+          s1_windows_tier={{ s1_molecule_2012r2_facts.windows_tier }}

@@ -94,3 +94,24 @@
             that:
               - s1_product_id is defined
               - s1_product_id | length >= 6
+
+        - name: Assert real host classifies as modern
+          ansible.builtin.assert:
+            that:
+              - s1_molecule_real_windows_tier == 'modern'
+            fail_msg: >-
+              Expected the real Windows preset (Server 2022) to classify as
+              'modern' - got {{ s1_molecule_real_windows_tier }}.
+
+        - name: Assert fact-mocked Windows support-tier cases resolved as expected
+          ansible.builtin.assert:
+            that:
+              - s1_molecule_tier_cases['legacy'] == 'legacy'
+              - s1_molecule_tier_cases['legacy_plus_bitness'] == 'legacy_plus'
+              - s1_molecule_tier_cases['legacy_plus_caption'] == 'legacy_plus'
+              - s1_molecule_tier_cases['modern_exclusion'] == 'modern'
+            fail_msg: >-
+              One or more fact-mocked tier cases resolved incorrectly:
+              {{ s1_molecule_tier_cases }}. Expected legacy=legacy,
+              legacy_plus_bitness=legacy_plus, legacy_plus_caption=legacy_plus,
+              modern_exclusion=modern.

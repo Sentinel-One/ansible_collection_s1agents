@@ -65,3 +65,10 @@
     label: "{{ loop_vars | basename }}"
   tags:
     - always
+
+- name: Compute Windows support tier
+  ansible.builtin.include_tasks:
+    file: windows_tier.yml
+  when: ansible_os_family == 'Windows'
+  tags:
+    - always

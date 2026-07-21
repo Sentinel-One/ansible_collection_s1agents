@@ -6,3 +6,47 @@
     - name: Include s1_agent_common
       ansible.builtin.include_role:
         name: s1_agent_common
+
+    - name: Persist real Windows support tier
+      ansible.builtin.set_fact:
+        s1_molecule_real_windows_tier: "{{ s1_windows_tier }}"
+        cacheable: true
+      when: ansible_os_family == 'Windows'
+
+    # Fact-mocked Windows support-tier classification cases (ADR 0008): one
+    # legacy case (version floor beats the 32-bit short-circuit), one
+    # legacy_plus case matched purely by bitness (Windows 10 32-bit, NT 10.0
+    # - outside the 6.x cluster the Caption matrix covers), one legacy_plus
+    # case matched by Caption (Windows 7 SP1, 64-bit), and one modern case
+    # proving the Windows 8.1 64-bit exclusion (shares NT 6.3 with its
+    # legacy_plus sibling Server 2012, but is not on the Legacy Plus list).
+    # The other exclusion instance - Server 2012 R2 - is proven against real
+    # facts by the extensions/molecule/windows-2012r2 fixture.
+    - name: Windows support-tier classification cases
+      when: ansible_os_family == 'Windows'
+      vars:
+        s1_tier_cases:
+          - case: legacy
+            ansible_distribution: Microsoft Windows XP Professional
+            ansible_distribution_version: "5.1.2600"
+            s1_os_bitness: 32-bit
+          - case: legacy_plus_bitness
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.19041"
+            s1_os_bitness: 32-bit
+          - case: legacy_plus_caption
+            ansible_distribution: Microsoft Windows 7 Professional
+            ansible_distribution_version: "6.1.7601"
+            s1_os_bitness: 64-bit
+          - case: modern_exclusion
+            ansible_distribution: Microsoft Windows 8.1 Pro
+            ansible_distribution_version: "6.3.9600"
+            s1_os_bitness: 64-bit
+      block:
+        - name: Resolve each fact-mocked tier case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_windows_tier_case.yml"
+          loop: "{{ s1_tier_cases }}"
+          loop_control:
+            loop_var: s1_tier_case
+            label: "{{ s1_tier_case.case }}"
