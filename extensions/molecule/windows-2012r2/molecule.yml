@@ -1,0 +1,69 @@
+---
+# Classifier-only fixture: proves what a real Server 2012 R2 host's Ansible
+# facts look like before the Windows support-tier classification logic (ADR
+# 0008) is built around assumptions about them. Installs nothing. Not part of
+# scripts/gate.yml — runs only via its own paths-filtered GitHub Actions
+# workflow. See .scratch/windows-support-tier-routing/issues/00-server-2012r2-molecule-fixture.md
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: vagrant
+  provider:
+    name: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
+    options:
+      linked_clone: true
+
+platforms:
+  - name: ${S1_MOLECULE_HOSTNAME:-blue-firefly}-${S1_VAGRANT_DISTRO:-WindowsServer2012R2}
+    groups:
+      - all
+    children:
+      - Windows
+    box: ${S1_VAGRANT_REPO:-jborean93}/${S1_VAGRANT_DISTRO:-WindowsServer2012R2}
+    memory: 4096
+    cpus: 2
+    config_options:
+      synced_folder: false
+      vm.communicator: winrm
+    instance_raw_config_args:
+      - "vm.boot_timeout = 1800"
+      - "winrm.username = 'vagrant'"
+      - "winrm.password = 'vagrant'"
+      - "vm.guest = :windows"
+    provider_options:
+      linked_clone: true
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_fact_cache
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+  env:
+    ANSIBLE_ROLES_PATH: ../../../roles
+    VAGRANT_DEFAULT_PROVIDER: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
+    S1_MOLECULE_HOSTNAME: ${S1_MOLECULE_HOSTNAME:-blue-firefly}
+  # This box has no working OpenSSH path (unlike the Server 2022 preset), so
+  # the connection must be forced to WinRM here rather than via group_vars.
+  connection_options:
+    ansible_connection: winrm
+    ansible_user: vagrant
+    ansible_password: vagrant
+    ansible_port: 55986
+    ansible_winrm_transport: basic
+    ansible_winrm_server_cert_validation: ignore
+  inventory:
+    group_vars:
+      Windows:
+        ansible_win_async_startup_timeout: 30
+        ansible_winrm_operation_timeout_sec: 200
+        ansible_winrm_read_timeout_sec: 250
+
+verifier:
+  name: ansible

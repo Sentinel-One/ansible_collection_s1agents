@@ -3,6 +3,10 @@
 # Edit this (not the script) to change what the gate runs. See ADR 0005.
 #
 # Dropped: centos6 (RHEL 6 EOL), WindowsServer2012R2 (EOL) — see ADR 0002.
+#   WindowsServer2012R2 is narrowly revived as a classifier-only fixture (proves
+#   the Legacy Plus tier's Server 2012 R2 exclusion against real facts) — see
+#   extensions/molecule/windows-2012r2 and .github/workflows/windows_2012r2_facts.yml.
+#   It runs only on its own paths-filtered workflow, not here. See ADR 0008.
 # Dropped: forced_remove, gpg_signed_rpm, not_installed — never implemented
 #   as molecule scenarios (were stale Makefile targets with no backing directory).
 # Windows uses the `default` scenario with the `windows` platform preset;

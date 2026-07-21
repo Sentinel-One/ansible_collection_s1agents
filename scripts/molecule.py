@@ -127,6 +127,16 @@ PRESETS: dict[str, dict[str, str]] = {
         "S1_VAGRANT_GROUP": "Windows",
         "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
     },
+    # Classifier-only fixture (extensions/molecule/windows-2012r2) — proves
+    # real Server 2012 R2 facts for the Legacy Plus exclusion case. Not part
+    # of the default gate; see ADR 0008. This preset is independent of
+    # "windows" above, so it must set its own fork-safety workaround.
+    "windows2012r2": {
+        "S1_VAGRANT_DISTRO": "WindowsServer2012R2",
+        "S1_VAGRANT_REPO": "jborean93",
+        "S1_VAGRANT_GROUP": "Windows",
+        "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
+    },
 }
 
 

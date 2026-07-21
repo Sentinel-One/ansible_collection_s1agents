@@ -17,16 +17,49 @@ no longer supports _installing_ versions that have been EOL for more than a
 year, though _upgrading from_ an EOL version remains supported. _Avoid_:
 deprecated, unsupported (too vague — name the phase).
 
-**Legacy Plus** (Windows-only): A SentinelOne category of older Windows OSes
-(e.g. Windows 7 SP1, Windows 8/8.1, Server 2008 R2 SP1, Server 2012 non-R2,
-POSReady 7) on which Agent 23.4 remains supported even though 23.4 is End of
-Life on every other Windows platform.
-
 **EOL accommodation**: A code path whose only reason to exist is to make an EOL
 agent version work (e.g. `--nodigest`, which exists solely for pre-23.3 unsigned
 RPMs that carry no header digest). The collection removes such accommodations
 rather than adding gates that block EOL versions — see
 [ADR 0002](./docs/adr/0002-remove-eol-accommodations-not-gate.md).
+
+### Windows support tiers
+
+**Windows support tier** (`s1_windows_tier`): The single classification fact —
+`legacy` | `legacy_plus` | `modern` — computed once per Windows host in
+`s1_agent_common` and used to route install/upgrade. Precedence is encoded in
+its resolution order: the Legacy floor is decided first, then Legacy Plus, then
+Modern. See [ADR 0008](./docs/adr/0008-windows-support-tier-routing.md).
+
+**Legacy Plus**: The SentinelOne category of older Windows OSes on which Agent
+23.4 remains the last supported version even though 23.4 is End of Life on every
+other Windows platform — Windows 10 32-bit, Windows 8.1 32-bit, Windows 8,
+Windows 7 SP1, POSReady 7, Server / Storage Server 2012 (non-R2), and Server
+2008 R2 SP1. The set is not a version range (it spans NT 6.1 / 6.2 / 6.3 / 10.0
+with the 64-bit 6.3/10.0 siblings excluded), so it is matched by OS bitness +
+`ansible_distribution` (Caption) substrings, not a numeric key. Routed to a
+role-local, intentionally-duplicated `windows_legacy_plus.yml` that freezes the
+23.4 install flow and asserts `s1_agent_version < 24.1`.
+
+**Legacy**: The older tier below Legacy Plus — Windows XP, Vista, POSReady 2009,
+Server 2003, Server 2008 non-R2 (NT `< 6.1`) — which requires a separate
+SentinelOne installer this collection does not manage. Install/upgrade route
+these to `unsupported.yml` (fail-loud). _Avoid_: conflating with Legacy Plus
+(different installer, no accommodation).
+
+**Modern**: 64-bit Windows that is neither Legacy nor Legacy Plus. Reached via
+the normal `with_first_found` dispatch (candidate `windows_<bitness>.yml`) and
+carries **no agent-version assertion** — per [ADR
+0002](./docs/adr/0002-remove-eol-accommodations-not-gate.md), EOL versions
+(e.g. 23.1–23.4.x) still install/upgrade here exactly as they do today; only
+Legacy Plus's ceiling is a genuine technical constraint worth gating.
+
+**Normalized OS bitness** (`s1_os_bitness`): A collection-owned `64-bit` /
+`32-bit` token derived in `s1_agent_common` from
+`[Environment]::Is64BitOperatingSystem`. Used instead of `ansible_architecture`
+because the latter maps to `Win32_OperatingSystem.OSArchitecture`, which is
+_localized_ (`64 bits` on French, `64-Bit` on German) and so unsafe as a
+filename or comparison key. _Avoid_: `ansible_architecture` for Windows routing.
 
 ### Install paths (Linux)
 
