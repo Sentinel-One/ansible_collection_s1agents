@@ -24,3 +24,94 @@
     - name: Show s1_molecule_upgrade_package
       ansible.builtin.debug:
         var: s1_molecule_upgrade_package
+
+    # Windows support-tier routing (ADR 0008 / issue 02). These cases run
+    # after the real upgrade above and rely on s1_agent_common's/s1_agent_info's
+    # dependencies NOT re-running on later include_role calls in the same
+    # play, so a direct s1_windows_tier set_fact reliably overrides the tier
+    # for each case (issue 01 already proved classification; this only
+    # proves routing). s1_agent_src is already a real, defined fact from the
+    # upgrade above, so none of these cases trigger a fresh download.
+    - name: Windows support-tier routing cases
+      when: ansible_os_family == 'Windows'
+      block:
+        - name: "Case: Legacy tier fails loud via unsupported.yml"
+          block:
+            - name: Reset case-rescued marker
+              ansible.builtin.set_fact:
+                s1_case_rescued: false
+
+            - name: Mock Legacy tier
+              ansible.builtin.set_fact:
+                s1_windows_tier: legacy
+
+            - name: Attempt upgrade on a mocked Legacy-tier host (expected to fail)
+              ansible.builtin.include_role:
+                name: s1_agent_upgrade
+              vars:
+                s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+          rescue:
+            - name: Mark this case as correctly rescued
+              ansible.builtin.set_fact:
+                s1_case_rescued: true
+
+            - name: Assert the failure came from unsupported.yml
+              ansible.builtin.assert:
+                that:
+                  - ansible_failed_result.msg is search('not currently supported')
+          always:
+            - name: Assert the Legacy-tier case actually failed
+              ansible.builtin.assert:
+                that:
+                  - s1_case_rescued | bool
+
+        - name: "Case: Legacy Plus tier rejects a version >= 24.1 pre-flight"
+          block:
+            - name: Reset case-rescued marker
+              ansible.builtin.set_fact:
+                s1_case_rescued: false
+
+            - name: Mock Legacy Plus tier and an incompatible version
+              ansible.builtin.set_fact:
+                s1_windows_tier: legacy_plus
+                s1_agent_version: "24.1.5.277"
+
+            # yamllint disable-line rule:line-length
+            - name: Attempt upgrade on a mocked Legacy-Plus-tier host (expected to fail the ceiling assert)
+              ansible.builtin.include_role:
+                name: s1_agent_upgrade
+              vars:
+                s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+          rescue:
+            - name: Mark this case as correctly rescued
+              ansible.builtin.set_fact:
+                s1_case_rescued: true
+
+            - name: Assert the failure came from the version-ceiling assert
+              ansible.builtin.assert:
+                that:
+                  - ansible_failed_result.msg is search('cannot run SentinelOne Agent')
+          always:
+            - name: Assert the Legacy-Plus-ceiling case actually failed
+              ansible.builtin.assert:
+                that:
+                  - s1_case_rescued | bool
+
+        # The target version (23.4.x) is older than whatever this box is
+        # already running (the upgrade above always moves to the newest
+        # release), so s1_agent_upgrade's own s1_prior_version guard skips
+        # the actual upgrade attempt - safely proving the ceiling assert
+        # passes and routing reaches windows_legacy_plus.yml for a
+        # supported version, without a live downgrade.
+        - name: "Case: Legacy Plus tier proceeds past the ceiling assert for a supported version"
+          block:
+            - name: Mock Legacy Plus tier and a supported 23.4.x version
+              ansible.builtin.set_fact:
+                s1_windows_tier: legacy_plus
+                s1_agent_version: "23.4.6.347"
+
+            - name: Attempt upgrade on a mocked Legacy-Plus-tier host via the frozen flow
+              ansible.builtin.include_role:
+                name: s1_agent_upgrade
+              vars:
+                s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing

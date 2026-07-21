@@ -1,0 +1,114 @@
+---
+# Frozen Legacy Plus upgrade flow (ADR 0008). Intentionally duplicated from
+# windows_64-bit.yml rather than shared, so the Modern flow can evolve freely
+# without risk to this frozen path. Legacy Plus OSes cannot run Agent >= 24.1
+# at all - the installer itself refuses with exit code 1007. The pre-flight
+# assert below is the primary defense; the 1007 handling further down is the
+# backstop in case that assert is ever bypassed.
+
+- name: Assert Legacy Plus version ceiling | Windows
+  ansible.builtin.assert:
+    that:
+      - s1_agent_version is version('24.1', '<')
+    fail_msg: >-
+      {{ ansible_distribution }} is a Legacy Plus host and cannot run
+      SentinelOne Agent {{ s1_agent_version }} - Agent 24.1 and newer require
+      64-bit Windows 8.1/Server 2012 R2 or newer. Use a 23.4.x release.
+
+- name: Create working directory | Windows
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: create_work_dir.yml
+
+- name: Set SentinelOne agent path | Windows
+  ansible.builtin.set_fact:
+    s1_agent_path: "{{ s1_work_dir }}\\{{ s1_agent_src | basename }}"
+    s1_agent_version: "{{ s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
+
+- name: Set SentinelOne agent parameters | Windows
+  ansible.builtin.set_fact:
+    s1_agent_silent_cmd:
+      "{{ lookup('ansible.builtin.template', (s1_install_msi | default('no') | bool | ternary('windows_agent_msi.j2', 'windows_agent_new_exe.j2')))
+      }}"
+    s1_agent_return_code: "{{ s1_install_msi | default('no') | bool | ternary(s1_msi_return_codes, s1_new_exe_return_codes) }}"
+
+- name: Upgrade Windows Agent
+  when:
+    - s1_prior_version|default('0') is version(s1_agent_version, '<')
+  block:
+    - name: Approve Local Upgrade | Windows
+      ansible.builtin.uri:
+        url: "{{ s1_management_console }}/web/api/v2.1/agents/actions/approve-stateless-upgrade"
+        return_content: false
+        headers:
+          Authorization: ApiToken {{ s1_api_token }}
+        validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
+        body:
+          filter:
+            uuid: "{{ s1_agent_info.uuid }}"
+          data:
+            expiration: 1
+        body_format: json
+        method: POST
+      register: s1_local_upgrade_result
+      until: s1_local_upgrade_result is not failed and s1_local_upgrade_result.json.data | length
+      retries: 10
+      delay: 10
+      become: false
+      check_mode: false
+      no_log: true
+      delegate_to: localhost
+
+    - name: Show Approve Local Upgrade results | Windows
+      ansible.builtin.debug:
+        msg: "status={{ s1_local_upgrade_result.status }}, data={{ s1_local_upgrade_result.json.data | length }}"
+      delegate_to: localhost
+      tags:
+        - never
+        - debug
+
+    - name: Copy SentinelOne agent | Windows
+      ansible.windows.win_copy:
+        src: "{{ s1_agent_src }}"
+        dest: "{{ s1_agent_path }}"
+
+    # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
+    - name: Upgrade SentinelOne | Windows
+      ansible.windows.win_package:
+        path: "{{ s1_agent_path }}"
+        state: present
+        arguments: "{{ s1_agent_silent_cmd }}"
+        wait_for_children: true
+        product_id: "{{ s1_agent_product_id | default(omit) }}"
+        expected_return_code: "{{ s1_agent_return_code }}"
+      become: true
+      notify: "{{ s1_reboot_handler_name }}"
+      register: s1_upgrade_log
+      # Let the module fail normally on any unexpected code except 1007
+      # (Legacy Plus version-ceiling rejection), which gets its own clear
+      # message below instead of a generic win_package error.
+      failed_when:
+        - s1_upgrade_log is failed
+        - s1_upgrade_log.rc | default(0) != 1007
+
+    - name: Fail clearly on installer's Legacy Plus version-ceiling rejection | Windows
+      ansible.builtin.fail:
+        msg: >-
+          The SentinelOne installer refused to upgrade to {{ s1_agent_version }}
+          on this Legacy Plus host (exit code 1007) - this OS cannot run Agent
+          24.1 or newer. Use a 23.4.x release instead.
+      when: s1_upgrade_log.rc | default(0) == 1007
+
+    - name: Show s1_upgrade_log log | Windows
+      ansible.builtin.debug:
+        var: s1_upgrade_log
+      tags:
+        - never
+        - debug
+
+- name: Remove working directory | Windows
+  ansible.windows.win_file:
+    path: "{{ s1_work_dir }}"
+    state: absent
+  tags:
+    - molecule-notest
