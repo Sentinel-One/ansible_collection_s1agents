@@ -168,9 +168,11 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   host rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
   does install (a deliberate, maintainer-approved exception to that fixture's
   install-nothing precedent — the goal here is to vet the frozen flow itself,
-  not just classification), but stays off the default gate for the same
-  reason: its own `paths:`-filtered CI workflow, run on demand rather than
-  every change, since re-vetting a frozen, rarely-touched flow doesn't need
-  to happen per-commit. This box ships Win32-OpenSSH pre-installed and
+  not just classification). Unlike the 2012 R2 fixture, this one **is** in
+  `scripts/gate.yml` (maintainer call: it needs to be runnable as part of
+  pre-release validation, not only on demand) on top of its own
+  `paths:`-filtered CI workflow, which still runs it per-PR/per-push scoped
+  to Legacy Plus file changes. This box ships Win32-OpenSSH pre-installed and
   auto-started (unlike 2012 R2's broken OpenSSH path), so it connects over
-  `ssh` like the Server 2022 preset rather than forcing `winrm`.
+  `ssh` with password auth (requires `sshpass` on the controller) like the
+  Server 2022 preset rather than forcing `winrm`.
