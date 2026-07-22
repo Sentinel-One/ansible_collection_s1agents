@@ -1,0 +1,86 @@
+---
+# Real-fact, real-install fixture for the Legacy Plus tier (ADR 0008). Unlike
+# extensions/molecule/windows-2012r2 (classifier-only - that box is Modern,
+# not Legacy Plus), WindowsServer2012 genuinely qualifies for Legacy Plus and
+# is exercised through a full s1_agent_upgrade run so the frozen 23.4 flow and
+# the default-version pin (issue 03) are proven end-to-end against a real
+# host, not fact-mocked. Not part of scripts/gate.yml - runs only via its own
+# paths-filtered GitHub Actions workflow, same rationale as windows-2012r2.
+#
+# This box ships Win32-OpenSSH pre-installed and auto-started (unlike
+# WindowsServer2012R2, which has no working OpenSSH path), so it uses the
+# same ssh connection as the Server 2022 preset rather than forcing WinRM.
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: vagrant
+  provider:
+    name: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
+    options:
+      linked_clone: true
+
+platforms:
+  - name: ${S1_MOLECULE_HOSTNAME:-blue-firefly}-${S1_VAGRANT_DISTRO:-WindowsServer2012}
+    groups:
+      - all
+    children:
+      - Windows
+    box: ${S1_VAGRANT_REPO:-jborean93}/${S1_VAGRANT_DISTRO:-WindowsServer2012}
+    memory: 4096
+    cpus: 2
+    config_options:
+      synced_folder: false
+    instance_raw_config_args:
+      - "vm.boot_timeout = 1800"
+    provider_options:
+      linked_clone: true
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_fact_cache
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+    ssh_connection:
+      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+  env:
+    ANSIBLE_ROLES_PATH: ../../../roles
+    VAGRANT_DEFAULT_PROVIDER: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
+    S1_MOLECULE_HOSTNAME: ${S1_MOLECULE_HOSTNAME:-blue-firefly}
+  # Unlike the Server 2022 preset, this box's OpenSSH doesn't accept
+  # Vagrant's default insecure keypair - the vagrant-derived ssh-config
+  # (ansible_private_key_file) gets rejected. Password auth (vagrant/vagrant)
+  # does work; adding it here (requires sshpass on the controller) merges
+  # into the driver-derived host vars rather than replacing the dynamically
+  # forwarded ansible_host/ansible_port, which a full connection_options
+  # override (like windows-2012r2's) would lose.
+  connection_options:
+    ansible_password: vagrant
+  inventory:
+    group_vars:
+      all:
+        s1_management_console: ${S1_MANAGEMENT_CONSOLE}
+        s1_agent_site_token: ${S1_AGENT_SITE_TOKEN}
+        s1_api_token: ${S1_API_TOKEN}
+        s1_agent_customer_id: ansible_collection_dev
+        s1_download_path: ${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}
+        s1_forced_remove: false
+      Windows:
+        ansible_become_method: runas
+        ansible_become_user: vagrant
+        ansible_become_password: vagrant
+        ansible_user: vagrant
+        ansible_connection: ssh
+        ansible_shell_type: cmd
+        ansible_win_async_startup_timeout: 60
+  playbooks:
+    cleanup: ../common/templates/cleanup-uninstall-agent.yml
+
+verifier:
+  name: ansible

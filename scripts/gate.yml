@@ -7,6 +7,12 @@
 #   the Legacy Plus tier's Server 2012 R2 exclusion against real facts) — see
 #   extensions/molecule/windows-2012r2 and .github/workflows/windows_2012r2_facts.yml.
 #   It runs only on its own paths-filtered workflow, not here. See ADR 0008.
+# Dropped: WindowsServer2012 (EOL, genuinely Legacy Plus) — narrowly revived as
+#   a real-install fixture (proves the frozen Legacy Plus upgrade flow and the
+#   default-version pin from issue 03 against a real host) — see
+#   extensions/molecule/windows-legacy-plus and
+#   .github/workflows/windows_legacy_plus_upgrade.yml. Runs only on its own
+#   paths-filtered workflow, not here — vetted on demand, not every change.
 # Dropped: forced_remove, gpg_signed_rpm, not_installed — never implemented
 #   as molecule scenarios (were stale Makefile targets with no backing directory).
 # Windows uses the `default` scenario with the `windows` platform preset;

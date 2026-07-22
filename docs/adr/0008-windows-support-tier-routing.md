@@ -147,7 +147,7 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   32-bit POSReady 7 still routes correctly (bitness short-circuit); 64-bit
   POSReady 7 reads as Modern and fails naturally. Solve only if a customer
   reports it.
-- **Testing needs fact-mocking, plus one real-fact fixture.** The only Windows
+- **Testing needs fact-mocking, plus two real-fact fixtures.** The only Windows
   molecule preset is Server 2022 (Modern). Legacy Plus / Legacy paths are
   exercised by overriding `ansible_distribution` / `ansible_distribution_version`
   / `s1_os_bitness` via `set_fact`. The `not_match: "2012 R2"` exclusion clause
@@ -158,3 +158,19 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   changes, not part of the default `scripts/gate.yml` matrix. Standing this box
   up is deferred to the `/tdd` build; if it proves impractical, it may need its
   own testing path rather than blocking the rest of the work.
+- **A second real-fact fixture proves genuine Legacy Plus, not just its 2012
+  R2 exclusion.** `jborean93/WindowsServer2012` (non-R2) genuinely qualifies
+  for Legacy Plus, unlike the 2012 R2 box above. `extensions/molecule/windows-legacy-plus`
+  installs an explicit, older 23.4.x release, then runs `s1_agent_upgrade`
+  with **no** `s1_agent_version` requested — asserting both that the real
+  host classifies as `legacy_plus` and that the issue 03 default-version pin
+  resolves and completes the frozen upgrade flow end-to-end, against a real
+  host rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
+  does install (a deliberate, maintainer-approved exception to that fixture's
+  install-nothing precedent — the goal here is to vet the frozen flow itself,
+  not just classification), but stays off the default gate for the same
+  reason: its own `paths:`-filtered CI workflow, run on demand rather than
+  every change, since re-vetting a frozen, rarely-touched flow doesn't need
+  to happen per-commit. This box ships Win32-OpenSSH pre-installed and
+  auto-started (unlike 2012 R2's broken OpenSSH path), so it connects over
+  `ssh` like the Server 2022 preset rather than forcing `winrm`.

@@ -137,6 +137,16 @@ PRESETS: dict[str, dict[str, str]] = {
         "S1_VAGRANT_GROUP": "Windows",
         "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
     },
+    # Real-install fixture (extensions/molecule/windows-legacy-plus) — proves
+    # the Legacy Plus tier's frozen upgrade flow and default-version pin
+    # (issue 03) against a real host, not fact-mocked. Not part of the
+    # default gate; see ADR 0008.
+    "windowslegacyplus": {
+        "S1_VAGRANT_DISTRO": "WindowsServer2012",
+        "S1_VAGRANT_REPO": "jborean93",
+        "S1_VAGRANT_GROUP": "Windows",
+        "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
+    },
 }
 
 

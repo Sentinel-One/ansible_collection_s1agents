@@ -28,3 +28,15 @@ runs:
         pip uninstall molecule-vagrant --yes
         pip install ansible-dev-tools pywinrm "molecule<25.2.0" python-vagrant molecule-plugins ansible-lint flake8 --disable-pip-version-check
         if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
+
+    # windows-legacy-plus (extensions/molecule/windows-legacy-plus) connects
+    # over ssh with password auth - Ansible's ssh connection plugin shells
+    # out to sshpass for that. Best-effort/non-fatal: this shouldn't break
+    # other workflows if the runner's package manager isn't apt.
+    - name: Ensure sshpass is available (windows-legacy-plus fixture)
+      shell: bash
+      run: |
+        command -v sshpass && exit 0
+        sudo apt-get install -y sshpass \
+          || sudo yum install -y sshpass \
+          || echo "::warning::sshpass not installed and no known package manager succeeded - windows-legacy-plus will fail to connect"
