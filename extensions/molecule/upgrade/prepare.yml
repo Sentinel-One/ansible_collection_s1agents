@@ -8,6 +8,15 @@
     - min
   vars:
     s1_release_n_minus: 1
+    # TEMPORARY (issue 01, .scratch/linux-upgrade-passphrase-unification/):
+    # lets a single legacy s1_prior_version band be pinned for the plain-RPM
+    # unified-upgrade validation, instead of relying on s1_release_n_minus.
+    # Unset (the default), this scenario behaves exactly as before. Set to a
+    # real agent version available on this console (see s1_available_packages)
+    # to run the scenario from that specific prior version. Remove this once
+    # the unified command has been proven across all three legacy bands
+    # (< 22.3, 22.3-25.1.3, >= 25.1.3) and issue 01 is closed out.
+    s1_molecule_legacy_prior_version: "{{ lookup('env', 'S1_UPGRADE_LEGACY_VERSION') | default('', true) }}"
   tasks:
     - name: Include tasks to clean up package managers | Linux
       ansible.builtin.include_tasks:
@@ -22,6 +31,13 @@
         s1_product_id_index: 1
       when:
         - ansible_os_family == 'Windows'
+
+    - name: Pin an explicit legacy-band prior version | Linux
+      ansible.builtin.set_fact:
+        s1_agent_version: "{{ s1_molecule_legacy_prior_version }}"
+      when:
+        - ansible_system == 'Linux'
+        - s1_molecule_legacy_prior_version | length > 0
 
     - name: Include tasks to install agent
       ansible.builtin.include_tasks:
