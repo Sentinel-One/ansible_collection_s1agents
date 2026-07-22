@@ -50,3 +50,25 @@
           loop_control:
             loop_var: s1_tier_case
             label: "{{ s1_tier_case.case }}"
+
+    # Legacy Plus default version pin cases (ADR 0008 / issue 03): proves the
+    # pin task in isolation - s1_windows_tier is mocked directly since tier
+    # classification is already proven by the block above. One case with no
+    # version requested (expect the pin to apply), one with an explicit
+    # version requested (expect it left unaffected).
+    - name: Legacy Plus default version pin cases
+      when: ansible_os_family == 'Windows'
+      vars:
+        s1_pin_cases:
+          - case: unset_version
+            s1_agent_version: ""
+          - case: explicit_version
+            s1_agent_version: "23.4.5.337"
+      block:
+        - name: Resolve each Legacy Plus version-pin case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_legacy_plus_version_pin_case.yml"
+          loop: "{{ s1_pin_cases }}"
+          loop_control:
+            loop_var: s1_pin_case
+            label: "{{ s1_pin_case.case }}"

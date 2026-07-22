@@ -72,3 +72,10 @@
   when: ansible_os_family == 'Windows'
   tags:
     - always
+
+- name: Pin Legacy Plus default agent version
+  ansible.builtin.include_tasks:
+    file: windows_legacy_plus_version_pin.yml
+  when: ansible_os_family == 'Windows'
+  tags:
+    - always

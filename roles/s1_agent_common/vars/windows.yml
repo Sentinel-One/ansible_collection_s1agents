@@ -40,6 +40,14 @@ s1_legacy_plus_x64_editions:
   - match: "Server 2012"
     not_match: "Server 2012 R2"
 
+# Manually-maintained default s1_agent_version for Legacy Plus hosts that
+# request no explicit version (see docs/adr/0008-windows-support-tier-routing.md).
+# Without this, s1_agent_download's release_n_minus fallback would silently
+# fetch the latest GA release, which then fails the windows_legacy_plus.yml
+# ceiling assert after an unnecessary download. Update by hand on the rare
+# occasion a new 23.4.x patch ships.
+s1_legacy_plus_default_version: "23.4.6.347"
+
 # The same Product ID is used for MSI and SentinelOneInstaller packages
 s1_product_id:
   v26_1_2_177_64_bit: '{7EF19502-697A-4014-B6F4-25B7EA86F6C2}'
