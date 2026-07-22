@@ -193,11 +193,40 @@ def build_env(platform: str, env_file: Path) -> dict[str, str]:
     return env
 
 
+def _unignored_fatals(log_text: str) -> list[str]:
+    """Return fatal/unreachable lines Ansible did NOT recover from.
+
+    Ansible prints '...ignoring' on the line right after a fatal result whose
+    task carries ignore_errors/ignore_unreachable — e.g. a pre-VM connectivity
+    probe that's expected to fail before the box exists. Those lines must not
+    count as evidence of what actually broke the run.
+    """
+    lines = [ANSI_RE.sub("", ln) for ln in log_text.splitlines()]
+    out = []
+    for i, line in enumerate(lines):
+        if not line.lstrip().startswith("fatal:"):
+            continue
+        lookahead = lines[i + 1 : i + 3]
+        if any("...ignoring" in nxt for nxt in lookahead):
+            continue
+        out.append(line)
+    return out
+
+
 def classify(rc: int, log_text: str) -> str:
-    """Return 'pass', 'transient', or 'fail'."""
+    """Return 'pass', 'transient', or 'fail'.
+
+    Transient signatures are matched only against unignored fatal/unreachable
+    lines (falling back to the full log if none are found — e.g. a molecule-
+    level abort with no leading 'fatal:' line) so an early, recovered blip
+    (an ignored SSH reset during a pre-VM connectivity check, say) can't mask
+    a real failure that happened later in the same run.
+    """
     if rc == 0:
         return "pass"
-    if any(sig in log_text for sig in TRANSIENT_SIGNATURES):
+    fatals = _unignored_fatals(log_text)
+    haystack = "\n".join(fatals) if fatals else log_text
+    if any(sig in haystack for sig in TRANSIENT_SIGNATURES):
         return "transient"
     return "fail"
 
