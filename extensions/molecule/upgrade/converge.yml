@@ -9,12 +9,25 @@
     # default), this is unchanged. Remove alongside the block below once
     # issue 02 is closed out.
     s1_molecule_gpg_signed_validation: "{{ lookup('env', 'S1_UPGRADE_GPG_SIGNED') | default('false', true) | bool }}"
+    # TEMPORARY smoke test (see prepare.yml's s1_molecule_legacy_nodigest_install):
+    # lets the upgrade target be pinned to a specific version instead of
+    # always "latest" — needed to test a realistic single hop (e.g.
+    # 22.2.2.2 -> 22.4.2.4) rather than an unrealistically large one.
+    # Unset (the default, empty string), s1_agent_download's own "latest"
+    # fallback is unchanged. Remove alongside the smoke test.
+    s1_molecule_target_version: "{{ lookup('env', 'S1_UPGRADE_TARGET_VERSION') | default('', true) }}"
   tasks:
     - name: Include s1_agent_upgrade
       ansible.builtin.include_role:
         name: s1_agent_upgrade
       vars:
         s1_install_gpg_signed_rpm: false
+        # Windows' target version is already a cached fact from prepare.yml
+        # (cacheable: true) — omit here so this task var doesn't clobber it
+        # with an empty string; only Linux (where nothing sets s1_agent_version
+        # before this point) reads the smoke-test pin.
+        # yamllint disable-line rule:line-length
+        s1_agent_version: "{{ s1_molecule_target_version if (ansible_os_family != 'Windows' and s1_molecule_target_version | length > 0) else omit }}"
         s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
       when: ansible_os_family == 'Windows' or not s1_molecule_gpg_signed_validation
 
