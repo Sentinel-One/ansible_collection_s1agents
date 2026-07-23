@@ -9,7 +9,6 @@
     success_msg: Agent can be upgraded in-place
   when:
     - s1_agent_version is version('22.3', '>=')
-    - s1_install_gpg_signed_rpm | default('no') | bool
 
 - name: Get the endpoints passphrase | Linux
   ansible.builtin.include_role:
@@ -45,40 +44,20 @@
         mode: "0755"
       become: true
 
-    - name: Upgrade SentinelOne agent | Linux | non-GPG-signed
+    - name: Upgrade SentinelOne agent | Linux
       ansible.builtin.command:
         cmd: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
         stdin: "{{ s1_agent_passphrase }}"
       notify: "{{ s1_service_handler_name }}"
       become: true
       no_log: true
-      register: s1_upgrade_pass_result
+      register: s1_upgrade_result
       changed_when:
-        - '"Agent upgrade successful" in s1_upgrade_pass_result.stdout'
-      when:
-        - not s1_install_gpg_signed_rpm | default('no') | bool
+        - '"Agent upgrade successful" in s1_upgrade_result.stdout'
 
-    - name: Show s1_upgrade_pass_result
+    - name: Show s1_upgrade_result
       ansible.builtin.debug:
-        msg: "rc={{ s1_upgrade_pass_result.rc | default('') }}, changed={{ s1_upgrade_pass_result.changed | default('') }}"
-      tags:
-        - never
-        - debug
-
-    - name: Upgrade SentinelOne agent without passphrase | Linux | GPG-signed
-      ansible.builtin.command: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
-      notify: "{{ s1_service_handler_name }}"
-      become: true
-      register: s1_upgrade_results
-      changed_when:
-        - '"Agent upgrade successful" in s1_upgrade_results.stdout'
-      when:
-        - (s1_prior_version is version('22.3', '>=')) and (s1_prior_version is version('25.1.3', '<'))
-        - s1_install_gpg_signed_rpm | default('no') | bool
-
-    - name: Show s1_upgrade_results
-      ansible.builtin.debug:
-        var: s1_upgrade_results
+        msg: "rc={{ s1_upgrade_result.rc | default('') }}, changed={{ s1_upgrade_result.changed | default('') }}"
       tags:
         - never
         - debug
