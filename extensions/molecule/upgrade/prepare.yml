@@ -8,25 +8,6 @@
     - min
   vars:
     s1_release_n_minus: 1
-    # TEMPORARY (issue 01, .scratch/linux-upgrade-passphrase-unification/):
-    # lets a single legacy s1_prior_version band be pinned for the plain-RPM
-    # unified-upgrade validation, instead of relying on s1_release_n_minus.
-    # Unset (the default), this scenario behaves exactly as before. Set to a
-    # real agent version available on this console (see s1_available_packages)
-    # to run the scenario from that specific prior version. Remove this once
-    # the unified command has been proven across all three legacy bands
-    # (< 22.3, 22.3-25.1.3, >= 25.1.3) and issue 01 is closed out.
-    s1_molecule_legacy_prior_version: "{{ lookup('env', 'S1_UPGRADE_LEGACY_VERSION') | default('', true) }}"
-    # TEMPORARY smoke test (not part of issue 02's acceptance criteria — a
-    # one-off maintainer-requested check): confirms that removing --nodigest
-    # (ADR 0002) didn't break anything else about fresh-installing a
-    # pre-23.3 unsigned package when --nodigest is supplied manually
-    # (bypassing the shipped role, which intentionally no longer supports
-    # this) — purely so a genuinely old prior version can be reached for
-    # s1_agent_upgrade (unmodified) to then operate on. Unset (the default),
-    # this scenario is unchanged. Remove this block and the one below once
-    # the smoke test's result is recorded.
-    s1_molecule_legacy_nodigest_install: "{{ lookup('env', 'S1_UPGRADE_LEGACY_NODIGEST') | default('false', true) | bool }}"
   tasks:
     - name: Include tasks to clean up package managers | Linux
       ansible.builtin.include_tasks:
@@ -42,92 +23,9 @@
       when:
         - ansible_os_family == 'Windows'
 
-    - name: Pin an explicit legacy-band prior version | Linux
-      ansible.builtin.set_fact:
-        s1_agent_version: "{{ s1_molecule_legacy_prior_version }}"
-      when:
-        - ansible_system == 'Linux'
-        - s1_molecule_legacy_prior_version | length > 0
-
     - name: Include tasks to install agent
       ansible.builtin.include_tasks:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/install_s1_agent.yml"
-      when: not s1_molecule_legacy_nodigest_install
-
-    # TEMPORARY smoke test — see s1_molecule_legacy_nodigest_install above.
-    # Mirrors install_s1_agent.yml's shape (attempt the role, then the same
-    # post-install steps), substituting a manual --nodigest rpm -i for the
-    # role's own (ADR-0002-hardened) install task on rescue, using the
-    # config/work-dir/package facts the role already resolved before it
-    # failed on digest verification.
-    - name: Fresh-install the pinned legacy version | Linux | --nodigest smoke test
-      when:
-        - ansible_system == 'Linux'
-        - s1_molecule_legacy_nodigest_install
-      block:
-        - name: Attempt the normal install (expected to fail digest verification) | Linux
-          ansible.builtin.include_role:
-            name: s1_agent_install
-          vars:
-            s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
-      rescue:
-        - name: Retry with --nodigest (bypasses the removed ADR 0002 accommodation) | Linux
-          ansible.builtin.command:
-            argv:
-              - rpm
-              - -i
-              - --nodigest
-              - "{{ s1_agent_path }}"
-          environment:
-            S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
-          become: true
-          register: s1_nodigest_install_result
-          changed_when: '"Registration token successfully set" in s1_nodigest_install_result.stdout'
-          notify: "{{ s1_service_handler_name }}"
-
-    # From here on, s1_molecule_legacy_nodigest_install (a play var) is the
-    # only safe guard — clear_facts below wipes ansible_system itself, and
-    # s1_agent_common's own first task is what re-gathers it.
-    - name: Flush handlers | --nodigest smoke test
-      ansible.builtin.meta: flush_handlers
-      when: s1_molecule_legacy_nodigest_install
-
-    - name: Clear cached facts | --nodigest smoke test
-      ansible.builtin.meta: clear_facts
-      when: s1_molecule_legacy_nodigest_install
-
-    - name: Get the agent's state | --nodigest smoke test
-      ansible.builtin.include_role:
-        name: "{{ item }}"
-      loop:
-        - s1_agent_common
-        - s1_agent_info
-      when: s1_molecule_legacy_nodigest_install
-
-    - name: Persist facts for verify step | --nodigest smoke test
-      ansible.builtin.set_fact:
-        s1_molecule_installed_src: "{{ s1_agent_src }}"
-        s1_molecule_installed_version: "{{ s1_agent_version }}"
-        cacheable: true
-      when: s1_molecule_legacy_nodigest_install
-
-    - name: Wait for agent to register with Management Console | --nodigest smoke test
-      ansible.builtin.uri:
-        url: "{{ s1_management_console }}/web/api/v2.1/agents?uuid={{ s1_agent_info.uuid }}&isActive=true"
-        return_content: false
-        headers:
-          Authorization: "ApiToken {{ s1_api_token }}"
-        validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
-      register: s1_agent_registered
-      until:
-        - s1_agent_registered is not failed
-        - s1_agent_registered.json.pagination.totalItems == 1
-      retries: 10
-      delay: 10
-      become: false
-      delegate_to: localhost
-      no_log: true
-      when: s1_molecule_legacy_nodigest_install
 
     - name: Include tasks to set target agent version | Windows
       ansible.builtin.include_tasks:

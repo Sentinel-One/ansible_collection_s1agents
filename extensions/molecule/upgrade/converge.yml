@@ -2,65 +2,13 @@
 - name: Converge
   hosts: all
   gather_facts: false
-  vars:
-    # TEMPORARY (issue 02, .scratch/linux-upgrade-passphrase-unification/):
-    # lets the per-band validation exercise the GPG-signed upgrade path too
-    # (Linux-only — Windows always takes the primary task below). Unset (the
-    # default), this is unchanged. Remove alongside the block below once
-    # issue 02 is closed out.
-    s1_molecule_gpg_signed_validation: "{{ lookup('env', 'S1_UPGRADE_GPG_SIGNED') | default('false', true) | bool }}"
-    # TEMPORARY smoke test (see prepare.yml's s1_molecule_legacy_nodigest_install):
-    # lets the upgrade target be pinned to a specific version instead of
-    # always "latest" — needed to test a realistic single hop (e.g.
-    # 22.2.2.2 -> 22.4.2.4) rather than an unrealistically large one.
-    # Unset (the default, empty string), s1_agent_download's own "latest"
-    # fallback is unchanged. Remove alongside the smoke test.
-    s1_molecule_target_version: "{{ lookup('env', 'S1_UPGRADE_TARGET_VERSION') | default('', true) }}"
   tasks:
     - name: Include s1_agent_upgrade
       ansible.builtin.include_role:
         name: s1_agent_upgrade
       vars:
         s1_install_gpg_signed_rpm: false
-        # Windows' target version is already a cached fact from prepare.yml
-        # (cacheable: true) — omit here so this task var doesn't clobber it
-        # with an empty string; only Linux (where nothing sets s1_agent_version
-        # before this point) reads the smoke-test pin.
-        # yamllint disable-line rule:line-length
-        s1_agent_version: "{{ s1_molecule_target_version if (ansible_os_family != 'Windows' and s1_molecule_target_version | length > 0) else omit }}"
         s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
-      when: ansible_os_family == 'Windows' or not s1_molecule_gpg_signed_validation
-
-    # TEMPORARY (issue 02, .scratch/linux-upgrade-passphrase-unification/):
-    # s1_agent_download's signed/unsigned package selection is unchanged and
-    # out of scope for issue 02 — and, per the maintainer, GPG signing was
-    # folded into the normal package from 23.3 onward, so no in-scope
-    # console carries a separate Signed-SentinelAgent Linux package to
-    # select in the first place. The upgrade target is therefore fetched via
-    # the normal (unsigned) path first and handed to s1_agent_upgrade as an
-    # already-resolved s1_agent_src/s1_agent_version (skipping its own
-    # download), purely to exercise s1_agent_upgrade's own logic — the GPG
-    # key import and the single upgrade command — with
-    # s1_install_gpg_signed_rpm: true. Remove this block once issue 02 is
-    # closed out.
-    - name: GPG-signed upgrade validation | Linux
-      when:
-        - ansible_os_family != 'Windows'
-        - s1_molecule_gpg_signed_validation
-      block:
-        - name: Fetch the latest normal package as the GPG-signed upgrade target
-          ansible.builtin.include_role:
-            name: s1_agent_download
-          vars:
-            s1_install_gpg_signed_rpm: false
-            s1_agent_version: ""
-
-        - name: Include s1_agent_upgrade | GPG-signed
-          ansible.builtin.include_role:
-            name: s1_agent_upgrade
-          vars:
-            s1_install_gpg_signed_rpm: true
-            s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
 
     - name: Persist facts for verify step
       ansible.builtin.set_fact:
