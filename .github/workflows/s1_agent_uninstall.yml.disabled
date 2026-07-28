@@ -1,36 +1,41 @@
-name: S1 Agent Download
-on:
-  push:
-    branches:
-      - "release/**"
-    paths:
-      - "roles/s1_agent_download/**"
-      - "!roles/s1_agent_download/README.md"
-      - "!roles/s1_agent_download/makefile"
-      - "extensions/molecule/download"
-      - ".github/workflows/s1_agent_download.yml"
-      - ".github/workflows/ci-*.yml"
-      - "!.github/workflows/ci-release.yml"
-      - ".github/actions/ci-setup/action.yml"
-      - "requirements.yml"
-  pull_request:
-    branches:
-      - "main"
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-    paths:
-      - "roles/s1_agent_download/**"
-      - "!roles/s1_agent_download/README.md"
-      - "!roles/s1_agent_download/makefile"
-      - "extensions/molecule/download"
-      - ".github/workflows/s1_agent_download.yml"
-      - ".github/workflows/ci-*.yml"
-      - "!.github/workflows/ci-release.yml"
-      - ".github/actions/ci-setup/actions.yml"
-      - "requirements.yml"
-  workflow_dispatch:
+# DISABLED pending the GitHub-hosted KVM/libvirt cloud-runner migration.
+# The self-hosted runners this workflow targeted are being retired; its
+# trigger block below is commented out so it never fires. Left in place
+# verbatim (aside from this note) as the blueprint for the rebuild.
+# See .scratch/github-hosted-runners/PRD.md and issue 01.
+name: S1 Agent Uninstall
+# on:
+#   push:
+#     branches:
+#       - "release/**"
+#     paths:
+#       - "roles/s1_agent_uninstall/**"
+#       - "!roles/s1_agent_uninstall/README.md"
+#       - "!roles/s1_agent_uninstall/makefile"
+#       - "extensions/molecule/uninstall"
+#       - ".github/workflows/s1_agent_uninstall.yml"
+#       - ".github/workflows/ci-*.yml"
+#       - "!.github/workflows/ci-release.yml"
+#       - ".github/actions/ci-setup/action.yml"
+#       - "requirements.yml"
+#   pull_request:
+#     branches:
+#       - "main"
+#     types:
+#       - opened
+#       - synchronize
+#       - ready_for_review
+#     paths:
+#       - "roles/s1_agent_uninstall/**"
+#       - "!roles/s1_agent_uninstall/README.md"
+#       - "extensions/molecule/uninstall"
+#       - "!roles/s1_agent_uninstall/makefile"
+#       - ".github/workflows/s1_agent_uninstall.yml"
+#       - ".github/workflows/ci-*.yml"
+#       - "!.github/workflows/ci-release.yml"
+#       - ".github/actions/ci-setup/actions.yml"
+#       - "requirements.yml"
+#   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -39,7 +44,7 @@ jobs:
     name: Lint Role
     uses: ./.github/workflows/ci-lint.yml
     with:
-      role-path: ./roles/s1_agent_download
+      role-path: ./roles/s1_agent_uninstall
 
   call-ci-test:
     name: "Test: ${{ matrix.boxes.display_name }} (${{ matrix.scenario-name }})"
@@ -67,14 +72,16 @@ jobs:
           #   display_name: Server 2012r2
           #   connection: winrm
         scenario-name:
-          - download
+          - uninstall
         # exclude:
         #   # OpenSSH is not supported on Windows Server 2012r2. We need to use
         #   # custom scenarios configured for winrm connections. Exclude normal
         #   # scenarios for winrm connections and winrm_* scenarios for ssh
         #   # connections.
         #   - { boxes: { connection: winrm }, scenario-name: default }
+        #   - { boxes: { connection: winrm }, scenario-name: forced_remove }
         #   - { boxes: { connection: ssh }, scenario-name: winrm_default }
+        #   - { boxes: { connection: ssh }, scenario-name: winrm_forced_remove }
     with:
       box-distribution: ${{ matrix.boxes.distribution }}
       box-repository: ${{ matrix.boxes.repository }}
@@ -82,7 +89,7 @@ jobs:
       ansible-group: ${{ matrix.boxes.group }}
       display-name: ${{ matrix.boxes.display_name }}
       scenario-name: ${{ matrix.scenario-name }}
-      # role-path: ./roles/s1_agent_download
+      # role-path: ./roles/s1_agent_uninstall
     secrets: inherit
 
   call-ci-assert:

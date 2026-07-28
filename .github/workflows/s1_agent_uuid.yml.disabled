@@ -1,36 +1,41 @@
+# DISABLED pending the GitHub-hosted KVM/libvirt cloud-runner migration.
+# The self-hosted runners this workflow targeted are being retired; its
+# trigger block below is commented out so it never fires. Left in place
+# verbatim (aside from this note) as the blueprint for the rebuild.
+# See .scratch/github-hosted-runners/PRD.md and issue 01.
 name: S1 Agent UUID
-on:
-  push:
-    branches:
-      - "release/**"
-    paths:
-      - "roles/s1_agent_uuid/**"
-      - "!roles/s1_agent_uuid/README.md"
-      - "!roles/s1_agent_uuid/makefile"
-      - "extensions/molecule/uuid"
-      - ".github/workflows/s1_agent_uuid.yml"
-      - ".github/workflows/ci-*.yml"
-      - "!.github/workflows/ci-release.yml"
-      - ".github/actions/ci-setup/action.yml"
-      - "requirements.yml"
-  pull_request:
-    branches:
-      - "main"
-    types:
-      - opened
-      - synchronize
-      - ready_for_review
-    paths:
-      - "roles/s1_agent_uuid/**"
-      - "!roles/s1_agent_uuid/README.md"
-      - "!roles/s1_agent_uuid/makefile"
-      - "extensions/molecule/uuid"
-      - ".github/workflows/s1_agent_uuid.yml"
-      - ".github/workflows/ci-*.yml"
-      - "!.github/workflows/ci-release.yml"
-      - ".github/actions/ci-setup/actions.yml"
-      - "requirements.yml"
-  workflow_dispatch:
+# on:
+#   push:
+#     branches:
+#       - "release/**"
+#     paths:
+#       - "roles/s1_agent_uuid/**"
+#       - "!roles/s1_agent_uuid/README.md"
+#       - "!roles/s1_agent_uuid/makefile"
+#       - "extensions/molecule/uuid"
+#       - ".github/workflows/s1_agent_uuid.yml"
+#       - ".github/workflows/ci-*.yml"
+#       - "!.github/workflows/ci-release.yml"
+#       - ".github/actions/ci-setup/action.yml"
+#       - "requirements.yml"
+#   pull_request:
+#     branches:
+#       - "main"
+#     types:
+#       - opened
+#       - synchronize
+#       - ready_for_review
+#     paths:
+#       - "roles/s1_agent_uuid/**"
+#       - "!roles/s1_agent_uuid/README.md"
+#       - "!roles/s1_agent_uuid/makefile"
+#       - "extensions/molecule/uuid"
+#       - ".github/workflows/s1_agent_uuid.yml"
+#       - ".github/workflows/ci-*.yml"
+#       - "!.github/workflows/ci-release.yml"
+#       - ".github/actions/ci-setup/actions.yml"
+#       - "requirements.yml"
+#   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
