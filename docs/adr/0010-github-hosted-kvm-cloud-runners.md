@@ -7,8 +7,8 @@ VMs had nowhere to run except a machine we owned and maintained. That
 constraint no longer holds: GitHub-hosted Ubuntu runners now expose
 hardware-accelerated nested virtualization, including on the free standard
 runner tier. Paying the ongoing cost of a bespoke self-hosted host to work
-around a limitation GitHub has since removed stopped making sense, so CI moves
-onto GitHub-hosted runners, using **KVM/libvirt** (not VirtualBox, which is
+around a limitation GitHub has since removed no longer made sense. We migrate
+CI onto GitHub-hosted runners, using **KVM/libvirt** (not VirtualBox, which is
 unsupported and unreliable on the hosted fleet) as the Vagrant provider.
 
 ## Decisions
@@ -62,6 +62,3 @@ unsupported and unreliable on the hosted fleet) as the Vagrant provider.
 - External contributors get lint feedback automatically but never see a
   secret; maintainers stay in the loop for any change that needs a full test
   run.
-- Every GitHub Action used in these workflows is official or vendor-owned and
-  pinned to a full commit SHA, keeping the supply-chain surface auditable and
-  minimal.
