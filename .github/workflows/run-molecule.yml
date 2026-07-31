@@ -1,0 +1,126 @@
+name: Run molecule scenario (reusable)
+
+# Generalizes the proven PoC pattern (poc-linux-cloud-kvm.yml, issue 03; and
+# poc-windows-cloud-kvm.yml, issue 04) into a single reusable workflow any
+# role's tests can call. See .scratch/github-hosted-runners/issues/06-reusable-run-molecule-workflow.md.
+#
+# One call = one guest VM = one job, always under libvirt via ci-setup
+# (enable_kvm: true) - this is also how the ~14 GB runner disk stays in
+# budget. Platform fan-out across a role's tests is a job matrix at the
+# caller, not inside this workflow (see issue 07's thin per-role callers).
+on:
+  workflow_call:
+    inputs:
+      scenario:
+        description: "Molecule scenario name (e.g. default, upgrade, uuid)"
+        required: true
+        type: string
+      platform_preset:
+        description: "Platform preset: rocky8, ubuntu2204, opensuse15, or windows"
+        required: true
+        type: string
+      inventory_group:
+        description: "Ansible inventory group the guest joins (Linux or Windows)"
+        required: true
+        type: string
+      connection:
+        description: >-
+          Ansible connection type the guest is reached over. Every in-scope
+          scenario's molecule.yml hardcodes ssh (Windows connects over ssh
+          here, unlike the winrm-only legacy Windows fixtures, which are out
+          of scope - see the PRD). The job guards this input against that
+          hardcoded assumption and fails fast on anything else, so a caller
+          asking for a connection type this workflow doesn't support yet is
+          an explicit error, not a silent mismatch between the job name and
+          what the scenario actually does.
+        required: false
+        type: string
+        default: ssh
+    secrets:
+      S1_AGENT_SITE_TOKEN:
+        required: true
+      S1_API_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: "${{ inputs.scenario }} - ${{ inputs.platform_preset }} (${{ inputs.connection }}, libvirt)"
+    runs-on: ubuntu-24.04
+    env:
+      ANSIBLE_FORCE_COLOR: "1" # allows ansible colors to be passed to GitHub Actions
+      PY_COLORS: "1" # allows molecule colors to be passed to GitHub Actions
+      VAGRANT_DEFAULT_PROVIDER: libvirt
+      S1_VAGRANT_GROUP: ${{ inputs.inventory_group }}
+      S1_MANAGEMENT_CONSOLE: ${{ vars.S1_MANAGEMENT_CONSOLE }}
+      S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
+      S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
+      MOLECULE_SCENARIO: ${{ inputs.scenario }}
+      PLATFORM_PRESET: ${{ inputs.platform_preset }}
+      CONNECTION: ${{ inputs.connection }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Every scenario's molecule.yml hardcodes ansible_connection: ssh - this
+      # input has nowhere to go yet, so a caller asking for anything else
+      # must fail loudly instead of silently getting ssh behavior under a
+      # different label.
+      - name: Guard connection type
+        shell: bash
+        run: |
+          if [ "$CONNECTION" != "ssh" ]; then
+            echo "::error::connection '$CONNECTION' is not supported - every in-scope scenario connects over ssh"
+            exit 1
+          fi
+
+      # Mirrors the S1_VAGRANT_DISTRO/S1_VAGRANT_REPO pairs in
+      # scripts/molecule.py's PRESETS - duplicated rather than shared, since
+      # that script is documented local-only (CI runs raw molecule so its
+      # output streams to the Actions console; see ADR 0010 / PRD).
+      - name: Resolve platform preset
+        id: preset
+        shell: bash
+        run: |
+          case "$PLATFORM_PRESET" in
+            rocky8)
+              echo "distro=rocky8" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            ubuntu2204)
+              echo "distro=ubuntu2204" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            opensuse15)
+              echo "distro=opensuse15" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            windows)
+              echo "distro=windows-server-2022-standard" >> "$GITHUB_OUTPUT"
+              echo "repo=gusztavvargadr" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::unknown platform_preset '$PLATFORM_PRESET' (expected rocky8, ubuntu2204, opensuse15, or windows)"
+              exit 1
+              ;;
+          esac
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "true"
+
+      - name: Report disk usage before box creation
+        run: df -h
+
+      - name: Molecule test
+        working-directory: extensions
+        env:
+          S1_VAGRANT_DISTRO: ${{ steps.preset.outputs.distro }}
+          S1_VAGRANT_REPO: ${{ steps.preset.outputs.repo }}
+        run: molecule test -s "$MOLECULE_SCENARIO"
+
+      - name: Report disk usage after box creation
+        run: df -h

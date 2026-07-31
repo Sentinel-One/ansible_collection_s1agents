@@ -1,0 +1,33 @@
+name: Demo - run-molecule reusable workflow (uuid, rocky8)
+
+# Thin caller demonstrating the reusable run-molecule workflow (issue 06)
+# end-to-end: a one-entry job matrix (the shape issue 07's per-role callers
+# scale up) invokes run-molecule.yml for the uuid scenario, one of the
+# scenarios normalized to provider-pluggable form in this same issue.
+# Push-triggered only: see poc-linux-cloud-kvm.yml for why.
+on:
+  push:
+    branches:
+      - ci/cloud-runner-poc
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  uuid:
+    strategy:
+      matrix:
+        include:
+          - platform_preset: rocky8
+            inventory_group: Linux
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: uuid
+      platform_preset: ${{ matrix.platform_preset }}
+      inventory_group: ${{ matrix.inventory_group }}
+      connection: ssh
+    secrets: inherit
