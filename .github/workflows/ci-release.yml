@@ -1,0 +1,98 @@
+---
+name: Release Ansible collection
+
+# Rebuilt on GitHub-hosted cloud runners (issue 08). A tag push is an
+# inherently trusted, same-repo action by a maintainer, so secrets are
+# always available here and there is no fork/skip concern - no
+# branch-protection config or always-running shim is needed to enforce the
+# gate. See .scratch/github-hosted-runners/issues/08-rebuild-release-workflow-cloud.md
+# and ADR 0010.
+#
+# gate.yml's windows-legacy-plus entry is intentionally omitted from this
+# matrix: it runs on jborean93 boxes whose libvirt support is unverified and
+# is explicitly out of scope for this migration (see the PRD's Out of Scope
+# section); it has no run-molecule platform preset. It is picked up again
+# when that fixture is rebuilt on cloud runners.
+on:
+  push:
+    tags:
+      - "*.*.*"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: "gate: ${{ matrix.scenario }} - ${{ matrix.preset }}"
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    strategy:
+      fail-fast: false
+      # Mirrors scripts/gate.yml (the single source of truth for the full
+      # sweep) minus windows-legacy-plus - see the note above.
+      matrix:
+        include:
+          - { scenario: upgrade, preset: rocky8, group: Linux }
+          - { scenario: upgrade, preset: ubuntu2204, group: Linux }
+          - { scenario: upgrade, preset: opensuse15, group: Linux }
+          - { scenario: upgrade, preset: windows, group: Windows }
+          - { scenario: uninstall, preset: rocky8, group: Linux }
+          - { scenario: uninstall, preset: ubuntu2204, group: Linux }
+          - { scenario: uninstall, preset: opensuse15, group: Linux }
+          - { scenario: uninstall, preset: windows, group: Windows }
+          - { scenario: info-missing, preset: rocky8, group: Linux }
+          - { scenario: info-missing, preset: ubuntu2204, group: Linux }
+          - { scenario: info-missing, preset: opensuse15, group: Linux }
+          - { scenario: info-missing, preset: windows, group: Windows }
+          - { scenario: gpgkey, preset: rocky8, group: Linux }
+          - { scenario: gpgkey, preset: opensuse15, group: Linux }
+          - { scenario: uuid, preset: rocky8, group: Linux }
+          - { scenario: uuid, preset: ubuntu2204, group: Linux }
+          - { scenario: uuid, preset: opensuse15, group: Linux }
+          - { scenario: uuid, preset: windows, group: Windows }
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: ${{ matrix.scenario }}
+      platform_preset: ${{ matrix.preset }}
+      inventory_group: ${{ matrix.group }}
+      connection: ssh
+    secrets: inherit
+
+  release:
+    name: Build and publish release
+    needs: gate
+    runs-on: ubuntu-24.04
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "false"
+
+      - name: Get version from galaxy.yml
+        id: collection-version
+        run: |
+          echo "RELEASE_TAG=$(grep '^version' galaxy.yml | awk '{ print $2 }')" >> $GITHUB_ENV
+          echo
+
+      - name: Build Ansible Collection
+        run: ansible-galaxy collection build
+
+      - name: Publish a release and attach collection
+        run: |
+          gh release create ${RELEASE_TAG} -F CHANGELOG.md --generate-notes --draft sentinelone-s1agents-${RELEASE_TAG}.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
+        shell: bash
+
+      # - name: Deploy Ansible collection to Galaxy
+      #   run: ansible-galaxy collection publish sentinelone-s1agents-${env.RELEASE_TAG}.tar.xz --api-key ${{ secrets.GALAXY_API_KEY }}
