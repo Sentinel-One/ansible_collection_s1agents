@@ -37,6 +37,17 @@ runs:
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
 
+    # Ubuntu's own apt repos don't ship a current Vagrant package; HashiCorp's
+    # official apt repo is the vendor-documented install path.
+    - name: Add HashiCorp apt repository
+      if: inputs.enable_kvm == 'true'
+      shell: bash
+      run: |
+        wget -O- https://apt.releases.hashicorp.com/gpg \
+          | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+          | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
     - name: Install KVM/libvirt/Vagrant virtualization stack
       if: inputs.enable_kvm == 'true'
       shell: bash
