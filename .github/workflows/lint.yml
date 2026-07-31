@@ -1,0 +1,44 @@
+name: Lint
+
+# The single required check on pull requests (see ADR 0010 / issue 07). Lints
+# the whole repository from the .venv toolchain in one job - no per-role
+# scoping, since .ansible-lint already excludes non-role paths and the venv
+# pins the one ansible-core line this collection supports. No KVM/secrets
+# needed, so this runs identically for same-repo branches and fork pull
+# requests alike.
+on:
+  push:
+    branches:
+      - "release/**"
+      # TODO: drop once these workflows land on main - see PRD note 35
+      # (.scratch/github-hosted-runners/PRD.md); push lets us iterate on this
+      # dedicated branch before workflow_dispatch becomes runnable.
+      - ci/cloud-runner-poc
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+
+      - name: ansible-lint
+        run: ansible-lint

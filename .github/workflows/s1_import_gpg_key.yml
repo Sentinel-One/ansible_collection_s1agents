@@ -1,0 +1,76 @@
+name: S1 Import GPG Key
+
+# Thin caller over the reusable run-molecule workflow (issue 06). Native
+# `on: paths` filtering only - no third-party path-filter action, no token.
+# See .scratch/github-hosted-runners/issues/07-thin-role-callers-fork-gate.md
+# and ADR 0010.
+on:
+  push:
+    branches:
+      - "release/**"
+      # TODO: drop once these workflows land on main - see PRD note 35
+      # (.scratch/github-hosted-runners/PRD.md); push lets us iterate on this
+      # dedicated branch before workflow_dispatch becomes runnable.
+      - ci/cloud-runner-poc
+    paths:
+      - "roles/s1_import_gpg_key/**"
+      - "!roles/s1_import_gpg_key/README.md"
+      - "extensions/molecule/gpgkey/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/s1_import_gpg_key.yml"
+      - ".github/workflows/run-molecule.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_import_gpg_key/**"
+      - "!roles/s1_import_gpg_key/README.md"
+      - "extensions/molecule/gpgkey/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/s1_import_gpg_key.yml"
+      - ".github/workflows/run-molecule.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: "${{ matrix.scenario }} - ${{ matrix.platform.preset }}"
+    # Secret-backed molecule jobs run automatically for same-repo branches;
+    # fork pull requests are gated out here so they never receive secrets by
+    # any automatic path. No pull_request_target anywhere - see ADR 0010.
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - gpgkey
+        # GPG key import only applies to RPM-based systems.
+        platform:
+          - preset: rocky8
+            group: Linux
+          - preset: opensuse15
+            group: Linux
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: ${{ matrix.scenario }}
+      platform_preset: ${{ matrix.platform.preset }}
+      inventory_group: ${{ matrix.platform.group }}
+      connection: ssh
+    secrets: inherit
