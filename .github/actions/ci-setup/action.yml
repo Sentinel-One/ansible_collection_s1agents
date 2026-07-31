@@ -20,6 +20,12 @@ runs:
       run: |
         uv venv --python 3.12
         uv pip install -r requirements-dev.txt
+        # Ansible's interpreter discovery for the "local" connection (used to
+        # create the Vagrant instance) resolves python3 from PATH, not from
+        # whichever interpreter launched ansible-playbook. Put the venv first
+        # so that lookup - and every later `molecule`/`ansible-*` invocation
+        # in this job - resolves to it instead of the system interpreter.
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
     - name: Install Galaxy collection dependencies
       shell: bash

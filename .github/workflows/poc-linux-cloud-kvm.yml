@@ -42,11 +42,11 @@ jobs:
 
       - name: Molecule converge (install-only smoke)
         working-directory: extensions
-        run: ../.venv/bin/molecule converge -s default
+        run: molecule converge -s default
 
       - name: Report disk usage after box creation
         run: df -h
 
       - name: Molecule test (full scenario)
         working-directory: extensions
-        run: ../.venv/bin/molecule test -s default
+        run: molecule test -s default
