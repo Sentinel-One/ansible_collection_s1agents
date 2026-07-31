@@ -45,5 +45,9 @@ on any machine and removes every hardcoded personal env name.
   `PATH` so molecule and the `ansible-playbook`/`ansible` it spawns all resolve to
   the `.venv` (resolution is PATH-based — there is no `ansible.cfg` or pinned
   interpreter in the repo).
-- CI is unchanged: it installs its toolchain inline via pip and is retained for
-  historical context (see 0006), so it is not unified onto `requirements-dev.txt`.
+- CI's `ci-setup` composite action (`.github/actions/ci-setup/action.yml`) now
+  bootstraps the same `requirements-dev.txt`-declared toolchain via uv, so CI and
+  local dev share one `.venv` build instead of CI's own inline-pip install. This
+  landed as part of the GitHub-hosted KVM/libvirt cloud-runner migration (see
+  `.scratch/github-hosted-runners/PRD.md`), not as part of this ADR's original
+  scope.
