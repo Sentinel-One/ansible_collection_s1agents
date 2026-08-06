@@ -10,13 +10,34 @@
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/vars/windows.yml"
 
+    # Build one Legacy Plus classification case per s1_legacy_plus_x64_editions
+    # entry, so adding an edition without adding coverage for it is not
+    # possible. Each case's Caption is synthesized from the entry's `match`
+    # substring alone (never its `not_match`), so it is guaranteed to match
+    # that entry and no other, and is expected to resolve to legacy_plus.
+    - name: Build one Legacy Plus classification case per editions-matrix entry
+      ansible.builtin.set_fact:
+        s1_tier_cases_editions_matrix: >-
+          {{ (s1_tier_cases_editions_matrix | default([])) + [{
+            'case': 'legacy_plus_caption_' ~ (s1_editions_entry.match | lower | regex_replace('[^a-z0-9]+', '_')),
+            'ansible_distribution': 'Microsoft ' ~ s1_editions_entry.match,
+            'ansible_distribution_version': '6.2.9200',
+            's1_os_bitness': '64-bit',
+          }] }}
+      loop: "{{ s1_legacy_plus_x64_editions }}"
+      loop_control:
+        loop_var: s1_editions_entry
+        label: "{{ s1_editions_entry.match }}"
+
     # Fact-mocked Windows support-tier classification cases (ADR 0008): one
     # legacy case (version floor beats the 32-bit short-circuit), one
     # legacy_plus case matched purely by bitness (Windows 10 32-bit, NT 10.0
-    # - outside the 6.x cluster the Caption matrix covers), one legacy_plus
-    # case matched by Caption (Windows 7 SP1, 64-bit), and one modern case
-    # proving the Windows 8.1 64-bit exclusion (shares NT 6.3 with its
-    # legacy_plus sibling Server 2012, but is not on the Legacy Plus list).
+    # - outside the 6.x cluster the Caption matrix covers), and both
+    # not_match exclusions - Windows 8.1 64-bit (shares NT 6.3 with its
+    # legacy_plus sibling Windows 8) and Server 2012 R2 64-bit (shares NT 6.3
+    # with its legacy_plus sibling Server 2012) - each proving the excluded
+    # edition still classifies as modern. The Caption-match cases themselves
+    # are generated above, one per editions-matrix entry.
     - name: Windows support-tier classification cases
       vars:
         s1_tier_cases:
@@ -28,19 +49,23 @@
             ansible_distribution: Microsoft Windows 10 Pro
             ansible_distribution_version: "10.0.19041"
             s1_os_bitness: 32-bit
-          - case: legacy_plus_caption
-            ansible_distribution: Microsoft Windows 7 Professional
-            ansible_distribution_version: "6.1.7601"
-            s1_os_bitness: 64-bit
-          - case: modern_exclusion
+          - case: modern_exclusion_windows81
             ansible_distribution: Microsoft Windows 8.1 Pro
             ansible_distribution_version: "6.3.9600"
+            s1_os_bitness: 64-bit
+          - case: modern_exclusion_server2012r2
+            # Real facts captured from the retired jborean93/WindowsServer2012R2
+            # Vagrant fixture (extensions/molecule/windows-2012r2) before
+            # ticket 03 of .scratch/windows-tier-ci-split retires that guest.
+            # See docs/adr/0008-windows-support-tier-routing.md.
+            ansible_distribution: Microsoft Windows Server 2012 R2 Standard Evaluation
+            ansible_distribution_version: "6.3.9600.0"
             s1_os_bitness: 64-bit
       block:
         - name: Resolve each fact-mocked tier case
           ansible.builtin.include_tasks:
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_windows_tier_case.yml"
-          loop: "{{ s1_tier_cases }}"
+          loop: "{{ s1_tier_cases + s1_tier_cases_editions_matrix }}"
           loop_control:
             loop_var: s1_tier_case
             label: "{{ s1_tier_case.case }}"
@@ -65,3 +90,23 @@
           loop_control:
             loop_var: s1_pin_case
             label: "{{ s1_pin_case.case }}"
+
+    # Legacy tier fail-loud routing (ADR 0008): s1_agent_install and
+    # s1_agent_upgrade both route Legacy-tier Windows hosts to unsupported.yml,
+    # which fails before doing any work. Safe to run for real; block/rescue in
+    # the template turns the expected failure into data rather than a
+    # scenario failure. Not mock-tested here: legacy_plus routing (proven by
+    # the windows-legacy-plus lifecycle guest) and modern routing (proven by
+    # the existing gate scenarios), since proceeding past either would
+    # attempt a real install.
+    - name: Resolve each Legacy-tier routing case
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_unsupported_routing_case.yml"
+      loop:
+        - case: s1_agent_install
+          role: s1_agent_install
+        - case: s1_agent_upgrade
+          role: s1_agent_upgrade
+      loop_control:
+        loop_var: s1_routing_case
+        label: "{{ s1_routing_case.case }}"

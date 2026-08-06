@@ -12,13 +12,40 @@
         that:
           - s1_molecule_tier_cases['legacy'] == 'legacy'
           - s1_molecule_tier_cases['legacy_plus_bitness'] == 'legacy_plus'
-          - s1_molecule_tier_cases['legacy_plus_caption'] == 'legacy_plus'
-          - s1_molecule_tier_cases['modern_exclusion'] == 'modern'
+          - s1_molecule_tier_cases['modern_exclusion_windows81'] == 'modern'
+          - s1_molecule_tier_cases['modern_exclusion_server2012r2'] == 'modern'
         fail_msg: >-
           One or more fact-mocked tier cases resolved incorrectly:
           {{ s1_molecule_tier_cases }}. Expected legacy=legacy,
-          legacy_plus_bitness=legacy_plus, legacy_plus_caption=legacy_plus,
-          modern_exclusion=modern.
+          legacy_plus_bitness=legacy_plus, modern_exclusion_windows81=modern,
+          modern_exclusion_server2012r2=modern.
+
+    - name: Compute the set of generated editions-matrix case keys
+      ansible.builtin.set_fact:
+        s1_editions_matrix_case_keys: "{{ s1_molecule_tier_cases.keys() | select('match', '^legacy_plus_caption_') | list }}"
+
+    - name: Assert every Legacy Plus 64-bit editions-matrix entry classifies as legacy_plus
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_tier_cases[s1_editions_case_key] == 'legacy_plus'
+        fail_msg: >-
+          Editions-matrix case {{ s1_editions_case_key }} resolved to
+          {{ s1_molecule_tier_cases[s1_editions_case_key] }}, expected
+          legacy_plus.
+      loop: "{{ s1_editions_matrix_case_keys }}"
+      loop_control:
+        loop_var: s1_editions_case_key
+
+    - name: Assert one generated case exists per editions-matrix entry
+      ansible.builtin.assert:
+        that:
+          - s1_editions_matrix_case_keys | length == s1_legacy_plus_x64_editions | length
+        fail_msg: >-
+          Expected {{ s1_legacy_plus_x64_editions | length }} Legacy Plus
+          editions-matrix cases (one per s1_legacy_plus_x64_editions entry),
+          got {{ s1_editions_matrix_case_keys | length }}. An edition was
+          added to s1_legacy_plus_x64_editions without generating coverage
+          for it - see converge.yml.
 
     - name: Assert Legacy Plus default version pin cases resolved as expected
       ansible.builtin.assert:
@@ -30,3 +57,22 @@
           {{ s1_molecule_pin_cases }}. Expected
           unset_version={{ s1_legacy_plus_default_version }},
           explicit_version=23.4.5.337.
+
+    - name: Assert the Legacy tier's fail-loud routing failed with the expected message
+      vars:
+        s1_routing_case_result: "{{ (s1_molecule_routing_cases | default({})).get(s1_routing_case_role, {}) }}"
+        s1_routing_case_expected_msg: >-
+          Microsoft Windows XP Professional is not currently supported by
+          the {{ s1_routing_case_role }} Ansible Role.
+      ansible.builtin.assert:
+        that:
+          - s1_routing_case_result.get('failed', false)
+          - s1_routing_case_expected_msg in s1_routing_case_result.get('msg', '')
+        fail_msg: >-
+          Legacy-tier fail-loud routing did not fail as expected for
+          {{ s1_routing_case_role }}: {{ s1_routing_case_result }}.
+      loop:
+        - s1_agent_install
+        - s1_agent_upgrade
+      loop_control:
+        loop_var: s1_routing_case_role

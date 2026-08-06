@@ -176,19 +176,19 @@ S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
 All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in
 `scripts/gate.yml`.
 
-| Scenario              | Platforms       | Tests                                                         |
-| --------------------- | --------------- | ------------------------------------------------------------- |
-| `common`              | Linux + Windows | `s1_agent_common` var loading                                 |
-| `default`             | Linux + Windows | Full install → verify                                         |
-| `download`            | Linux + Windows | Package download from console                                 |
-| `gpgkey`              | Linux (RPM)     | GPG key import                                                |
-| `info-installed`      | Linux + Windows | `s1_agent_info` with agent present                            |
-| `info-missing`        | Linux + Windows | `s1_agent_info` without agent present                         |
-| `passphrase`          | Linux + Windows | Passphrase retrieval from console                             |
-| `uninstall`           | Linux + Windows | Agent removal with passphrase                                 |
-| `upgrade`             | Linux + Windows | Agent upgrade flow                                            |
-| `uuid`                | Linux + Windows | UUID report from console                                      |
-| `windows-tier-matrix` | none (VM-less)  | Windows support-tier classification + Legacy Plus version pin |
+| Scenario              | Platforms       | Tests                                                                                                        |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
+| `common`              | Linux + Windows | `s1_agent_common` var loading                                                                                |
+| `default`             | Linux + Windows | Full install → verify                                                                                        |
+| `download`            | Linux + Windows | Package download from console                                                                                |
+| `gpgkey`              | Linux (RPM)     | GPG key import                                                                                               |
+| `info-installed`      | Linux + Windows | `s1_agent_info` with agent present                                                                           |
+| `info-missing`        | Linux + Windows | `s1_agent_info` without agent present                                                                        |
+| `passphrase`          | Linux + Windows | Passphrase retrieval from console                                                                            |
+| `uninstall`           | Linux + Windows | Agent removal with passphrase                                                                                |
+| `upgrade`             | Linux + Windows | Agent upgrade flow                                                                                           |
+| `uuid`                | Linux + Windows | UUID report from console                                                                                     |
+| `windows-tier-matrix` | none (VM-less)  | Windows support-tier classification (exhaustive) + Legacy Plus version pin + `legacy` tier fail-loud routing |
 
 `extensions/molecule/common/` also provides shared Jinja2 templates
 (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other
