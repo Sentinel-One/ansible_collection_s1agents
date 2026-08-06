@@ -59,7 +59,7 @@ provisioner:
   # does work; adding it here (requires sshpass on the controller) merges
   # into the driver-derived host vars rather than replacing the dynamically
   # forwarded ansible_host/ansible_port, which a full connection_options
-  # override (like windows-2012r2's) would lose.
+  # override would lose.
   connection_options:
     ansible_password: vagrant
   inventory:
