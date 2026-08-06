@@ -54,6 +54,10 @@ runs:
         echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
           | sudo tee /etc/apt/sources.list.d/hashicorp.list
 
+    # sshpass backs the windows-legacy-plus scenario's password auth: that
+    # box rejects Vagrant's default insecure keypair, so its molecule.yml
+    # connects with ansible_password instead, which requires sshpass on the
+    # controller.
     - name: Install KVM/libvirt/Vagrant virtualization stack
       if: inputs.enable_kvm == 'true'
       shell: bash
@@ -61,7 +65,7 @@ runs:
         sudo apt-get update
         sudo apt-get install -y \
           qemu-kvm libvirt-daemon-system libvirt-dev \
-          ebtables dnsmasq-base vagrant cpu-checker
+          ebtables dnsmasq-base vagrant cpu-checker sshpass
         sudo usermod -aG kvm,libvirt "$(whoami)"
         sudo systemctl restart libvirtd
         # The current login session predates the group change above; loosen

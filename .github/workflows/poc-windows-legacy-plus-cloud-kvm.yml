@@ -1,0 +1,59 @@
+name: PoC - Windows Legacy Plus lifecycle on cloud KVM
+
+# Smoke run for extensions/molecule/windows-legacy-plus on a GitHub-hosted
+# libvirt runner, ahead of wiring it into a per-change gate or the release
+# gate (.scratch/windows-tier-ci-split/issues/04 and 05). Retires the risk
+# the PRD calls out for this specific box before anything depends on it:
+# whether jborean93/WindowsServer2012 pulls under libvirt, boots inside the
+# scenario's 1800s timeout, fits the runner's disk budget, and accepts
+# password auth (sshpass) from the runner. Mirrors poc-windows-cloud-kvm.yml
+# (issue 04 of .scratch/github-hosted-runners) with this box's preset.
+# Push-triggered only: see poc-linux-cloud-kvm.yml for why.
+on:
+  push:
+    branches:
+      - ci/cloud-runner-poc
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  windows-legacy-plus-poc:
+    name: Server 2012 (windows-legacy-plus scenario, libvirt)
+    runs-on: ubuntu-24.04
+    env:
+      ANSIBLE_FORCE_COLOR: "1" # allows ansible colors to be passed to GitHub Actions
+      PY_COLORS: "1" # allows molecule colors to be passed to GitHub Actions
+      VAGRANT_DEFAULT_PROVIDER: libvirt
+      S1_VAGRANT_DISTRO: WindowsServer2012
+      S1_VAGRANT_REPO: jborean93
+      S1_VAGRANT_GROUP: Windows
+      S1_MANAGEMENT_CONSOLE: ${{ vars.S1_MANAGEMENT_CONSOLE }}
+      S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
+      S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "true"
+
+      - name: Report disk usage before box creation
+        run: df -h
+
+      - name: Molecule converge (install-only smoke)
+        working-directory: extensions
+        run: molecule converge -s windows-legacy-plus
+
+      - name: Report disk usage after box creation
+        run: df -h
+
+      - name: "Molecule test (full lifecycle: prepare, upgrade, idempotence, verify, cleanup)"
+        working-directory: extensions
+        run: molecule test -s windows-legacy-plus

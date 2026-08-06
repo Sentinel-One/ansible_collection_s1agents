@@ -16,7 +16,7 @@ on:
         required: true
         type: string
       platform_preset:
-        description: "Platform preset: rocky8, ubuntu2204, opensuse15, or windows"
+        description: "Platform preset: rocky8, ubuntu2204, opensuse15, windows, or windowslegacyplus"
         required: true
         type: string
       inventory_group:
@@ -101,8 +101,12 @@ jobs:
               echo "distro=windows-server-2022-standard" >> "$GITHUB_OUTPUT"
               echo "repo=gusztavvargadr" >> "$GITHUB_OUTPUT"
               ;;
+            windowslegacyplus)
+              echo "distro=WindowsServer2012" >> "$GITHUB_OUTPUT"
+              echo "repo=jborean93" >> "$GITHUB_OUTPUT"
+              ;;
             *)
-              echo "::error::unknown platform_preset '$PLATFORM_PRESET' (expected rocky8, ubuntu2204, opensuse15, or windows)"
+              echo "::error::unknown platform_preset '$PLATFORM_PRESET' (expected rocky8, ubuntu2204, opensuse15, windows, or windowslegacyplus)"
               exit 1
               ;;
           esac
