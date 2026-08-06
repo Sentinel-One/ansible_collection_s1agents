@@ -154,13 +154,14 @@ retry rather than treating it as a test failure.
 **macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
 automatically.
 
-**Real-fact Windows fixtures:** `extensions/molecule/windows-2012r2` and
-`extensions/molecule/windows-legacy-plus` aren't part of the default gate —
-each runs via its own `paths:`-filtered GitHub Actions workflow, gated to
-Windows support-tier changes (see ADR 0008). `windows-legacy-plus` connects
-over SSH with password auth (its box doesn't accept Vagrant's default
+**Real-fact Windows fixture:** `extensions/molecule/windows-legacy-plus` isn't
+part of the default gate — it runs via its own `paths:`-filtered GitHub
+Actions workflow, gated to Windows support-tier changes (see ADR 0008). It
+connects over SSH with password auth (its box doesn't accept Vagrant's default
 insecure keypair), which requires `sshpass` on the controller — install once
-per machine (`brew install sshpass` or your OS equivalent).
+per machine (`brew install sshpass` or your OS equivalent). The retired
+`windows-2012r2` fixture's sole claim (the Server 2012 R2 exclusion) now lives
+as a captured-fact case in `windows-tier-matrix` instead.
 
 To run raw molecule steps for development (from `extensions/`, with the `.venv`
 activated so bare `molecule` resolves — `source ../.venv/bin/activate`):

@@ -54,10 +54,10 @@
             ansible_distribution_version: "6.3.9600"
             s1_os_bitness: 64-bit
           - case: modern_exclusion_server2012r2
-            # Real facts captured from the retired jborean93/WindowsServer2012R2
-            # Vagrant fixture (extensions/molecule/windows-2012r2) before
-            # ticket 03 of .scratch/windows-tier-ci-split retires that guest.
-            # See docs/adr/0008-windows-support-tier-routing.md.
+            # Real facts captured from the now-retired jborean93/WindowsServer2012R2
+            # Vagrant fixture (formerly extensions/molecule/windows-2012r2;
+            # see ticket 03 of .scratch/windows-tier-ci-split) before that
+            # guest was removed. See docs/adr/0008-windows-support-tier-routing.md.
             ansible_distribution: Microsoft Windows Server 2012 R2 Standard Evaluation
             ansible_distribution_version: "6.3.9600.0"
             s1_os_bitness: 64-bit

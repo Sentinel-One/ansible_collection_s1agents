@@ -1,14 +1,14 @@
 ---
-# Real-fact, real-install fixture for the Legacy Plus tier (ADR 0008). Unlike
-# extensions/molecule/windows-2012r2 (classifier-only - that box is Modern,
-# not Legacy Plus), WindowsServer2012 genuinely qualifies for Legacy Plus and
-# is exercised through a full s1_agent_upgrade run so the frozen 23.4 flow and
+# Real-fact, real-install fixture for the Legacy Plus tier (ADR 0008).
+# WindowsServer2012 genuinely qualifies for Legacy Plus (unlike the retired,
+# classifier-only WindowsServer2012R2 fixture, which was Modern) and is
+# exercised through a full s1_agent_upgrade run so the frozen 23.4 flow and
 # the default-version pin (issue 03) are proven end-to-end against a real
-# host, not fact-mocked. Not part of scripts/gate.yml - runs only via its own
-# paths-filtered GitHub Actions workflow, same rationale as windows-2012r2.
+# host, not fact-mocked. Runs via its own paths-filtered GitHub Actions
+# workflow.
 #
 # This box ships Win32-OpenSSH pre-installed and auto-started (unlike
-# WindowsServer2012R2, which has no working OpenSSH path), so it uses the
+# WindowsServer2012R2, which had no working OpenSSH path), so it uses the
 # same ssh connection as the Server 2022 preset rather than forcing WinRM.
 dependency:
   name: galaxy

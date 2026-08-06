@@ -3,10 +3,9 @@
 # Edit this (not the script) to change what the gate runs. See ADR 0005.
 #
 # Dropped: centos6 (RHEL 6 EOL), WindowsServer2012R2 (EOL) — see ADR 0002.
-#   WindowsServer2012R2 is narrowly revived as a classifier-only fixture (proves
-#   the Legacy Plus tier's Server 2012 R2 exclusion against real facts) — see
-#   extensions/molecule/windows-2012r2 and .github/workflows/windows_2012r2_facts.yml.
-#   It runs only on its own paths-filtered workflow, not here. See ADR 0008.
+#   The Server 2012 R2 exclusion this box once proved is now a captured-fact
+#   case in windows-tier-matrix (below) rather than a recurring guest. See
+#   ADR 0008.
 # windows-legacy-plus (WindowsServer2012, EOL, genuinely Legacy Plus) — a
 #   real-install fixture (proves the frozen Legacy Plus upgrade flow and the
 #   default-version pin from issue 03 against a real host) — see

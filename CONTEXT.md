@@ -47,13 +47,15 @@ never fetches a too-new GA release that would fail the ceiling assert. _Avoid_:
 letting `s1_agent_download`'s `release_n_minus` fallback run unpinned on a
 Legacy Plus host.
 
-Two real-fact molecule fixtures exist alongside the fact-mocked `common`
-scenario cases, each gated to its own `paths:`-filtered CI workflow rather than
-the default `scripts/gate.yml`: `extensions/molecule/windows-2012r2`
-(classifier-only — proves the `not_match: "2012 R2"` exclusion, installs
-nothing) and `extensions/molecule/windows-legacy-plus` (a real `s1_agent_upgrade`
-run against genuinely-Legacy-Plus `jborean93/WindowsServer2012` — proves the
-frozen flow and the default-version pin end-to-end, not fact-mocked).
+One real-fact molecule fixture exists alongside the fact-mocked
+`windows-tier-matrix` cases, gated to its own `paths:`-filtered CI workflow
+rather than the default `scripts/gate.yml`: `extensions/molecule/windows-legacy-plus`
+(a real `s1_agent_upgrade` run against genuinely-Legacy-Plus
+`jborean93/WindowsServer2012` — proves the frozen flow and the default-version
+pin end-to-end, not fact-mocked). The `not_match: "2012 R2"` exclusion was
+previously proven by a real-guest classifier-only fixture; that guest is
+retired and the exclusion is now a captured-fact case in `windows-tier-matrix`
+instead.
 
 **Legacy**: The older tier below Legacy Plus — Windows XP, Vista, POSReady 2009,
 Server 2003, Server 2008 non-R2 (NT `< 6.1`) — which requires a separate
