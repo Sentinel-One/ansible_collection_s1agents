@@ -139,12 +139,13 @@ project `.venv` (see [Python Environment](#python-environment)).
 
 **Platform presets:**
 
-| Preset       | Distro              | Notes                                |
-| ------------ | ------------------- | ------------------------------------ |
-| `rocky8`     | Rocky Linux 8       | Default Linux (roboxes)              |
-| `ubuntu2204` | Ubuntu 22.04        | (roboxes)                            |
-| `opensuse15` | OpenSUSE Leap 15    | (roboxes)                            |
-| `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
+| Preset       | Distro              | Notes                                                                 |
+| ------------ | ------------------- | --------------------------------------------------------------------- |
+| `rocky8`     | Rocky Linux 8       | Default Linux (roboxes)                                               |
+| `ubuntu2204` | Ubuntu 22.04        | (roboxes)                                                             |
+| `opensuse15` | OpenSUSE Leap 15    | (roboxes)                                                             |
+| `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group                                  |
+| `none`       | n/a                 | VM-less scenarios (e.g. `windows-tier-matrix`); no `S1_VAGRANT_*` env |
 
 **Logs** are written to `scripts/logs/molecule/<scenario>-<platform>.log`. Exit code 75
 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
@@ -175,18 +176,19 @@ S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
 All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in
 `scripts/gate.yml`.
 
-| Scenario         | Platforms       | Tests                                 |
-| ---------------- | --------------- | ------------------------------------- |
-| `common`         | Linux + Windows | `s1_agent_common` var loading         |
-| `default`        | Linux + Windows | Full install → verify                 |
-| `download`       | Linux + Windows | Package download from console         |
-| `gpgkey`         | Linux (RPM)     | GPG key import                        |
-| `info-installed` | Linux + Windows | `s1_agent_info` with agent present    |
-| `info-missing`   | Linux + Windows | `s1_agent_info` without agent present |
-| `passphrase`     | Linux + Windows | Passphrase retrieval from console     |
-| `uninstall`      | Linux + Windows | Agent removal with passphrase         |
-| `upgrade`        | Linux + Windows | Agent upgrade flow                    |
-| `uuid`           | Linux + Windows | UUID report from console              |
+| Scenario              | Platforms       | Tests                                                         |
+| --------------------- | --------------- | ------------------------------------------------------------- |
+| `common`              | Linux + Windows | `s1_agent_common` var loading                                 |
+| `default`             | Linux + Windows | Full install → verify                                         |
+| `download`            | Linux + Windows | Package download from console                                 |
+| `gpgkey`              | Linux (RPM)     | GPG key import                                                |
+| `info-installed`      | Linux + Windows | `s1_agent_info` with agent present                            |
+| `info-missing`        | Linux + Windows | `s1_agent_info` without agent present                         |
+| `passphrase`          | Linux + Windows | Passphrase retrieval from console                             |
+| `uninstall`           | Linux + Windows | Agent removal with passphrase                                 |
+| `upgrade`             | Linux + Windows | Agent upgrade flow                                            |
+| `uuid`                | Linux + Windows | UUID report from console                                      |
+| `windows-tier-matrix` | none (VM-less)  | Windows support-tier classification + Legacy Plus version pin |
 
 `extensions/molecule/common/` also provides shared Jinja2 templates
 (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other

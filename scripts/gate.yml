@@ -19,6 +19,13 @@
 # Windows uses the `default` scenario with the `windows` platform preset;
 #   the old `winrm_default` scenario name is gone. See ADR 0005.
 #
+# windows-tier-matrix (VM-less, default driver) — proves Windows support-tier
+#   classification and the Legacy Plus default-version pin on the runner
+#   itself, no guest, no console secrets. See extensions/molecule/windows-tier-matrix
+#   and .scratch/windows-tier-ci-split/issues/01-vm-less-tier-matrix-scenario.md.
+#   Registered with the "none" preset (scripts/molecule.py) since it has no
+#   Vagrant platform to fan out over.
+#
 # Consolidated matrix (18 runs vs 38 exhaustive).  Several scenarios are
 # fully exercised as sub-steps of a more comprehensive scenario and are
 # omitted from the default gate to reduce wall-clock time.
@@ -47,3 +54,5 @@
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
 - scenario: windows-legacy-plus
   platforms: [windowslegacyplus]
+- scenario: windows-tier-matrix
+  platforms: [none]

@@ -1,0 +1,72 @@
+name: Windows Tier Matrix
+
+# Plain job, not a run-molecule caller (issue 01 of .scratch/windows-tier-ci-split):
+# extensions/molecule/windows-tier-matrix proves Windows support-tier
+# classification and the Legacy Plus default-version pin entirely on the
+# runner - no guest VM, no virtualization stack, no console secrets - so,
+# unlike the other thin per-role callers, it needs no fork-secret `if:`
+# gate. Fork pull requests get real tier-logic signal for the first time.
+# See .scratch/windows-tier-ci-split/PRD.md and ADR 0010.
+on:
+  push:
+    branches:
+      - "release/**"
+      # TODO: drop once these workflows land on main - see PRD note 35
+      # (.scratch/github-hosted-runners/PRD.md); push lets us iterate on this
+      # dedicated branch before workflow_dispatch becomes runnable.
+      - ci/cloud-runner-poc
+    paths:
+      - "roles/s1_agent_common/tasks/windows_tier.yml"
+      - "roles/s1_agent_common/tasks/windows_legacy_plus_version_pin.yml"
+      - "roles/s1_agent_common/vars/windows.yml"
+      - "roles/s1_agent_install/tasks/unsupported.yml"
+      - "roles/s1_agent_upgrade/tasks/unsupported.yml"
+      - "extensions/molecule/windows-tier-matrix/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/windows_tier_matrix.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_agent_common/tasks/windows_tier.yml"
+      - "roles/s1_agent_common/tasks/windows_legacy_plus_version_pin.yml"
+      - "roles/s1_agent_common/vars/windows.yml"
+      - "roles/s1_agent_install/tasks/unsupported.yml"
+      - "roles/s1_agent_upgrade/tasks/unsupported.yml"
+      - "extensions/molecule/windows-tier-matrix/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/windows_tier_matrix.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: windows-tier-matrix
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "false"
+
+      - name: Molecule test
+        working-directory: extensions
+        run: molecule test -s windows-tier-matrix

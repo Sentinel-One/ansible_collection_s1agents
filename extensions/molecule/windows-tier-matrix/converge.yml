@@ -1,0 +1,67 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    # include_vars, not include_role: s1_agent_common - that role's gather_facts
+    # task would overwrite the mocked ansible_distribution/ansible_distribution_version
+    # facts each case sets below. See docs/adr/0008-windows-support-tier-routing.md.
+    - name: Load Windows support-tier vars
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/vars/windows.yml"
+
+    # Fact-mocked Windows support-tier classification cases (ADR 0008): one
+    # legacy case (version floor beats the 32-bit short-circuit), one
+    # legacy_plus case matched purely by bitness (Windows 10 32-bit, NT 10.0
+    # - outside the 6.x cluster the Caption matrix covers), one legacy_plus
+    # case matched by Caption (Windows 7 SP1, 64-bit), and one modern case
+    # proving the Windows 8.1 64-bit exclusion (shares NT 6.3 with its
+    # legacy_plus sibling Server 2012, but is not on the Legacy Plus list).
+    - name: Windows support-tier classification cases
+      vars:
+        s1_tier_cases:
+          - case: legacy
+            ansible_distribution: Microsoft Windows XP Professional
+            ansible_distribution_version: "5.1.2600"
+            s1_os_bitness: 32-bit
+          - case: legacy_plus_bitness
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.19041"
+            s1_os_bitness: 32-bit
+          - case: legacy_plus_caption
+            ansible_distribution: Microsoft Windows 7 Professional
+            ansible_distribution_version: "6.1.7601"
+            s1_os_bitness: 64-bit
+          - case: modern_exclusion
+            ansible_distribution: Microsoft Windows 8.1 Pro
+            ansible_distribution_version: "6.3.9600"
+            s1_os_bitness: 64-bit
+      block:
+        - name: Resolve each fact-mocked tier case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_windows_tier_case.yml"
+          loop: "{{ s1_tier_cases }}"
+          loop_control:
+            loop_var: s1_tier_case
+            label: "{{ s1_tier_case.case }}"
+
+    # Legacy Plus default version pin cases (ADR 0008 / issue 03): proves the
+    # pin task in isolation - s1_windows_tier is mocked directly since tier
+    # classification is already proven by the block above. One case with no
+    # version requested (expect the pin to apply), one with an explicit
+    # version requested (expect it left unaffected).
+    - name: Legacy Plus default version pin cases
+      vars:
+        s1_pin_cases:
+          - case: unset_version
+            s1_agent_version: ""
+          - case: explicit_version
+            s1_agent_version: "23.4.5.337"
+      block:
+        - name: Resolve each Legacy Plus version-pin case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_legacy_plus_version_pin_case.yml"
+          loop: "{{ s1_pin_cases }}"
+          loop_control:
+            loop_var: s1_pin_case
+            label: "{{ s1_pin_case.case }}"

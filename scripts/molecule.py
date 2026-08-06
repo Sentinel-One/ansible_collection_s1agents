@@ -7,8 +7,10 @@ Run on the project's uv-managed .venv (see requirements-dev.txt):
     .venv/bin/python scripts/molecule.py gate
 
 Actions: test | converge | verify | destroy | create | login | gate
-Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | <raw distro>
+Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | none | <raw distro>
            (comma-separated to run several, e.g. --platform linux,windows)
+           "none" is for VM-less scenarios (e.g. windows-tier-matrix) that declare
+           no Vagrant platform at all.
 
 Secrets (molecule.env, gitignored) are injected by wrapping the invocation in `op run`,
 never read or parsed by this script:
@@ -151,6 +153,10 @@ PRESETS: dict[str, dict[str, str]] = {
         "S1_VAGRANT_GROUP": "Windows",
         "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
     },
+    # VM-less scenario (extensions/molecule/windows-tier-matrix) — no box, so
+    # no S1_VAGRANT_* env is needed; an empty preset keeps raw distro
+    # pass-through (below) from misinterpreting "none" as a Linux box name.
+    "none": {},
 }
 
 
