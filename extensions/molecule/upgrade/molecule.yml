@@ -62,6 +62,7 @@ provisioner:
       Darwin:
   playbooks:
     cleanup: ../common/templates/cleanup-uninstall-agent.yml
+    side_effect: side_effect.yml
 
 verifier:
   name: ansible

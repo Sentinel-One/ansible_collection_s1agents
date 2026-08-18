@@ -19,8 +19,6 @@ driver:
   name: vagrant
   provider:
     name: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
-    options:
-      linked_clone: true
 
 platforms:
   - name: ${S1_MOLECULE_HOSTNAME:-blue-firefly}-${S1_VAGRANT_DISTRO:-WindowsServer2012}
@@ -35,8 +33,6 @@ platforms:
       synced_folder: false
     instance_raw_config_args:
       - "vm.boot_timeout = 1800"
-    provider_options:
-      linked_clone: true
 
 provisioner:
   name: ansible

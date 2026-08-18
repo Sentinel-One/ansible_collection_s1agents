@@ -63,6 +63,7 @@ provisioner:
   playbooks:
     cleanup: ../common/templates/cleanup-uninstall-agent.yml
     prepare: ../common/templates/prepare-basic.yml
+    side_effect: side_effect.yml
 
 verifier:
   name: ansible
