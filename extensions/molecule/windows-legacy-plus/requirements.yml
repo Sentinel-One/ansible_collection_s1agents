@@ -1,0 +1,15 @@
+---
+# Legacy Plus real-install fixture only - not shared with ../requirements.yml,
+# so every other scenario keeps testing against current ansible.windows
+# releases. ansible.windows >= 2.8.0 made win_package's installer-checksum
+# step (Get-FileHash) unconditional, which crashes on this scenario's genuine
+# Windows Server 2012 box (ships PowerShell 3.0, no Get-FileHash). Pinned
+# below 2.8.0 here, paired with ANSIBLE_SKIP_TAGS in this scenario's
+# molecule.yml to bypass the role's own PowerShell 4+ guard - the same
+# workaround documented in the s1_agent_install/s1_agent_upgrade READMEs for
+# end users who cannot upgrade a Legacy Plus host's PowerShell.
+collections:
+  - name: ansible.windows
+    version: "<2.8.0"
+  - community.windows
+  - ansible.posix

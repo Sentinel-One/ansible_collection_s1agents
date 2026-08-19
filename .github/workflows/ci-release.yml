@@ -8,11 +8,17 @@ name: Release Ansible collection
 # gate. See .scratch/github-hosted-runners/issues/08-rebuild-release-workflow-cloud.md
 # and ADR 0010.
 #
-# gate.yml's windows-legacy-plus entry is intentionally omitted from this
-# matrix: it runs on jborean93 boxes whose libvirt support is unverified and
-# is explicitly out of scope for this migration (see the PRD's Out of Scope
-# section); it has no run-molecule platform preset. It is picked up again
-# when that fixture is rebuilt on cloud runners.
+# windows-legacy-plus runs here but with matrix.allow_failure: true, wired to
+# `continue-on-error` below - a real Windows Server 2012 guest, an aging box
+# whose own tooling (WMF, Windows Update) has proven unreliable, pinned to a
+# frozen ansible.windows release its role's PowerShell 4+ guard is bypassed
+# for (see extensions/molecule/windows-legacy-plus/requirements.yml). It's
+# genuine signal for as long as it keeps passing, but a real-VM job this
+# fragile - for reasons both in and out of this repo's control - should not
+# be able to block every release. `continue-on-error` is native, documented
+# GitHub Actions behavior: a failing leg still shows failed (flagged with a
+# warning icon, never silently green) but doesn't fail `gate` or block
+# `release`, which needs it. See .scratch/windows-tier-ci-split/issues/05.
 on:
   push:
     tags:
@@ -30,10 +36,12 @@ jobs:
   gate:
     name: "gate: ${{ matrix.scenario }} - ${{ matrix.preset }}"
     if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    continue-on-error: ${{ matrix.allow_failure == true }}
     strategy:
       fail-fast: false
       # Mirrors scripts/gate.yml (the single source of truth for the full
-      # sweep) minus windows-legacy-plus - see the note above.
+      # sweep). windows-legacy-plus carries allow_failure: true - see the
+      # note above.
       matrix:
         include:
           - { scenario: upgrade, preset: rocky8, group: Linux }
@@ -54,6 +62,7 @@ jobs:
           - { scenario: uuid, preset: ubuntu2204, group: Linux }
           - { scenario: uuid, preset: opensuse15, group: Linux }
           - { scenario: uuid, preset: windows, group: Windows }
+          - { scenario: windows-legacy-plus, preset: windowslegacyplus, group: Windows, allow_failure: true }
     uses: ./.github/workflows/run-molecule.yml
     with:
       scenario: ${{ matrix.scenario }}

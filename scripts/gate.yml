@@ -10,9 +10,11 @@
 #   real-install fixture (proves the frozen Legacy Plus upgrade flow and the
 #   default-version pin from issue 03 against a real host) — see
 #   extensions/molecule/windows-legacy-plus. Included below for pre-release
-#   `gate` sweeps; its own paths-filtered workflow
-#   (.github/workflows/windows_legacy_plus_upgrade.yml) still runs it
-#   per-PR/per-push on top of that, scoped to Legacy Plus file changes.
+#   `gate` sweeps. Its own requirements.yml pins ansible.windows below the
+#   version that made win_package's checksum step unconditional, paired with
+#   an ANSIBLE_SKIP_TAGS bypass of the role's PowerShell 4+ guard, since this
+#   box genuinely ships PowerShell 3.0. ci-release.yml's gate matrix runs it
+#   too, marked non-blocking (`continue-on-error`) given that fragility.
 # Dropped: forced_remove, gpg_signed_rpm, not_installed — never implemented
 #   as molecule scenarios (were stale Makefile targets with no backing directory).
 # Windows uses the `default` scenario with the `windows` platform preset;

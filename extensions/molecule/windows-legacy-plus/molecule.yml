@@ -10,10 +10,15 @@
 # This box ships Win32-OpenSSH pre-installed and auto-started (unlike
 # WindowsServer2012R2, which had no working OpenSSH path), so it uses the
 # same ssh connection as the Server 2022 preset rather than forcing WinRM.
+#
+# Uses its own requirements.yml (not the shared ../requirements.yml) to pin
+# ansible.windows below the version that made win_package's installer
+# checksum step unconditional - see requirements.yml in this directory and
+# the s1_agent_install/s1_agent_upgrade READMEs.
 dependency:
   name: galaxy
   options:
-    requirements-file: ../requirements.yml
+    requirements-file: molecule/windows-legacy-plus/requirements.yml
 
 driver:
   name: vagrant
@@ -49,6 +54,13 @@ provisioner:
     ANSIBLE_ROLES_PATH: ../../../roles
     VAGRANT_DEFAULT_PROVIDER: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
     S1_MOLECULE_HOSTNAME: ${S1_MOLECULE_HOSTNAME:-blue-firefly}
+    # Pairs with the pinned-old ansible.windows in this scenario's
+    # requirements.yml: skips the role's own PowerShell 4+ guard, since this
+    # box genuinely ships PowerShell 3.0 and the pinned collection no longer
+    # needs Get-FileHash. ANSIBLE_SKIP_TAGS is additive with molecule's own
+    # --skip-tags (molecule-notest,notest[,molecule-idempotence-notest]),
+    # confirmed via a local repro - it does not replace or interfere with it.
+    ANSIBLE_SKIP_TAGS: s1_legacy_plus_powershell_check
   # Unlike the Server 2022 preset, this box's OpenSSH doesn't accept
   # Vagrant's default insecure keypair - the vagrant-derived ssh-config
   # (ansible_private_key_file) gets rejected. Password auth (vagrant/vagrant)
