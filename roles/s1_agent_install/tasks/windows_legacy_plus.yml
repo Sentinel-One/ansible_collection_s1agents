@@ -5,6 +5,25 @@
 # at all - the installer itself refuses with exit code 1007. The pre-flight
 # assert below is the primary defense; the 1007 handling further down is the
 # backstop in case that assert is ever bypassed.
+#
+# This role targets servers, not workstations, so the fixed Legacy Plus edition
+# list's server members (Server 2008 R2 SP1, Server 2012) are what matters
+# here - both can reach PowerShell 4+ via an official Microsoft WMF update.
+# See the role README for the escape hatch on hosts that genuinely cannot.
+
+- name: Assert PowerShell 4+ is available | Windows
+  ansible.builtin.assert:
+    that:
+      - ansible_powershell_version | int >= 4
+    fail_msg: >-
+      {{ ansible_distribution }} reports PowerShell
+      {{ ansible_powershell_version }}, but installing the SentinelOne Agent
+      on a Legacy Plus host requires PowerShell 4.0 or newer -
+      ansible.windows.win_package computes an installer checksum via
+      Get-FileHash, which does not exist before PowerShell 4. See this role's
+      README for a documented workaround on hosts that cannot be upgraded.
+  tags:
+    - s1_legacy_plus_powershell_check
 
 - name: Assert Legacy Plus version ceiling | Windows
   ansible.builtin.assert:

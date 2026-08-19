@@ -11,6 +11,36 @@ A valid SentinelOne license, access to the SentinelOne Management Console and ac
 
 Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://community.sentinelone.com/s/topic/0TO69000000as1iGAA/system-requirements).
 
+### Windows Legacy Plus hosts require PowerShell 4.0+
+
+Installing on a Windows "Legacy Plus" host (see `s1_windows_tier` in
+[CONTEXT.md](../../CONTEXT.md)) requires PowerShell 4.0 or newer.
+`ansible.windows.win_package` unconditionally computes an installer checksum
+via `Get-FileHash`, which does not exist before PowerShell 4 - every
+`ansible.windows` release from 2.8.0 onward hits this, with no version guard.
+This role fails loud with a clear message (tagged `s1_legacy_plus_powershell_check`)
+before ever reaching `win_package`, rather than letting that call crash with a
+raw PowerShell exception.
+
+Of the fixed Legacy Plus edition list, this role's primary audience is
+servers rather than workstations, and the server editions (Server 2008 R2
+SP1, Server 2012) can both reach PowerShell 4.0+ via an official Microsoft
+Windows Management Framework (WMF) update.
+
+If a target genuinely cannot be upgraded (e.g. Windows 8, which Microsoft
+never shipped a WMF package for), you can work around this at your own risk:
+
+1. In your own `requirements.yml`, pin `ansible.windows` to a version before
+   2.8.0 (e.g. `<2.8.0`) - this collection's own dependency constraint
+   (`ansible.windows >= 1.13.0`) already permits this, but you must pin it
+   explicitly in your own environment, since Ansible Galaxy otherwise
+   resolves the latest release.
+2. Skip the guard: `ansible-playbook ... --skip-tags s1_legacy_plus_powershell_check`.
+
+Without both steps together, the install will either be blocked by this
+role's own guard, or proceed and crash inside `win_package` on the
+unsupported `Get-FileHash` call.
+
 ## Role Variables
 
 ```yaml

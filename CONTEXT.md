@@ -47,6 +47,16 @@ never fetches a too-new GA release that would fail the ceiling assert. _Avoid_:
 letting `s1_agent_download`'s `release_n_minus` fallback run unpinned on a
 Legacy Plus host.
 
+**PowerShell 4+ requirement**: `windows_legacy_plus.yml` (both roles) asserts
+`ansible_powershell_version >= 4` before calling `ansible.windows.win_package`,
+which unconditionally computes an installer checksum via `Get-FileHash` (added
+in `ansible.windows` 2.8.0, present in every release since, with no version
+guard) — a cmdlet that does not exist before PowerShell 4. This role targets
+servers, not workstations: of the fixed Legacy Plus edition list, the server
+members (Server 2008 R2 SP1, Server 2012) can both reach PowerShell 4+ via an
+official Microsoft WMF update. See the `s1_agent_install`/`s1_agent_upgrade`
+READMEs for the tag-gated escape hatch on hosts that cannot be upgraded.
+
 One real-fact molecule fixture exists alongside the fact-mocked
 `windows-tier-matrix` cases, gated to its own `paths:`-filtered CI workflow
 rather than the default `scripts/gate.yml`: `extensions/molecule/windows-legacy-plus`

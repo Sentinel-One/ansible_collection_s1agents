@@ -5,13 +5,19 @@
 # idempotence re-converge for no added signal.
 #
 # side_effect.yml is its own ansible-playbook invocation, so s1_agent_common
-# (a meta dependency of s1_agent_upgrade) hasn't run yet in this play; the
-# "Prime" task below runs it for real once so Ansible skips re-running it on
-# each case's own include_role below (a role dependency only runs once per
-# play), letting a direct s1_windows_tier set_fact reliably override the tier
-# for each case (issue 01 already proved classification; this only proves
-# routing). s1_agent_src is already a real, cached fact from the earlier
-# converge, so none of these cases trigger a fresh download.
+# (a meta dependency of s1_agent_upgrade) hasn't run yet in this play.
+# Ansible's "a role dependency only runs once per play" dedup is keyed on the
+# dependency being pulled in AS a dependency - a bare/direct include_role of
+# s1_agent_common does NOT register as that, so it does not stop s1_agent_common
+# from running again (for real, clobbering every mock) the first time a case
+# below reaches it via s1_agent_upgrade's meta dependency. The "Prime" task
+# must therefore be a real include_role of s1_agent_upgrade itself (the same
+# role every case below calls), so the dedup keys match. Confirmed both ways
+# with a minimal local repro; see .scratch/windows-tier-ci-split. Once primed,
+# a direct s1_windows_tier set_fact reliably overrides the tier for each case
+# (issue 01 already proved classification; this only proves routing).
+# s1_agent_src is already a real, cached fact from the earlier converge, so
+# none of these cases trigger a fresh download.
 - name: Side effect
   hosts: all
   gather_facts: false
@@ -19,9 +25,11 @@
     - name: Windows support-tier routing cases
       when: ansible_os_family == 'Windows'
       block:
-        - name: Prime s1_agent_common for this play
+        - name: Prime s1_agent_common (via s1_agent_upgrade) for this play
           ansible.builtin.include_role:
-            name: s1_agent_common
+            name: s1_agent_upgrade
+          vars:
+            s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
 
         - name: "Case: Legacy tier fails loud via unsupported.yml"
           block:
@@ -84,6 +92,47 @@
               ansible.builtin.assert:
                 that:
                   - s1_case_rescued | bool
+
+        - name: "Case: Legacy Plus tier without PowerShell 4+ fails loud"
+          block:
+            - name: Reset case-rescued marker
+              ansible.builtin.set_fact:
+                s1_case_rescued: false
+
+            - name: Mock Legacy Plus tier, a supported version, and pre-PowerShell-4
+              ansible.builtin.set_fact:
+                s1_windows_tier: legacy_plus
+                s1_agent_version: "23.4.6.347"
+                ansible_powershell_version: 3
+
+            # yamllint disable-line rule:line-length
+            - name: Attempt upgrade on a mocked pre-PowerShell-4 Legacy-Plus host (expected to fail)
+              ansible.builtin.include_role:
+                name: s1_agent_upgrade
+              vars:
+                s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+          rescue:
+            - name: Mark this case as correctly rescued
+              ansible.builtin.set_fact:
+                s1_case_rescued: true
+
+            - name: Assert the failure came from the PowerShell version check
+              ansible.builtin.assert:
+                that:
+                  - ansible_failed_result.msg is search('PowerShell 4.0 or newer')
+          always:
+            - name: Assert the PowerShell-version case actually failed
+              ansible.builtin.assert:
+                that:
+                  - s1_case_rescued | bool
+
+            # The mocked override above only touched the flat ansible_powershell_version
+            # var, not ansible_facts.powershell_version, so the real value is
+            # still there to restore - needed so the cases below (which
+            # legitimately reach win_package) don't trip this assert too.
+            - name: Restore the real PowerShell version fact
+              ansible.builtin.set_fact:
+                ansible_powershell_version: "{{ ansible_facts.powershell_version }}"
 
         # The target version (23.4.x) is older than whatever this box is
         # already running (the upgrade above always moves to the newest
