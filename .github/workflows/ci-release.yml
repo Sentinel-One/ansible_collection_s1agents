@@ -8,17 +8,19 @@ name: Release Ansible collection
 # gate. See .scratch/github-hosted-runners/issues/08-rebuild-release-workflow-cloud.md
 # and ADR 0010.
 #
-# windows-legacy-plus runs here but with matrix.allow_failure: true, wired to
-# `continue-on-error` below - a real Windows Server 2012 guest, an aging box
-# whose own tooling (WMF, Windows Update) has proven unreliable, pinned to a
-# frozen ansible.windows release its role's PowerShell 4+ guard is bypassed
-# for (see extensions/molecule/windows-legacy-plus/requirements.yml). It's
-# genuine signal for as long as it keeps passing, but a real-VM job this
-# fragile - for reasons both in and out of this repo's control - should not
-# be able to block every release. `continue-on-error` is native, documented
-# GitHub Actions behavior: a failing leg still shows failed (flagged with a
-# warning icon, never silently green) but doesn't fail `gate` or block
-# `release`, which needs it. See .scratch/windows-tier-ci-split/issues/05.
+# windows-legacy-plus runs in its own job below, deliberately not listed in
+# release's `needs:` - a real Windows Server 2012 guest, an aging box whose
+# own tooling (WMF, Windows Update) has proven unreliable, pinned to a frozen
+# ansible.windows release its role's PowerShell 4+ guard is bypassed for (see
+# extensions/molecule/windows-legacy-plus/requirements.yml). It's genuine
+# signal for as long as it keeps passing, but a real-VM job this fragile -
+# for reasons both in and out of this repo's control - should not be able to
+# block every release. A job outside `needs:` still runs and still shows its
+# own pass/fail in the checks list (never silently green), it just can't
+# fail `release`. (Note: `continue-on-error` cannot do this - jobs that call
+# a reusable workflow via `uses:` only support a restricted key set, and
+# continue-on-error isn't in it; adding it corrupts how the whole job block
+# parses.) See .scratch/windows-tier-ci-split/issues/05.
 on:
   push:
     tags:
@@ -36,12 +38,11 @@ jobs:
   gate:
     name: "gate: ${{ matrix.scenario }} - ${{ matrix.preset }}"
     if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
-    continue-on-error: ${{ matrix.allow_failure == true }}
     strategy:
       fail-fast: false
       # Mirrors scripts/gate.yml (the single source of truth for the full
-      # sweep). windows-legacy-plus carries allow_failure: true - see the
-      # note above.
+      # sweep) minus windows-legacy-plus, which runs in its own job below -
+      # see the note above.
       matrix:
         include:
           - { scenario: upgrade, preset: rocky8, group: Linux }
@@ -62,7 +63,6 @@ jobs:
           - { scenario: uuid, preset: ubuntu2204, group: Linux }
           - { scenario: uuid, preset: opensuse15, group: Linux }
           - { scenario: uuid, preset: windows, group: Windows }
-          - { scenario: windows-legacy-plus, preset: windowslegacyplus, group: Windows, allow_failure: true }
     uses: ./.github/workflows/run-molecule.yml
     with:
       scenario: ${{ matrix.scenario }}
@@ -71,8 +71,20 @@ jobs:
       connection: ssh
     secrets: inherit
 
+  windows-legacy-plus:
+    name: "gate: windows-legacy-plus - windowslegacyplus (non-blocking)"
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: windows-legacy-plus
+      platform_preset: windowslegacyplus
+      inventory_group: Windows
+      connection: ssh
+    secrets: inherit
+
   release:
     name: Build and publish release
+    # Deliberately not windows-legacy-plus - see the note above.
     needs: gate
     runs-on: ubuntu-24.04
     if: github.repository == 'Sentinel-One/ansible_collection_s1agents'

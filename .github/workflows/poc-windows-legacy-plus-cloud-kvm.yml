@@ -1,14 +1,18 @@
 name: PoC - Windows Legacy Plus lifecycle on cloud KVM
 
 # Smoke run for extensions/molecule/windows-legacy-plus on a GitHub-hosted
-# libvirt runner, ahead of wiring it into a per-change gate or the release
-# gate (.scratch/windows-tier-ci-split/issues/04 and 05). Retires the risk
-# the PRD calls out for this specific box before anything depends on it:
-# whether jborean93/WindowsServer2012 pulls under libvirt, boots inside the
+# libvirt runner (.scratch/windows-tier-ci-split/issues/04 and 05). Retired
+# the risk the PRD called out for this specific box: whether
+# jborean93/WindowsServer2012 pulls under libvirt, boots inside the
 # scenario's 1800s timeout, fits the runner's disk budget, and accepts
-# password auth (sshpass) from the runner. Mirrors poc-windows-cloud-kvm.yml
-# (issue 04 of .scratch/github-hosted-runners) with this box's preset.
-# Push-triggered only: see poc-linux-cloud-kvm.yml for why.
+# password auth (sshpass) from the runner - all now proven. Still needed:
+# the release gate's windows-legacy-plus job (ci-release.yml) only fires on
+# a tag push or workflow_dispatch, and the per-change thin caller from issue
+# 05 doesn't exist yet, so this is currently the only per-push signal for
+# this scenario. Push-triggered only, not workflow_dispatch: a push-triggered
+# workflow runs from its own branch, whereas workflow_dispatch only becomes
+# runnable once the file lands on the default branch - this branch carries
+# the same-repo secrets the console API needs.
 on:
   push:
     branches:

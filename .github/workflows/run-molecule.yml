@@ -1,8 +1,10 @@
 name: Run molecule scenario (reusable)
 
-# Generalizes the proven PoC pattern (poc-linux-cloud-kvm.yml, issue 03; and
-# poc-windows-cloud-kvm.yml, issue 04) into a single reusable workflow any
-# role's tests can call. See .scratch/github-hosted-runners/issues/06-reusable-run-molecule-workflow.md.
+# Generalizes the pattern proven by two now-retired PoC workflows (issue 03,
+# Linux; issue 04, Windows - both fully superseded by the thin per-role
+# callers this workflow now backs, and deleted) into a single reusable
+# workflow any role's tests can call. See
+# .scratch/github-hosted-runners/issues/06-reusable-run-molecule-workflow.md.
 #
 # One call = one guest VM = one job, always under libvirt via ci-setup
 # (enable_kvm: true) - this is also how the ~14 GB runner disk stays in
