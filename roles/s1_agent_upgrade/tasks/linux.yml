@@ -45,22 +45,24 @@
       become: true
 
     - name: Upgrade SentinelOne agent | Linux
-      ansible.builtin.command:
-        cmd: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
-        stdin: "{{ s1_agent_passphrase }}"
-      notify: "{{ s1_service_handler_name }}"
-      become: true
-      no_log: true
-      register: s1_upgrade_result
-      changed_when:
-        - '"Agent upgrade successful" in s1_upgrade_result.stdout'
-
-    - name: Show s1_upgrade_result
-      ansible.builtin.debug:
-        msg: "rc={{ s1_upgrade_result.rc | default('') }}, changed={{ s1_upgrade_result.changed | default('') }}"
-      tags:
-        - never
-        - debug
+      block:
+        - name: Upgrade SentinelOne agent | Linux
+          ansible.builtin.command:
+            cmd: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
+            stdin: "{{ s1_agent_passphrase }}"
+          notify: "{{ s1_service_handler_name }}"
+          become: true
+          no_log: true
+          register: s1_upgrade_result
+          changed_when:
+            - '"Agent upgrade successful" in s1_upgrade_result.stdout'
+      always:
+        - name: Show s1_upgrade_result
+          ansible.builtin.debug:
+            msg: "rc={{ s1_upgrade_result.rc | default('') }}, changed={{ s1_upgrade_result.changed | default('') }}"
+          tags:
+            - never
+            - debug
 
 - name: Remove working directory | Linux
   ansible.builtin.file:

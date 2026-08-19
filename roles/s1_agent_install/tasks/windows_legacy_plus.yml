@@ -91,39 +91,40 @@
 
 # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
 - name: Install SentinelOne | Windows
-  ansible.windows.win_package:
-    path: "{{ s1_agent_path }}"
-    state: present
-    arguments: "{{ s1_agent_silent_cmd }}"
-    wait_for_children: true
-    product_id: "{{ s1_agent_product_id | default(omit) }}"
-    expected_return_code: "{{ s1_agent_return_code }}"
-  become: true
-  notify: "{{ s1_reboot_handler_name }}"
-  register: s1_install_log
-  # changed_when:
-  #   - s1_agent_product_id is undefined
-  # Let the module fail normally on any unexpected code except 1007 (Legacy
-  # Plus version-ceiling rejection), which gets its own clear message below
-  # instead of a generic win_package error.
-  failed_when:
-    - s1_install_log is failed
-    - s1_install_log.rc | default(0) != 1007
+  block:
+    - name: Install SentinelOne | Windows
+      ansible.windows.win_package:
+        path: "{{ s1_agent_path }}"
+        state: present
+        arguments: "{{ s1_agent_silent_cmd }}"
+        wait_for_children: true
+        product_id: "{{ s1_agent_product_id | default(omit) }}"
+        expected_return_code: "{{ s1_agent_return_code }}"
+      become: true
+      notify: "{{ s1_reboot_handler_name }}"
+      register: s1_install_log
+      # changed_when:
+      #   - s1_agent_product_id is undefined
+  rescue:
+    - name: Agent version unsupported | Windows
+      ansible.builtin.fail:
+        msg: >-
+          The SentinelOne installer refused to install {{ s1_agent_version }} on
+          this Legacy Plus host (exit code 1007) - this OS cannot run Agent 24.1
+          or newer. Use a 23.4.x release instead.
+      when: s1_install_log.rc | default(0) == 1007
 
-- name: Fail clearly on installer's Legacy Plus version-ceiling rejection | Windows
-  ansible.builtin.fail:
-    msg: >-
-      The SentinelOne installer refused to install {{ s1_agent_version }} on
-      this Legacy Plus host (exit code 1007) - this OS cannot run Agent 24.1
-      or newer. Use a 23.4.x release instead.
-  when: s1_install_log.rc | default(0) == 1007
-
-- name: Show install log | Windows
-  ansible.builtin.debug:
-    var: s1_install_log
-  tags:
-    - never
-    - debug
+    - name: Show installation error | Windows
+      ansible.builtin.fail:
+        msg: "{{ ansible_failed_result.msg }}"
+      when: s1_install_log.rc | default(0) != 1007
+  always:
+    - name: Show install log | Windows
+      ansible.builtin.debug:
+        var: s1_install_log
+      tags:
+        - never
+        - debug
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:

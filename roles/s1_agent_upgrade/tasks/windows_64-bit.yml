@@ -37,7 +37,7 @@
         body_format: json
         method: POST
       register: s1_local_upgrade_result
-      until: s1_local_upgrade_result is not failed and s1_local_upgrade_result.json.data | length
+      until: s1_local_upgrade_result is not failed and s1_local_upgrade_result.json.data | length > 0
       retries: 10
       delay: 10
       become: false
@@ -59,23 +59,25 @@
         dest: "{{ s1_agent_path }}"
     # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
     - name: Upgrade SentinelOne | Windows
-      ansible.windows.win_package:
-        path: "{{ s1_agent_path }}"
-        state: present
-        arguments: "{{ s1_agent_silent_cmd }}"
-        wait_for_children: true
-        product_id: "{{ s1_agent_product_id | default(omit) }}"
-        expected_return_code: "{{ s1_agent_return_code }}"
-      become: true
-      notify: "{{ s1_reboot_handler_name }}"
-      register: s1_upgrade_log
-
-    - name: Show s1_upgrade_log log | Windows
-      ansible.builtin.debug:
-        var: s1_upgrade_log
-      tags:
-        - never
-        - debug
+      block:
+        - name: Upgrade SentinelOne | Windows
+          ansible.windows.win_package:
+            path: "{{ s1_agent_path }}"
+            state: present
+            arguments: "{{ s1_agent_silent_cmd }}"
+            wait_for_children: true
+            product_id: "{{ s1_agent_product_id | default(omit) }}"
+            expected_return_code: "{{ s1_agent_return_code }}"
+          become: true
+          notify: "{{ s1_reboot_handler_name }}"
+          register: s1_upgrade_log
+      always:
+        - name: Show s1_upgrade_log log | Windows
+          ansible.builtin.debug:
+            var: s1_upgrade_log
+          tags:
+            - never
+            - debug
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:

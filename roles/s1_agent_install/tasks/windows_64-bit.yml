@@ -58,26 +58,28 @@
 
 # If this task fails molecule's idempotence step, check that s1_product_id contains the ProductID for the version of the agent being installed
 - name: Install SentinelOne | Windows
-  ansible.windows.win_package:
-    path: "{{ s1_agent_path }}"
-    state: present
-    arguments: "{{ s1_agent_silent_cmd }}"
-    wait_for_children: true
-    product_id: "{{ s1_agent_product_id | default(omit) }}"
-    expected_return_code: "{{ s1_agent_return_code }}"
-  become: true
-  notify: "{{ s1_reboot_handler_name }}"
-  register: s1_install_log
-  # changed_when:
-  #   - s1_agent_product_id is undefined
-  #   - s1_install_log.rc != 1000
-
-- name: Show install log | Windows
-  ansible.builtin.debug:
-    var: s1_install_log
-  tags:
-    - never
-    - debug
+  block:
+    - name: Install SentinelOne | Windows
+      ansible.windows.win_package:
+        path: "{{ s1_agent_path }}"
+        state: present
+        arguments: "{{ s1_agent_silent_cmd }}"
+        wait_for_children: true
+        product_id: "{{ s1_agent_product_id | default(omit) }}"
+        expected_return_code: "{{ s1_agent_return_code }}"
+      become: true
+      notify: "{{ s1_reboot_handler_name }}"
+      register: s1_install_log
+      # changed_when:
+      #   - s1_agent_product_id is undefined
+      #   - s1_install_log.rc != 1000
+  always:
+    - name: Show install log | Windows
+      ansible.builtin.debug:
+        var: s1_install_log
+      tags:
+        - never
+        - debug
 
 - name: Remove working directory | Windows
   ansible.windows.win_file:

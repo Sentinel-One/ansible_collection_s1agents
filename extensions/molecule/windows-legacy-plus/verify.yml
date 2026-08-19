@@ -26,6 +26,23 @@
           Expected {{ ansible_distribution }} to classify as 'legacy_plus' -
           got {{ s1_windows_tier }}. See docs/adr/0008-windows-support-tier-routing.md.
 
+    # s1_agent_upgrade's windows_legacy_plus.yml reformats s1_agent_version to
+    # Windows' 3-segment display form (23.4.6.347 -> 23.4.347) before install,
+    # and converge.yml cached that reformatted value as
+    # s1_molecule_upgraded_version - so the pin is verified against the same
+    # reformatting rather than the raw 4-segment constant, with no need to
+    # re-derive s1_agent_version fresh in this independent verify play.
+    - name: Assert the Legacy Plus default version pin was applied
+      ansible.builtin.assert:
+        that:
+          # yamllint disable-line rule:line-length
+          - s1_molecule_upgraded_version == (s1_legacy_plus_default_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4'))
+        fail_msg: >-
+          Expected the upgrade with no explicit version requested to
+          auto-pin {{ s1_legacy_plus_default_version }} - got
+          {{ s1_molecule_upgraded_version }}. See
+          .scratch/windows-support-tier-routing/issues/03-legacy-plus-default-version-pin.md.
+
     - name: Assert SentinelOne Agent is upgraded to the Legacy Plus default pin
       ansible.builtin.assert:
         that:

@@ -100,42 +100,46 @@
     - not s1_install_gpg_signed_rpm | default('no') | bool
   block:
     - name: Check if SentinelOne RPM package is installed | Linux
-      ansible.builtin.command: rpm -q --qf "%{VERSION}\n" '{{ s1_package_name }}' # noqa command-instead-of-module
-      register: s1_rpm_query
-      failed_when:
-        - s1_rpm_query is failed
-        - '"package " ~ s1_package_name ~ " is not installed" not in s1_rpm_query.stdout'
-      changed_when: false
+      block:
+        - name: Check if SentinelOne RPM package is installed | Linux
+          ansible.builtin.command: rpm -q --qf "%{VERSION}\n" '{{ s1_package_name }}' # noqa command-instead-of-module
+          register: s1_rpm_query
+          failed_when:
+            - s1_rpm_query is failed
+            - '"package " ~ s1_package_name ~ " is not installed" not in s1_rpm_query.stdout'
+          changed_when: false
+      always:
+        - name: Show s1_rpm_query
+          ansible.builtin.debug:
+            var: s1_rpm_query
+          tags:
+            - never
+            - debug
 
-    - name: Show s1_rpm_query
-      ansible.builtin.debug:
-        var: s1_rpm_query
-      tags:
-        - never
-        - debug
-
-    - name: Install SentinelOne RPM package | Linux # noqa command-instead-of-module
-      ansible.builtin.command:
-        # --nodigest was an EOL accommodation for pre-23.3 unsigned RPMs.
-        # Pre-23.3 unsigned installs are no longer supported. See ADR 0002.
-        argv:
-          - rpm
-          - -i
-          - "{{ s1_agent_path }}"
-      environment:
-        S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
-      become: true
-      notify: "{{ s1_service_handler_name }}"
-      register: s1_rpm_install_result
-      changed_when: '"Registration token successfully set" in s1_rpm_install_result.stdout'
-      when: '"package " ~ s1_package_name ~ " is not installed" in s1_rpm_query.stdout'
-
-    - name: Show s1_rpm_install_result
-      ansible.builtin.debug:
-        var: s1_rpm_install_result
-      tags:
-        - never
-        - debug
+    - name: Install SentinelOne RPM package | Linux
+      block:
+        - name: Install SentinelOne RPM package | Linux # noqa command-instead-of-module
+          ansible.builtin.command:
+            # --nodigest was an EOL accommodation for pre-23.3 unsigned RPMs.
+            # Pre-23.3 unsigned installs are no longer supported. See ADR 0002.
+            argv:
+              - rpm
+              - -i
+              - "{{ s1_agent_path }}"
+          environment:
+            S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
+          become: true
+          notify: "{{ s1_service_handler_name }}"
+          register: s1_rpm_install_result
+          changed_when: '"Registration token successfully set" in s1_rpm_install_result.stdout'
+          when: '"package " ~ s1_package_name ~ " is not installed" in s1_rpm_query.stdout'
+      always:
+        - name: Show s1_rpm_install_result
+          ansible.builtin.debug:
+            var: s1_rpm_install_result
+          tags:
+            - never
+            - debug
 
 - name: Install SentinelOne DEB package | Linux
   ansible.builtin.apt:
