@@ -154,8 +154,7 @@ compact summary. The single entry point for the agent, end users, and CI. See
 **Proxy**: The corporate TLS-inspecting egress proxy between the controller and
 the Management Console. When its auth token expires it resets inspected TLS
 connections, surfacing as `SSL: UNEXPECTED_EOF` on console API calls — a
-_transient infrastructure_ error, not a playbook failure. _Avoid_: naming the
-specific vendor product in committed artifacts.
+_transient infrastructure_ error, not a playbook failure.
 
 **Transient infrastructure error**: A non-deterministic environmental failure
 (proxy TLS reset, SSH `Connection reset` during VM boot) distinct from a real

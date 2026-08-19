@@ -53,8 +53,7 @@ system Node is required. trufflehog must be installed locally.
 pre-commit run --all-files   # prettier (md/json) + trufflehog secret scan
 ```
 
-Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`)
-and owned by ansible-lint.
+Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`) and owned by ansible-lint. Do not hard-wrap markdown prose.
 
 **ansible-lint** checks Ansible correctness (FQCN, task naming, idempotence,
 `production` profile) and bundles yamllint for YAML style. Runs from the
