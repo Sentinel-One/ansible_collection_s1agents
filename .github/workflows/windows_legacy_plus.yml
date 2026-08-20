@@ -1,0 +1,63 @@
+name: Windows Legacy Plus lifecycle
+
+# Deliberately narrow and mostly manual. This fixture depends on a frozen,
+# years-old SentinelOne installer build (23.4.5.337) that has proven to
+# crash deterministically under GitHub's current libvirt/KVM stack, for
+# reasons outside this repo's control (see
+# .scratch/windows-tier-ci-split/issues/04's status section - every
+# CI/molecule/Ansible-level variable was compared against the passing
+# modern-tier job and found identical; what differs is the guest OS and the
+# frozen installer binary itself). Since it's expected to fail, this is
+# triggered sparingly by design, erring toward not running rather than
+# adding noise:
+#   - No pull_request trigger at all - not path-filtered-down, absent. That
+#     means this can never appear as a PR check, required or advisory, and
+#     can never block a merge.
+#   - No release/** or tag-push trigger - the release gate already has its
+#     own separate, non-blocking windows-legacy-plus job (ci-release.yml),
+#     kept deliberately independent of this workflow.
+#   - The only automatic trigger is a push to this iteration branch, path-
+#     filtered to just the windows_legacy_plus task files and the
+#     windows-legacy-plus molecule scenario - not the broader tier-
+#     classification/shared-template/CI-plumbing paths other thin callers
+#     use, since none of those are what's actually failing here.
+#   - workflow_dispatch is the primary intended way to run this: on demand,
+#     when someone specifically wants a fresh read on this fixture. Only
+#     becomes dispatchable from GitHub's UI/API once this file exists on
+#     the default branch (main) - a GitHub platform constraint, not
+#     something this repo controls.
+on:
+  push:
+    branches:
+      # TODO: drop once this workflow lands on main and workflow_dispatch
+      # becomes reachable from any branch.
+      - ci/cloud-runner-poc
+    paths:
+      - "roles/s1_agent_install/tasks/windows_legacy_plus.yml"
+      - "roles/s1_agent_upgrade/tasks/windows_legacy_plus.yml"
+      - "extensions/molecule/windows-legacy-plus/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: windows-legacy-plus - windowslegacyplus
+    # Belt-and-suspenders same-repo guard, matching ci-release.yml - push
+    # and workflow_dispatch already require write access to trigger, so
+    # there's no fork-pull_request secrets risk to guard against here (this
+    # workflow has no pull_request trigger at all), but this still stops a
+    # fork's own copy of this file from running against the fork's secrets.
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: windows-legacy-plus
+      platform_preset: windowslegacyplus
+      inventory_group: Windows
+      connection: ssh
+    secrets: inherit

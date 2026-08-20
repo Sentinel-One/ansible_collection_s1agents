@@ -154,13 +154,21 @@ retry rather than treating it as a test failure.
 automatically.
 
 **Real-fact Windows fixture:** `extensions/molecule/windows-legacy-plus` isn't
-part of the default gate — it runs via its own `paths:`-filtered GitHub
-Actions workflow, gated to Windows support-tier changes (see ADR 0008). It
-connects over SSH with password auth (its box doesn't accept Vagrant's default
-insecure keypair), which requires `sshpass` on the controller — install once
-per machine (`brew install sshpass` or your OS equivalent). The retired
-`windows-2012r2` fixture's sole claim (the Server 2012 R2 exclusion) now lives
-as a captured-fact case in `windows-tier-matrix` instead.
+part of the default gate — it's part of the release gate (`ci-release.yml`,
+its own job, deliberately non-blocking: it can fail without stopping a
+release) and has a narrowly-scoped, mostly-manual workflow
+(`windows_legacy_plus.yml`) for per-change signal, triggered only by pushes
+touching the install/upgrade roles' Legacy Plus task files or the fixture
+itself — not on every PR, not on release/tag events. It's scoped this
+narrowly because its installer build (frozen at an old release for this tier)
+crashes deterministically under GitHub's current libvirt/KVM stack for
+reasons outside this repo's control; `workflow_dispatch` is the primary way
+to run it on demand. It connects over SSH with password auth (its box doesn't
+accept Vagrant's default insecure keypair), which requires `sshpass` on the
+controller — install once per machine (`brew install sshpass` or your OS
+equivalent). The retired `windows-2012r2` fixture's sole claim (the Server
+2012 R2 exclusion) now lives as a captured-fact case in `windows-tier-matrix`
+instead.
 
 To run raw molecule steps for development (from `extensions/`, with the `.venv`
 activated so bare `molecule` resolves — `source ../.venv/bin/activate`):
