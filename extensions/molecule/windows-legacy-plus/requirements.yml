@@ -8,8 +8,16 @@
 # molecule.yml to bypass the role's own PowerShell 4+ guard - the same
 # workaround documented in the s1_agent_install/s1_agent_upgrade READMEs for
 # end users who cannot upgrade a Legacy Plus host's PowerShell.
+#
+# community.windows must be pinned too: 3.0.0+ depends on
+# ansible.windows>=3.0.0,<4.0.0, which directly conflicts with the pin above
+# and makes the whole dependency map unsatisfiable. community.windows <3.0.0
+# depends on ansible.windows>=1.0.0,<3.0.0, which is compatible. Verified
+# against the actual Galaxy dependency metadata for both collections before
+# writing this, not assumed.
 collections:
   - name: ansible.windows
     version: "<2.8.0"
-  - community.windows
+  - name: community.windows
+    version: "<3.0.0"
   - ansible.posix
