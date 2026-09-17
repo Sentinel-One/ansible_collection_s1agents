@@ -1,12 +1,17 @@
+# DISABLED pending the GitHub-hosted KVM/libvirt cloud-runner migration.
+# The self-hosted runners this workflow targeted are being retired; its
+# trigger block below is commented out so it never fires. Left in place
+# verbatim (aside from this note) as the blueprint for the rebuild.
+# See .scratch/github-hosted-runners/PRD.md and issue 01.
 name: Continuous Integration
-on:
-  workflow_call:
-    inputs:
-      role-path:
-        description: "Relative path to the role to be linted"
-        type: string
-        required: true
-
+# on:
+#   workflow_call:
+#     inputs:
+#       role-path:
+#         description: "Relative path to the role to be linted"
+#         type: string
+#         required: true
+#
 jobs:
   molecule-lint:
     name: "ansible-${{ matrix.versions.ansible }} (Python: ${{ matrix.versions.python }})"

@@ -47,13 +47,17 @@ never fetches a too-new GA release that would fail the ceiling assert. _Avoid_:
 letting `s1_agent_download`'s `release_n_minus` fallback run unpinned on a
 Legacy Plus host.
 
-Two real-fact molecule fixtures exist alongside the fact-mocked `common`
-scenario cases, each gated to its own `paths:`-filtered CI workflow rather than
-the default `scripts/gate.yml`: `extensions/molecule/windows-2012r2`
-(classifier-only — proves the `not_match: "2012 R2"` exclusion, installs
-nothing) and `extensions/molecule/windows-legacy-plus` (a real `s1_agent_upgrade`
-run against genuinely-Legacy-Plus `jborean93/WindowsServer2012` — proves the
-frozen flow and the default-version pin end-to-end, not fact-mocked).
+**PowerShell 4+ requirement**: `windows_legacy_plus.yml` (both roles) asserts
+`ansible_powershell_version >= 4` before calling `ansible.windows.win_package`,
+which unconditionally computes an installer checksum via `Get-FileHash` (added
+in `ansible.windows` 2.8.0, present in every release since, with no version
+guard) — a cmdlet that does not exist before PowerShell 4. This role targets
+servers, not workstations: of the fixed Legacy Plus edition list, the server
+members (Server 2008 R2 SP1, Server 2012) can both reach PowerShell 4+ via an
+official Microsoft WMF update. See the `s1_agent_install`/`s1_agent_upgrade`
+READMEs for the tag-gated escape hatch on hosts that cannot be upgraded.
+
+One real-fact molecule fixture exists alongside the fact-mocked `windows-tier-matrix` cases: `extensions/molecule/windows-legacy-plus`, a real `s1_agent_upgrade` run against genuinely-Legacy-Plus `jborean93/WindowsServer2012` that proves the frozen flow and the default-version pin end-to-end rather than by mocked facts. It is part of the local `scripts/gate.yml` sweep, which is the authoritative gate for this tier — it passes there and cannot pass on hosted CI runners, an _external limitation_ recorded in [ADR 0011](./docs/adr/0011-legacy-plus-lifecycle-known-red-canary.md). The `not_match: "2012 R2"` exclusion was previously proven by a real-guest classifier-only fixture; that guest is retired and the exclusion is now a captured-fact case in `windows-tier-matrix` instead.
 
 **Legacy**: The older tier below Legacy Plus — Windows XP, Vista, POSReady 2009,
 Server 2003, Server 2008 non-R2 (NT `< 6.1`) — which requires a separate
@@ -142,9 +146,10 @@ compact summary. The single entry point for the agent, end users, and CI. See
 **Proxy**: The corporate TLS-inspecting egress proxy between the controller and
 the Management Console. When its auth token expires it resets inspected TLS
 connections, surfacing as `SSL: UNEXPECTED_EOF` on console API calls — a
-_transient infrastructure_ error, not a playbook failure. _Avoid_: naming the
-specific vendor product in committed artifacts.
+_transient infrastructure_ error, not a playbook failure.
 
 **Transient infrastructure error**: A non-deterministic environmental failure
 (proxy TLS reset, SSH `Connection reset` during VM boot) distinct from a real
 test failure. The test harness signals it with exit code `75`.
+
+**External limitation**: A constraint this collection is subject to but cannot resolve — an upstream binary, EOL guest tooling, or platform behaviour outside its control. Reproducible, unlike a _transient infrastructure error_ (which retrying fixes), and not attributable to the collection, unlike a real test failure (which code fixes). Documented and accepted rather than chased; a CI job held against one runs non-blocking and is expected to be red. The worked example is the Legacy Plus lifecycle fixture's install crashing only on hosted CI runners, never locally — see [ADR 0011](./docs/adr/0011-legacy-plus-lifecycle-known-red-canary.md). _Avoid_: retrying one, or reading its red result as a regression.

@@ -47,7 +47,7 @@
           Authorization: ApiToken {{ s1_api_token }}
         validate_certs: "{{ s1_validate_certs | default('true') | bool }}"
       register: s1_passphrase_result
-      until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length
+      until: s1_passphrase_result is not failed and s1_passphrase_result.json.data | length > 0
       retries: 10
       delay: 10
       become: false

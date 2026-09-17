@@ -53,8 +53,7 @@ system Node is required. trufflehog must be installed locally.
 pre-commit run --all-files   # prettier (md/json) + trufflehog secret scan
 ```
 
-Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`)
-and owned by ansible-lint.
+Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`) and owned by ansible-lint. Do not hard-wrap markdown prose.
 
 **ansible-lint** checks Ansible correctness (FQCN, task naming, idempotence,
 `production` profile) and bundles yamllint for YAML style. Runs from the
@@ -139,12 +138,13 @@ project `.venv` (see [Python Environment](#python-environment)).
 
 **Platform presets:**
 
-| Preset       | Distro              | Notes                                |
-| ------------ | ------------------- | ------------------------------------ |
-| `rocky8`     | Rocky Linux 8       | Default Linux (roboxes)              |
-| `ubuntu2204` | Ubuntu 22.04        | (roboxes)                            |
-| `opensuse15` | OpenSUSE Leap 15    | (roboxes)                            |
-| `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group |
+| Preset       | Distro              | Notes                                                                 |
+| ------------ | ------------------- | --------------------------------------------------------------------- |
+| `rocky8`     | Rocky Linux 8       | Default Linux (roboxes)                                               |
+| `ubuntu2204` | Ubuntu 22.04        | (roboxes)                                                             |
+| `opensuse15` | OpenSUSE Leap 15    | (roboxes)                                                             |
+| `windows`    | Windows Server 2022 | gusztavvargadr box; sets WinRM group                                  |
+| `none`       | n/a                 | VM-less scenarios (e.g. `windows-tier-matrix`); no `S1_VAGRANT_*` env |
 
 **Logs** are written to `scripts/logs/molecule/<scenario>-<platform>.log`. Exit code 75
 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
@@ -153,13 +153,9 @@ retry rather than treating it as a test failure.
 **macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
 automatically.
 
-**Real-fact Windows fixtures:** `extensions/molecule/windows-2012r2` and
-`extensions/molecule/windows-legacy-plus` aren't part of the default gate —
-each runs via its own `paths:`-filtered GitHub Actions workflow, gated to
-Windows support-tier changes (see ADR 0008). `windows-legacy-plus` connects
-over SSH with password auth (its box doesn't accept Vagrant's default
-insecure keypair), which requires `sshpass` on the controller — install once
-per machine (`brew install sshpass` or your OS equivalent).
+**Real-fact Windows fixture:** `extensions/molecule/windows-legacy-plus` is in `scripts/gate.yml`, and **the local run is the authoritative gate for the Legacy Plus tier** — it passes locally and cannot pass on hosted CI runners, where the install crashes deterministically inside GitHub's libvirt/KVM stack for reasons outside this repo's control (the same installer on the same box installs fine locally, so this is environmental, not a bad package). That's an _external limitation_, so CI is scoped to match: `ci-release.yml` runs it as its own job outside `release`'s `needs:`, non-blocking and expected to be red — a canary, not a gate — and `windows_legacy_plus.yml` is `workflow_dispatch`-only, with no push or pull_request trigger. If you change Legacy Plus install/upgrade code, validate it with a local `windows-legacy-plus` run; don't wait on CI for it. See `docs/adr/0011-legacy-plus-lifecycle-known-red-canary.md`.
+
+That fixture connects over SSH with password auth (its box doesn't accept Vagrant's default insecure keypair), which requires `sshpass` on the controller — install once per machine (`brew install sshpass` or your OS equivalent). Its scenario-local `requirements.yml` pins `ansible.windows<2.8.0` and `community.windows<3.0.0`, paired with an `ANSIBLE_SKIP_TAGS` bypass of the roles' PowerShell 4+ assert; all three are load-bearing, since the box genuinely ships PowerShell 3.0. The retired `windows-2012r2` fixture's sole claim (the Server 2012 R2 exclusion) now lives as a captured-fact case in `windows-tier-matrix` instead.
 
 To run raw molecule steps for development (from `extensions/`, with the `.venv`
 activated so bare `molecule` resolves — `source ../.venv/bin/activate`):
@@ -175,18 +171,19 @@ S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
 All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in
 `scripts/gate.yml`.
 
-| Scenario         | Platforms       | Tests                                 |
-| ---------------- | --------------- | ------------------------------------- |
-| `common`         | Linux + Windows | `s1_agent_common` var loading         |
-| `default`        | Linux + Windows | Full install → verify                 |
-| `download`       | Linux + Windows | Package download from console         |
-| `gpgkey`         | Linux (RPM)     | GPG key import                        |
-| `info-installed` | Linux + Windows | `s1_agent_info` with agent present    |
-| `info-missing`   | Linux + Windows | `s1_agent_info` without agent present |
-| `passphrase`     | Linux + Windows | Passphrase retrieval from console     |
-| `uninstall`      | Linux + Windows | Agent removal with passphrase         |
-| `upgrade`        | Linux + Windows | Agent upgrade flow                    |
-| `uuid`           | Linux + Windows | UUID report from console              |
+| Scenario              | Platforms       | Tests                                                                                                        |
+| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
+| `common`              | Linux + Windows | `s1_agent_common` var loading                                                                                |
+| `default`             | Linux + Windows | Full install → verify                                                                                        |
+| `download`            | Linux + Windows | Package download from console                                                                                |
+| `gpgkey`              | Linux (RPM)     | GPG key import                                                                                               |
+| `info-installed`      | Linux + Windows | `s1_agent_info` with agent present                                                                           |
+| `info-missing`        | Linux + Windows | `s1_agent_info` without agent present                                                                        |
+| `passphrase`          | Linux + Windows | Passphrase retrieval from console                                                                            |
+| `uninstall`           | Linux + Windows | Agent removal with passphrase                                                                                |
+| `upgrade`             | Linux + Windows | Agent upgrade flow                                                                                           |
+| `uuid`                | Linux + Windows | UUID report from console                                                                                     |
+| `windows-tier-matrix` | none (VM-less)  | Windows support-tier classification (exhaustive) + Legacy Plus version pin + `legacy` tier fail-loud routing |
 
 `extensions/molecule/common/` also provides shared Jinja2 templates
 (`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other

@@ -1,35 +1,87 @@
 ---
 name: Release Ansible collection
+
+# Cloud-runner rebuild. A tag push is a trusted same-repo action, so secrets
+# are always available and no fork shim is needed. See ADR 0010.
+#
+# windows-legacy-plus is EXPECTED TO BE RED - a non-blocking canary in its own
+# job, not a gate. Don't retry it or treat it as a blocker. See ADR 0011.
 on:
-  workflow_dispatch:
   push:
     tags:
       - "*.*.*"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: read
+  contents: read
 
 jobs:
-  release:
-    runs-on: [self-hosted, Linux, X64, ansible-collection]
+  gate:
+    name: "gate: ${{ matrix.scenario }} - ${{ matrix.preset }}"
     if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
     strategy:
+      fail-fast: false
+      # Mirrors scripts/gate.yml minus windows-legacy-plus (own job below;
+      # continue-on-error is invalid on a `uses:` job, so it can't live here).
       matrix:
-        versions:
-          # ansible-core upstream development supports 3 releases at a time
-          # https://docs.ansible.com/ansible/latest/reference_appendices/release_and_maintenance.html
-          - ansible: stable-2.16
-            python: "3.12"
+        include:
+          - { scenario: upgrade, preset: rocky8, group: Linux }
+          - { scenario: upgrade, preset: ubuntu2204, group: Linux }
+          - { scenario: upgrade, preset: opensuse15, group: Linux }
+          - { scenario: upgrade, preset: windows, group: Windows }
+          - { scenario: uninstall, preset: rocky8, group: Linux }
+          - { scenario: uninstall, preset: ubuntu2204, group: Linux }
+          - { scenario: uninstall, preset: opensuse15, group: Linux }
+          - { scenario: uninstall, preset: windows, group: Windows }
+          - { scenario: info-missing, preset: rocky8, group: Linux }
+          - { scenario: info-missing, preset: ubuntu2204, group: Linux }
+          - { scenario: info-missing, preset: opensuse15, group: Linux }
+          - { scenario: info-missing, preset: windows, group: Windows }
+          - { scenario: gpgkey, preset: rocky8, group: Linux }
+          - { scenario: gpgkey, preset: opensuse15, group: Linux }
+          - { scenario: uuid, preset: rocky8, group: Linux }
+          - { scenario: uuid, preset: ubuntu2204, group: Linux }
+          - { scenario: uuid, preset: opensuse15, group: Linux }
+          - { scenario: uuid, preset: windows, group: Windows }
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: ${{ matrix.scenario }}
+      platform_preset: ${{ matrix.preset }}
+      inventory_group: ${{ matrix.group }}
+      connection: ssh
+    secrets: inherit
 
+  windows-legacy-plus:
+    name: "gate: windows-legacy-plus - windowslegacyplus (non-blocking)"
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: windows-legacy-plus
+      platform_preset: windowslegacyplus
+      inventory_group: Windows
+      connection: ssh
+    secrets: inherit
+
+  release:
+    name: Build and publish release
+    # Deliberately excludes windows-legacy-plus - see the header note.
+    needs: gate
+    runs-on: ubuntu-24.04
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up environment
         uses: ./.github/actions/ci-setup
         with:
-          python-version: ${{ matrix.versions.python }}
-          ansible-version: ${{ matrix.versions.ansible }}
+          enable_kvm: "false"
 
       - name: Get version from galaxy.yml
         id: collection-version

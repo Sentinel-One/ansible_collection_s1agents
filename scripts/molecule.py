@@ -7,11 +7,18 @@ Run on the project's uv-managed .venv (see requirements-dev.txt):
     .venv/bin/python scripts/molecule.py gate
 
 Actions: test | converge | verify | destroy | create | login | gate
-Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | <raw distro>
+Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | none | <raw distro>
            (comma-separated to run several, e.g. --platform linux,windows)
+           "none" is for VM-less scenarios (e.g. windows-tier-matrix) that declare
+           no Vagrant platform at all.
 
-Config precedence (low -> high): env-file (molecule.env) < process env < --platform preset.
-Secrets are never committed; with secrets in the environment (CI) no env-file is needed.
+Secrets (molecule.env, gitignored) are injected by wrapping the invocation in `op run`,
+never read or parsed by this script:
+
+    op run --env-file="molecule.env" -- .venv/bin/python scripts/molecule.py test default
+
+Config precedence (low -> high): process env (op run's injected secrets included) <
+--platform preset.
 
 Output is streamed to .molecule-logs/<scenario>-<platform>.log (gitignored); a compact
 summary is printed to stdout. Exit 0 = pass, molecule's code = real failure, 75 = transient
@@ -101,7 +108,6 @@ SCRIPTS_DIR = REPO_ROOT / "scripts"
 EXTENSIONS_DIR = REPO_ROOT / "extensions"
 LOG_DIR = SCRIPTS_DIR / "logs" / "molecule"
 GATE_FILE = SCRIPTS_DIR / "gate.yml"
-DEFAULT_ENV_FILE = REPO_ROOT / "molecule.env"
 
 EXIT_TRANSIENT = 75  # EX_TEMPFAIL — transient infra, safe to retry
 
@@ -127,45 +133,22 @@ PRESETS: dict[str, dict[str, str]] = {
         "S1_VAGRANT_GROUP": "Windows",
         "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
     },
-    # Classifier-only fixture (extensions/molecule/windows-2012r2) — proves
-    # real Server 2012 R2 facts for the Legacy Plus exclusion case. Not part
-    # of the default gate; see ADR 0008. This preset is independent of
-    # "windows" above, so it must set its own fork-safety workaround.
-    "windows2012r2": {
-        "S1_VAGRANT_DISTRO": "WindowsServer2012R2",
-        "S1_VAGRANT_REPO": "jborean93",
-        "S1_VAGRANT_GROUP": "Windows",
-        "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
-    },
     # Real-install fixture (extensions/molecule/windows-legacy-plus) — proves
     # the Legacy Plus tier's frozen upgrade flow and default-version pin
-    # (issue 03) against a real host, not fact-mocked. Not part of the
-    # default gate; see ADR 0008.
+    # against a real host, not fact-mocked. In the gate (scripts/gate.yml),
+    # and this local run is the authoritative gate for that tier: it cannot
+    # pass on hosted CI runners. See ADR 0008 and ADR 0011.
     "windowslegacyplus": {
         "S1_VAGRANT_DISTRO": "WindowsServer2012",
         "S1_VAGRANT_REPO": "jborean93",
         "S1_VAGRANT_GROUP": "Windows",
         "OBJC_DISABLE_INITIALIZE_FORK_SAFETY": "YES",
     },
+    # VM-less scenario (extensions/molecule/windows-tier-matrix) — no box, so
+    # no S1_VAGRANT_* env is needed; an empty preset keeps raw distro
+    # pass-through (below) from misinterpreting "none" as a Linux box name.
+    "none": {},
 }
-
-
-def parse_env_file(path: Path) -> dict[str, str]:
-    """Parse a shell-style env file (`export KEY=VALUE`); ignore comments/blanks."""
-    values: dict[str, str] = {}
-    if not path.is_file():
-        return values
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#"):
-            continue
-        if line.startswith("export "):
-            line = line[len("export "):]
-        if "=" not in line:
-            continue
-        key, val = line.split("=", 1)
-        values[key.strip()] = val.strip().strip('"').strip("'")
-    return values
 
 
 def preset_for(platform: str) -> dict[str, str]:
@@ -176,10 +159,9 @@ def preset_for(platform: str) -> dict[str, str]:
     return {"S1_VAGRANT_DISTRO": platform, "S1_VAGRANT_REPO": "roboxes", "S1_VAGRANT_GROUP": "Linux"}
 
 
-def build_env(platform: str, env_file: Path) -> dict[str, str]:
-    """Layer: env-file (base) < process env < platform preset."""
-    env = dict(parse_env_file(env_file))      # lowest precedence
-    env.update(os.environ)                    # process env / CI secrets win
+def build_env(platform: str) -> dict[str, str]:
+    """Layer: process env (secrets, injected by `op run` if used) < platform preset."""
+    env = dict(os.environ)
     env.update(preset_for(platform))          # explicit platform wins for VM cfg
     # molecule (provisioner.name: ansible) resolves ansible-playbook/ansible by
     # bare name via PATH — there's no ansible.cfg or pinned interpreter anywhere
@@ -246,12 +228,12 @@ def recap_lines(log_text: str) -> list[str]:
     return out
 
 
-def run_one(action: str, scenario: str, platform: str, env_file: Path) -> tuple[str, int, Path]:
+def run_one(action: str, scenario: str, platform: str) -> tuple[str, int, Path]:
     """Run a single molecule action for one platform; return (result, rc, logpath)."""
     LOG_DIR.mkdir(exist_ok=True)
     logpath = LOG_DIR / f"{scenario}-{platform}.log"
     ansible_log = LOG_DIR / f"{scenario}-{platform}.ansible.log"
-    env = build_env(platform, env_file)
+    env = build_env(platform)
     env["ANSIBLE_LOG_PATH"] = str(ansible_log)
     if ansible_log.exists():
         ansible_log.unlink()
@@ -322,7 +304,6 @@ def main() -> int:
     parser.add_argument("action", choices=["test", "converge", "verify", "destroy", "create", "login", "gate"])
     parser.add_argument("scenario", nargs="?", help="molecule scenario (omit for 'gate')")
     parser.add_argument("--platform", default="linux", help="preset(s) or raw distro, comma-separated")
-    parser.add_argument("--env-file", default=str(DEFAULT_ENV_FILE), type=Path)
     parser.add_argument(
         "--force", action="store_true",
         help="bypass pre-flight checks (running molecule/VMs); results may be unreliable",
@@ -339,7 +320,7 @@ def main() -> int:
         for entry in load_gate():
             scenario = entry["scenario"]
             for platform in entry.get("platforms", ["linux"]):
-                result, rc, _ = run_one("test", scenario, platform, args.env_file)
+                result, rc, _ = run_one("test", scenario, platform)
                 results.append(result)
                 rcs.append(rc)
         print(f"\n=== gate: {results.count('pass')}/{len(results)} passed ===")
@@ -351,7 +332,7 @@ def main() -> int:
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     results, rcs = [], []
     for platform in [p.strip() for p in args.platform.split(",") if p.strip()]:
-        result, rc, _ = run_one(args.action, args.scenario, platform, args.env_file)
+        result, rc, _ = run_one(args.action, args.scenario, platform)
         results.append(result)
         rcs.append(rc)
     return aggregate_exit(results, rcs)

@@ -118,13 +118,20 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
 'equalto', ...)`), so a constant needs no new download-role logic, and the
   pinned version changes infrequently, if ever.
 - **Legacy Plus 2012R2-exclusion test fixture.** The retired
-  `WindowsServer2012R2` Vagrant box is revived specifically to assert
+  `WindowsServer2012R2` Vagrant box was revived specifically to assert
   `s1_windows_tier == 'modern'` against real facts (proving the `not_match:
-"2012 R2"` clause), but is NOT added to the default `scripts/gate.yml` matrix.
-  Instead it's wired as its own `paths:`-filtered GitHub Actions workflow keyed
-  to the Legacy Plus task/vars files (mirroring the existing per-role
-  `paths:`-filtered workflows under `.github/workflows/`), so it only runs when
-  the Legacy Plus flow itself changes.
+"2012 R2"` clause), wired as its own `paths:`-filtered GitHub Actions workflow
+  rather than the default `scripts/gate.yml` matrix. That discovery is now
+  complete: the box's real fact tuple is captured, and the exclusion is proven
+  as a regression case in `extensions/molecule/windows-tier-matrix` instead.
+  The guest fixture, its
+  `windows2012r2` preset, and its disabled workflow are retired — the facts
+  only move if the box vendor re-publishes it with a different `Caption`, and
+  the mitigation for that is the provenance comment on the captured-fact case,
+  not a recurring guest. This was the only scenario in the cloud-runner path
+  that connected over WinRM; with it gone, the reusable `run-molecule.yml`
+  workflow's ssh-only connection guard stays a hard failure rather than
+  growing a WinRM path — no WinRM support is added to that workflow.
 
 ## Consequences
 
@@ -147,32 +154,34 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   32-bit POSReady 7 still routes correctly (bitness short-circuit); 64-bit
   POSReady 7 reads as Modern and fails naturally. Solve only if a customer
   reports it.
-- **Testing needs fact-mocking, plus two real-fact fixtures.** The only Windows
-  molecule preset is Server 2022 (Modern). Legacy Plus / Legacy paths are
-  exercised by overriding `ansible_distribution` / `ansible_distribution_version`
-  / `s1_os_bitness` via `set_fact`. The `not_match: "2012 R2"` exclusion clause
-  is additionally verified against real facts by reviving the retired
-  `jborean93/WindowsServer2012R2` Vagrant box as a classifier-only fixture
-  (asserts `s1_windows_tier == 'modern'`, installs nothing) — gated to its own
-  `paths:`-filtered CI workflow so it only runs when the Legacy Plus flow
-  changes, not part of the default `scripts/gate.yml` matrix. Standing this box
-  up is deferred to the `/tdd` build; if it proves impractical, it may need its
-  own testing path rather than blocking the rest of the work.
+- **Testing needs fact-mocking, plus one real-fact fixture.** The only Windows
+  molecule preset is Server 2022 (Modern). Legacy Plus / Legacy paths, plus the
+  `not_match: "2012 R2"` exclusion clause, are exercised by overriding
+  `ansible_distribution` / `ansible_distribution_version` / `s1_os_bitness` via
+  `set_fact` in the VM-less `extensions/molecule/windows-tier-matrix` scenario.
+  The 2012 R2 case is a captured-fact regression check, not a fresh gather: its
+  fact tuple was recorded from a real `jborean93/WindowsServer2012R2` guest
+  before that guest was retired (see the decision above), with a provenance
+  comment on the case rather than a recurring guest.
 - **A second real-fact fixture proves genuine Legacy Plus, not just its 2012
   R2 exclusion.** `jborean93/WindowsServer2012` (non-R2) genuinely qualifies
   for Legacy Plus, unlike the 2012 R2 box above. `extensions/molecule/windows-legacy-plus`
   installs an explicit, older 23.4.x release, then runs `s1_agent_upgrade`
   with **no** `s1_agent_version` requested — asserting both that the real
-  host classifies as `legacy_plus` and that the issue 03 default-version pin
-  resolves and completes the frozen upgrade flow end-to-end, against a real
-  host rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
+  host classifies as `legacy_plus` and that the default-version pin resolves
+  and completes the frozen upgrade flow end-to-end, against a real host
+  rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
   does install (a deliberate, maintainer-approved exception to that fixture's
   install-nothing precedent — the goal here is to vet the frozen flow itself,
   not just classification). Unlike the 2012 R2 fixture, this one **is** in
-  `scripts/gate.yml` (maintainer call: it needs to be runnable as part of
-  pre-release validation, not only on demand) on top of its own
-  `paths:`-filtered CI workflow, which still runs it per-PR/per-push scoped
-  to Legacy Plus file changes. This box ships Win32-OpenSSH pre-installed and
+  `scripts/gate.yml` — and that local run is the authoritative gate for this
+  tier, because the fixture passes locally but cannot pass on hosted CI
+  runners, where the install crashes inside GitHub's KVM/libvirt stack for
+  reasons outside this repo's control. Its CI presence is therefore deliberately minimal: a
+  non-blocking canary job in `ci-release.yml` and a `workflow_dispatch`-only
+  workflow, with no per-PR or per-push trigger. See
+  [ADR 0011](./0011-legacy-plus-lifecycle-known-red-canary.md). This box
+  ships Win32-OpenSSH pre-installed and
   auto-started (unlike 2012 R2's broken OpenSSH path), so it connects over
   `ssh` with password auth (requires `sshpass` on the controller) like the
   Server 2022 preset rather than forcing `winrm`.

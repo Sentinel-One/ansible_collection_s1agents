@@ -25,34 +25,12 @@
       vars:
         s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
 
-    - name: Show resolved Windows support tier and agent version
+    # s1_agent_upgrade's own "SentinelOne agent version installed" task
+    # (roles/s1_agent_upgrade/tasks/main.yml) already showed s1_agent_version
+    # above - only the tier is new information here.
+    - name: Show resolved Windows support tier | Windows
       ansible.builtin.debug:
-        msg:
-          s1_windows_tier: "{{ s1_windows_tier }}"
-          s1_agent_version: "{{ s1_agent_version }}"
-
-    - name: Assert this real host classified as legacy_plus
-      ansible.builtin.assert:
-        that:
-          - s1_windows_tier == 'legacy_plus'
-        fail_msg: >-
-          Expected {{ ansible_distribution }} to classify as 'legacy_plus' -
-          got {{ s1_windows_tier }}. See docs/adr/0008-windows-support-tier-routing.md.
-
-    # s1_agent_upgrade's windows_legacy_plus.yml reformats s1_agent_version to
-    # Windows' 3-segment display form (23.4.6.347 -> 23.4.347) before this
-    # point, so the pin is verified against the same reformatting rather than
-    # the raw 4-segment constant.
-    - name: Assert the Legacy Plus default version pin was applied
-      ansible.builtin.assert:
-        that:
-          # yamllint disable-line rule:line-length
-          - s1_agent_version == (s1_legacy_plus_default_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4'))
-        fail_msg: >-
-          Expected the upgrade with no explicit version requested to
-          auto-pin {{ s1_legacy_plus_default_version }} - got
-          {{ s1_agent_version }}. See
-          .scratch/windows-support-tier-routing/issues/03-legacy-plus-default-version-pin.md.
+        var: s1_windows_tier
 
     - name: Persist facts for verify step
       ansible.builtin.set_fact:

@@ -31,16 +31,16 @@
 
 - name: Set s1_prior_version
   ansible.builtin.set_fact:
-    s1_prior_version: "{{ s1_agent_info.version }}"
+    s1_prior_version: '{{ s1_agent_info.version }}'
 
-- name: Route Legacy-tier Windows hosts to the unsupported installer message
+- name: Include Windows Legacy tier specific tasks
   ansible.builtin.include_tasks:
     file: unsupported.yml
   when:
     - ansible_os_family == 'Windows'
     - s1_windows_tier == 'legacy'
 
-- name: Route Legacy-Plus-tier Windows hosts to the frozen 23.4 upgrade flow
+- name: Include Windows Legacy-Plus tier specific tasks
   ansible.builtin.include_tasks:
     file: windows_legacy_plus.yml
   when:
@@ -49,21 +49,21 @@
 
 - name: Include OS specific tasks
   ansible.builtin.include_tasks:
-    file: "{{ loop_family }}"
+    file: '{{ loop_family }}'
   with_first_found:
     - files:
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml"
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml"
-        - "{{ ansible_distribution | lower }}.yml"
-        - "{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml"
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}.yml'
+        - '{{ ansible_distribution | lower }}.yml'
+        - '{{ ansible_os_family | lower }}_{{ ansible_distribution_major_version }}.yml'
         - "{{ ansible_os_family | lower }}_{{ s1_os_bitness | default('unset') }}.yml"
-        - "{{ ansible_os_family | lower }}.yml"
-        - "{{ ansible_system | lower }}.yml"
+        - '{{ ansible_os_family | lower }}.yml'
+        - '{{ ansible_system | lower }}.yml'
         - unsupported.yml
   when: ansible_os_family != 'Windows' or s1_windows_tier == 'modern'
   loop_control:
     loop_var: loop_family
-    label: "{{ loop_family | basename }}"
+    label: '{{ loop_family | basename }}'
 
 - name: SentinelOne agent version installed
   ansible.builtin.debug:

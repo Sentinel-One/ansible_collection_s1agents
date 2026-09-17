@@ -102,27 +102,3 @@
             fail_msg: >-
               Expected the real Windows preset (Server 2022) to classify as
               'modern' - got {{ s1_molecule_real_windows_tier }}.
-
-        - name: Assert fact-mocked Windows support-tier cases resolved as expected
-          ansible.builtin.assert:
-            that:
-              - s1_molecule_tier_cases['legacy'] == 'legacy'
-              - s1_molecule_tier_cases['legacy_plus_bitness'] == 'legacy_plus'
-              - s1_molecule_tier_cases['legacy_plus_caption'] == 'legacy_plus'
-              - s1_molecule_tier_cases['modern_exclusion'] == 'modern'
-            fail_msg: >-
-              One or more fact-mocked tier cases resolved incorrectly:
-              {{ s1_molecule_tier_cases }}. Expected legacy=legacy,
-              legacy_plus_bitness=legacy_plus, legacy_plus_caption=legacy_plus,
-              modern_exclusion=modern.
-
-        - name: Assert Legacy Plus default version pin cases resolved as expected
-          ansible.builtin.assert:
-            that:
-              - s1_molecule_pin_cases['unset_version'] == s1_legacy_plus_default_version
-              - s1_molecule_pin_cases['explicit_version'] == '23.4.5.337'
-            fail_msg: >-
-              One or more Legacy Plus version-pin cases resolved incorrectly:
-              {{ s1_molecule_pin_cases }}. Expected
-              unset_version={{ s1_legacy_plus_default_version }},
-              explicit_version=23.4.5.337.

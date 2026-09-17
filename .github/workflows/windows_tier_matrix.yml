@@ -1,0 +1,65 @@
+name: Windows Tier Matrix
+
+# Plain job, not a run-molecule caller: this scenario needs no guest VM and no
+# console secrets, so it needs no fork-secret gate. See ADR 0008 and ADR 0010.
+on:
+  push:
+    branches:
+      - "release/**"
+      # TODO: drop once these workflows land on main.
+      - ci/cloud-runner-poc
+    paths:
+      - "roles/s1_agent_common/tasks/windows_tier.yml"
+      - "roles/s1_agent_common/tasks/windows_legacy_plus_version_pin.yml"
+      - "roles/s1_agent_common/vars/windows.yml"
+      - "roles/s1_agent_install/tasks/unsupported.yml"
+      - "roles/s1_agent_upgrade/tasks/unsupported.yml"
+      - "extensions/molecule/windows-tier-matrix/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/windows_tier_matrix.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_agent_common/tasks/windows_tier.yml"
+      - "roles/s1_agent_common/tasks/windows_legacy_plus_version_pin.yml"
+      - "roles/s1_agent_common/vars/windows.yml"
+      - "roles/s1_agent_install/tasks/unsupported.yml"
+      - "roles/s1_agent_upgrade/tasks/unsupported.yml"
+      - "extensions/molecule/windows-tier-matrix/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/windows_tier_matrix.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: windows-tier-matrix
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "false"
+
+      - name: Molecule test
+        working-directory: extensions
+        run: molecule test -s windows-tier-matrix
