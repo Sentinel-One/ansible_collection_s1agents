@@ -1,15 +1,7 @@
 name: Run molecule scenario (reusable)
 
-# Generalizes the pattern proven by two now-retired PoC workflows (issue 03,
-# Linux; issue 04, Windows - both fully superseded by the thin per-role
-# callers this workflow now backs, and deleted) into a single reusable
-# workflow any role's tests can call. See
-# .scratch/github-hosted-runners/issues/06-reusable-run-molecule-workflow.md.
-#
-# One call = one guest VM = one job, always under libvirt via ci-setup
-# (enable_kvm: true) - this is also how the ~14 GB runner disk stays in
-# budget. Platform fan-out across a role's tests is a job matrix at the
-# caller, not inside this workflow (see issue 07's thin per-role callers).
+# One call = one guest VM = one job, always under libvirt (ci-setup
+# enable_kvm: true). Platform fan-out is a matrix at the caller. See ADR 0010.
 on:
   workflow_call:
     inputs:
@@ -27,14 +19,8 @@ on:
         type: string
       connection:
         description: >-
-          Ansible connection type the guest is reached over. Every in-scope
-          scenario's molecule.yml hardcodes ssh (Windows connects over ssh
-          here, unlike the winrm-only legacy Windows fixtures, which are out
-          of scope - see the PRD). The job guards this input against that
-          hardcoded assumption and fails fast on anything else, so a caller
-          asking for a connection type this workflow doesn't support yet is
-          an explicit error, not a silent mismatch between the job name and
-          what the scenario actually does.
+          Ansible connection type. Every scenario's molecule.yml hardcodes
+          ssh; the job guards this input and fails fast on anything else.
         required: false
         type: string
         default: ssh
@@ -66,10 +52,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Every scenario's molecule.yml hardcodes ansible_connection: ssh - this
-      # input has nowhere to go yet, so a caller asking for anything else
-      # must fail loudly instead of silently getting ssh behavior under a
-      # different label.
+      # Fail loudly rather than silently give ssh behavior under another label.
       - name: Guard connection type
         shell: bash
         run: |
@@ -78,10 +61,8 @@ jobs:
             exit 1
           fi
 
-      # Mirrors the S1_VAGRANT_DISTRO/S1_VAGRANT_REPO pairs in
-      # scripts/molecule.py's PRESETS - duplicated rather than shared, since
-      # that script is documented local-only (CI runs raw molecule so its
-      # output streams to the Actions console; see ADR 0010 / PRD).
+      # Mirrors scripts/molecule.py's PRESETS - duplicated deliberately, since
+      # that script is local-only. See ADR 0010.
       - name: Resolve platform preset
         id: preset
         shell: bash

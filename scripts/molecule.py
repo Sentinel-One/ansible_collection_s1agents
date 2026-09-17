@@ -135,8 +135,9 @@ PRESETS: dict[str, dict[str, str]] = {
     },
     # Real-install fixture (extensions/molecule/windows-legacy-plus) — proves
     # the Legacy Plus tier's frozen upgrade flow and default-version pin
-    # (issue 03) against a real host, not fact-mocked. Not part of the
-    # default gate; see ADR 0008.
+    # against a real host, not fact-mocked. In the gate (scripts/gate.yml),
+    # and this local run is the authoritative gate for that tier: it cannot
+    # pass on hosted CI runners. See ADR 0008 and ADR 0011.
     "windowslegacyplus": {
         "S1_VAGRANT_DISTRO": "WindowsServer2012",
         "S1_VAGRANT_REPO": "jborean93",

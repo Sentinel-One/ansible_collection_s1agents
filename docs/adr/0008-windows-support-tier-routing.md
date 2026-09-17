@@ -123,8 +123,8 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
 "2012 R2"` clause), wired as its own `paths:`-filtered GitHub Actions workflow
   rather than the default `scripts/gate.yml` matrix. That discovery is now
   complete: the box's real fact tuple is captured, and the exclusion is proven
-  as a regression case in `extensions/molecule/windows-tier-matrix` instead
-  (see `.scratch/windows-tier-ci-split/`). The guest fixture, its
+  as a regression case in `extensions/molecule/windows-tier-matrix` instead.
+  The guest fixture, its
   `windows2012r2` preset, and its disabled workflow are retired — the facts
   only move if the box vendor re-publishes it with a different `Caption`, and
   the mitigation for that is the provenance comment on the captured-fact case,
@@ -168,16 +168,20 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   for Legacy Plus, unlike the 2012 R2 box above. `extensions/molecule/windows-legacy-plus`
   installs an explicit, older 23.4.x release, then runs `s1_agent_upgrade`
   with **no** `s1_agent_version` requested — asserting both that the real
-  host classifies as `legacy_plus` and that the issue 03 default-version pin
-  resolves and completes the frozen upgrade flow end-to-end, against a real
-  host rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
+  host classifies as `legacy_plus` and that the default-version pin resolves
+  and completes the frozen upgrade flow end-to-end, against a real host
+  rather than a fact-mocked one. Unlike the 2012 R2 fixture this one
   does install (a deliberate, maintainer-approved exception to that fixture's
   install-nothing precedent — the goal here is to vet the frozen flow itself,
   not just classification). Unlike the 2012 R2 fixture, this one **is** in
-  `scripts/gate.yml` (maintainer call: it needs to be runnable as part of
-  pre-release validation, not only on demand) on top of its own
-  `paths:`-filtered CI workflow, which still runs it per-PR/per-push scoped
-  to Legacy Plus file changes. This box ships Win32-OpenSSH pre-installed and
+  `scripts/gate.yml` — and that local run is the authoritative gate for this
+  tier, because the fixture passes locally but cannot pass on hosted CI
+  runners, where the install crashes inside GitHub's KVM/libvirt stack for
+  reasons outside this repo's control. Its CI presence is therefore deliberately minimal: a
+  non-blocking canary job in `ci-release.yml` and a `workflow_dispatch`-only
+  workflow, with no per-PR or per-push trigger. See
+  [ADR 0011](./0011-legacy-plus-lifecycle-known-red-canary.md). This box
+  ships Win32-OpenSSH pre-installed and
   auto-started (unlike 2012 R2's broken OpenSSH path), so it connects over
   `ssh` with password auth (requires `sshpass` on the controller) like the
   Server 2022 preset rather than forcing `winrm`.
