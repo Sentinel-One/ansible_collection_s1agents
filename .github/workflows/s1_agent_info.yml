@@ -7,7 +7,7 @@ on:
     branches:
       - "release/**"
       # TODO: drop once these workflows land on main.
-      - ci/cloud-runner-poc
+      - security/hardening-pass
     paths:
       - "roles/s1_agent_info/**"
       - "!roles/s1_agent_info/README.md"
