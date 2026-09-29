@@ -102,12 +102,14 @@ jobs:
       - name: Report disk usage before box creation
         run: df -h
 
+      # Molecule drives Vagrant, which needs the libvirt socket; sg picks up
+      # ci-setup's group add without a fresh login. See ADR 0012.
       - name: Molecule test
         working-directory: extensions
         env:
           S1_VAGRANT_DISTRO: ${{ steps.preset.outputs.distro }}
           S1_VAGRANT_REPO: ${{ steps.preset.outputs.repo }}
-        run: molecule test -s "$MOLECULE_SCENARIO"
+        run: sg libvirt -c 'molecule test -s "$MOLECULE_SCENARIO"'
 
       - name: Report disk usage after box creation
         run: df -h

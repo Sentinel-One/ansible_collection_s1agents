@@ -60,11 +60,9 @@ runs:
         sudo apt-get install -y \
           qemu-kvm libvirt-daemon-system libvirt-dev \
           ebtables dnsmasq-base vagrant cpu-checker sshpass
-        sudo usermod -aG kvm,libvirt "$(whoami)"
+        # Takes effect only via `sg libvirt` - this session predates it. See ADR 0012.
+        sudo usermod -aG libvirt "$(whoami)"
         sudo systemctl restart libvirtd
-        # The current login session predates the group change above; loosen
-        # the libvirt socket directly rather than requiring a fresh login.
-        sudo chmod 666 /var/run/libvirt/libvirt-sock
         vagrant plugin install vagrant-libvirt
 
     # Turns a runner-image regression that removes nested virt into a legible
