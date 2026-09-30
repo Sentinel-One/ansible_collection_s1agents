@@ -17,6 +17,7 @@ quoting rather than treating them as standing RCEs.
   which every role declares as a meta dependency, so it runs first for all roles.
   Asserts are conditional (`defined and not none → must match`) so info/uuid-only
   runs are unaffected.
+- Validation runs right after `s1_agent_common`'s read-only fact gather, before any change to the endpoint, so OS-specific rules (e.g. the Linux vs. Windows `s1_agent_custom_install_path` shape) can key on `ansible_os_family`.
 - The genuinely real boundary — an unprivileged local user on the `root`/`SYSTEM`
   endpoint — is treated as a hard boundary regardless of how variables are
   supplied. Those findings (the `/tmp` race, passphrase on argv) are fixed

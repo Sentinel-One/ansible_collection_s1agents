@@ -48,11 +48,13 @@
       - s1_agent_custom_install_path is match('^/[^/\s"\']+(/[^/\s"\']+)+/?$')
       # Never an operating-system directory (a forced remove deletes it as root)
       - s1_agent_custom_install_path is not match('^/(bin|boot|dev|etc|lib|lib32|lib64|libx32|proc|root|run|sbin|sys|usr|var)(/|$)')
+      # No '..' and no '.' component (/./etc would slip past the check above)
       - s1_agent_custom_install_path is not search('\.\.')
+      - s1_agent_custom_install_path is not search('/\.(/|$)')
     fail_msg: >-
       s1_agent_custom_install_path must be an absolute path with at least two
       path components, not under an operating-system directory (/usr, /etc,
-      /var, ...), with no '..' traversal, no quotes, and no whitespace.
+      /var, ...), with no '.' or '..' components, no quotes, and no whitespace.
       Rejected: {{ s1_agent_custom_install_path }}
   when:
     - ansible_os_family != 'Windows'
@@ -65,11 +67,13 @@
     that:
       # Whole value: drive-letter path with at least one component below the root
       - s1_agent_custom_install_path is match('^[A-Za-z]:\\\\[^\\\\/\s"\':*?<>|]+(\\\\[^\\\\/\s"\':*?<>|]+)*\\\\?$')
+      # No '..' and no '.' component (C:\. is the drive root)
       - s1_agent_custom_install_path is not search('\.\.')
+      - s1_agent_custom_install_path is not search('\\\\\.(\\\\|$)')
     fail_msg: >-
       s1_agent_custom_install_path must be a drive-letter path (e.g. C:\S1Data)
-      with at least one directory below the drive root, no '..' traversal, no
-      quotes, and no whitespace. Rejected: {{ s1_agent_custom_install_path }}
+      with at least one directory below the drive root, no '.' or '..'
+      components, no quotes, and no whitespace. Rejected: {{ s1_agent_custom_install_path }}
   when:
     - ansible_os_family == 'Windows'
     - s1_agent_custom_install_path is defined
