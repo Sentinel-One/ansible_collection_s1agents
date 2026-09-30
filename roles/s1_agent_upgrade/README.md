@@ -56,12 +56,6 @@ This is mandatory and is the API token[^1] associated with the user which will r
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
 
-```yaml
-s1_agent_site_token:
-```
-
-The Site or Group token for existing Windows agent, used by the SentinelOneInstaller package in cases where the installer fix a corrupted install prior to completing the upgrade.
-
 ### Configuring package variants
 
 ```yaml
