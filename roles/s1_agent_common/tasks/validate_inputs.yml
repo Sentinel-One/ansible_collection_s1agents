@@ -7,10 +7,10 @@
   ansible.builtin.assert:
     that:
       - s1_agent_management_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
-      - s1_agent_management_proxy is not search('[;|&`$\s]')
+      - s1_agent_management_proxy is not search('[;|&`$"=\s]')
     fail_msg: >-
       s1_agent_management_proxy must be a URL or host:port with no shell
-      metacharacters or whitespace. Rejected: {{ s1_agent_management_proxy }}
+      metacharacters, quotes, '=', or whitespace. Rejected: {{ s1_agent_management_proxy }}
   when:
     - s1_agent_management_proxy is defined
     - s1_agent_management_proxy is not none
@@ -20,10 +20,10 @@
   ansible.builtin.assert:
     that:
       - s1_agent_dv_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
-      - s1_agent_dv_proxy is not search('[;|&`$\s]')
+      - s1_agent_dv_proxy is not search('[;|&`$"=\s]')
     fail_msg: >-
       s1_agent_dv_proxy must be a URL or host:port with no shell
-      metacharacters or whitespace. Rejected: {{ s1_agent_dv_proxy }}
+      metacharacters, quotes, '=', or whitespace. Rejected: {{ s1_agent_dv_proxy }}
   when:
     - s1_agent_dv_proxy is defined
     - s1_agent_dv_proxy is not none
@@ -41,18 +41,37 @@
     - s1_agent_customer_id is not none
     - s1_agent_customer_id | string | length > 0
 
-- name: Validate s1_agent_custom_install_path
+- name: Validate s1_agent_custom_install_path | Linux
   ansible.builtin.assert:
     that:
-      # Absolute path with at least two path components (rejects '/', '/usr', etc.)
-      - s1_agent_custom_install_path is match('^/[^/\s"\']+/[^/\s"\']+')
-      # No traversal
+      # Whole value: absolute, at least two components, no quotes or whitespace
+      - s1_agent_custom_install_path is match('^/[^/\s"\']+(/[^/\s"\']+)+/?$')
+      # Never an operating-system directory (a forced remove deletes it as root)
+      - s1_agent_custom_install_path is not match('^/(bin|boot|dev|etc|lib|lib32|lib64|libx32|proc|root|run|sbin|sys|usr|var)(/|$)')
       - s1_agent_custom_install_path is not search('\.\.')
     fail_msg: >-
       s1_agent_custom_install_path must be an absolute path with at least two
-      path components, no '..' traversal, no quotes, and no whitespace.
+      path components, not under an operating-system directory (/usr, /etc,
+      /var, ...), with no '..' traversal, no quotes, and no whitespace.
       Rejected: {{ s1_agent_custom_install_path }}
   when:
+    - ansible_os_family != 'Windows'
+    - s1_agent_custom_install_path is defined
+    - s1_agent_custom_install_path is not none
+    - s1_agent_custom_install_path | string | length > 0
+
+- name: Validate s1_agent_custom_install_path | Windows
+  ansible.builtin.assert:
+    that:
+      # Whole value: drive-letter path with at least one component below the root
+      - s1_agent_custom_install_path is match('^[A-Za-z]:\\\\[^\\\\/\s"\':*?<>|]+(\\\\[^\\\\/\s"\':*?<>|]+)*\\\\?$')
+      - s1_agent_custom_install_path is not search('\.\.')
+    fail_msg: >-
+      s1_agent_custom_install_path must be a drive-letter path (e.g. C:\S1Data)
+      with at least one directory below the drive root, no '..' traversal, no
+      quotes, and no whitespace. Rejected: {{ s1_agent_custom_install_path }}
+  when:
+    - ansible_os_family == 'Windows'
     - s1_agent_custom_install_path is defined
     - s1_agent_custom_install_path is not none
     - s1_agent_custom_install_path | string | length > 0

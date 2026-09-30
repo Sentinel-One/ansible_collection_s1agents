@@ -1,15 +1,16 @@
 ---
 # tasks file for s1_agent_common
 
-- name: Validate operator inputs
-  ansible.builtin.include_tasks:
-    file: validate_inputs.yml
-
 - name: Gather required facts
   ansible.builtin.setup:
     gather_subset: "{{ default_gather_subset + (role_gather_subset | default([])) }}"
   tags:
     - s1_gather_facts
+
+# After the read-only fact gather: the install-path rule is OS-specific.
+- name: Validate operator inputs
+  ansible.builtin.include_tasks:
+    file: validate_inputs.yml
 
 - name: Show distribution facts
   tags:

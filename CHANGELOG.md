@@ -48,6 +48,10 @@
   with conditional `assert` tasks. Runs without the variable set are
   unaffected. See [ADR 0001](./docs/adr/0001-trust-model.md).
 
+- **Upgrade role no longer uses the site token.** The Windows upgrade MSI and new-EXE argument templates no longer pass `s1_agent_site_token` (`SITE_TOKEN=` / `-t`), removing an unvalidated value from the upgrade command line. The variable is now ignored by `s1_agent_upgrade`; existing inventories need no change. See [ADR 0013](./docs/adr/0013-upgrade-role-takes-no-site-token.md).
+
+- **Input validation bypasses closed.** `s1_agent_custom_install_path` is now checked across its whole value (a trailing `" TRANSFORMS=...` could previously slip past), is refused under operating-system directories such as `/usr/lib` or `/etc/ssl` on Linux, and has a Windows rule that accepts drive-letter paths like `C:\S1Data` (previously every Windows value was rejected). The proxy variables additionally refuse `"` and `=`. Validation now runs immediately after the collection's read-only fact gather so the OS-specific rule can apply. See [ADR 0001](./docs/adr/0001-trust-model.md).
+
 - **CI hardening documentation (issue 06).** Documented unsafe CI patterns
   (unquoted input injection, floating `requirements.txt`, PR-head code on
   self-hosted runners) and their fixes in `docs/ci-hardening.md` for future
