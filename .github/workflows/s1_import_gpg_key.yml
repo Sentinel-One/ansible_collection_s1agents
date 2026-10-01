@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - "release/**"
-      # TODO: drop once these workflows land on main.
-      - security/hardening-pass
     paths:
       - "roles/s1_import_gpg_key/**"
       - "!roles/s1_import_gpg_key/README.md"

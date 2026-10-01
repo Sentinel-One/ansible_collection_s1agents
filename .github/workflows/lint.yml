@@ -6,8 +6,6 @@ on:
   push:
     branches:
       - "release/**"
-      # TODO: drop once these workflows land on main.
-      - security/hardening-pass
   pull_request:
     branches:
       - main
