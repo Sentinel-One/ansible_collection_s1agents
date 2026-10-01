@@ -7,8 +7,10 @@ Run on the project's uv-managed .venv (see requirements-dev.txt):
     .venv/bin/python scripts/molecule.py gate
 
 Actions: test | converge | verify | destroy | create | login | gate
-Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | none | <raw distro>
+Platforms: linux (rocky8, default) | ubuntu2204 | opensuse15 | windows | windowslegacyplus | none | <raw distro>
            (comma-separated to run several, e.g. --platform linux,windows)
+           Scenarios with a single valid platform (PINNED_PLATFORMS, e.g.
+           windows-legacy-plus) default to it and reject any other.
            "none" is for VM-less scenarios (e.g. windows-tier-matrix) that declare
            no Vagrant platform at all.
 
@@ -149,6 +151,24 @@ PRESETS: dict[str, dict[str, str]] = {
     # pass-through (below) from misinterpreting "none" as a Linux box name.
     "none": {},
 }
+
+
+# Scenarios that can only ever run on one platform. Omitting --platform picks it;
+# passing any other platform is an error rather than a silently meaningless run.
+PINNED_PLATFORMS: dict[str, str] = {
+    "windows-legacy-plus": "windowslegacyplus",
+}
+
+
+def resolve_platforms(scenario: str, platform_arg: str | None) -> list[str]:
+    """Platforms to run: the explicit --platform list, the scenario's pin, or linux."""
+    pinned = PINNED_PLATFORMS.get(scenario)
+    if platform_arg is None:
+        return [pinned or "linux"]
+    platforms = [p.strip() for p in platform_arg.split(",") if p.strip()]
+    if pinned and any(p != pinned for p in platforms):
+        raise ValueError(f"scenario '{scenario}' only runs on --platform {pinned} (got: {platform_arg})")
+    return platforms
 
 
 def preset_for(platform: str) -> dict[str, str]:
@@ -303,12 +323,23 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Molecule test harness (see docs/adr/0005).")
     parser.add_argument("action", choices=["test", "converge", "verify", "destroy", "create", "login", "gate"])
     parser.add_argument("scenario", nargs="?", help="molecule scenario (omit for 'gate')")
-    parser.add_argument("--platform", default="linux", help="preset(s) or raw distro, comma-separated")
+    parser.add_argument(
+        "--platform",
+        help="preset(s) or raw distro, comma-separated (default: the scenario's pinned platform, else linux)",
+    )
     parser.add_argument(
         "--force", action="store_true",
         help="bypass pre-flight checks (running molecule/VMs); results may be unreliable",
     )
     args = parser.parse_args()
+
+    if args.action != "gate":
+        if not args.scenario:
+            parser.error(f"action '{args.action}' requires a scenario")
+        try:
+            platforms = resolve_platforms(args.scenario, args.platform)
+        except ValueError as e:
+            parser.error(str(e))
 
     # Run pre-flight for actions that provision VMs and share the fact cache.
     if args.action in ("gate", "test"):
@@ -326,12 +357,9 @@ def main() -> int:
         print(f"\n=== gate: {results.count('pass')}/{len(results)} passed ===")
         return aggregate_exit(results, rcs)
 
-    if not args.scenario:
-        parser.error(f"action '{args.action}' requires a scenario")
-
     LOG_DIR.mkdir(parents=True, exist_ok=True)
     results, rcs = [], []
-    for platform in [p.strip() for p in args.platform.split(",") if p.strip()]:
+    for platform in platforms:
         result, rc, _ = run_one(args.action, args.scenario, platform)
         results.append(result)
         rcs.append(rc)
