@@ -157,6 +157,7 @@ PRESETS: dict[str, dict[str, str]] = {
 # passing any other platform is an error rather than a silently meaningless run.
 PINNED_PLATFORMS: dict[str, str] = {
     "windows-legacy-plus": "windowslegacyplus",
+    "windows-tier-matrix": "none",
 }
 
 

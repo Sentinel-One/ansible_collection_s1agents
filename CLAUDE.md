@@ -133,7 +133,7 @@ project `.venv` (see [Python Environment](#python-environment)).
 .venv/bin/python scripts/molecule.py test <scenario> --platform <preset>
 
 # Omit --platform: uses the scenario's pinned platform (windows-legacy-plus ->
-# windowslegacyplus), otherwise the linux (rocky8) preset
+# windowslegacyplus, windows-tier-matrix -> none), otherwise linux (rocky8)
 .venv/bin/python scripts/molecule.py test <scenario>
 ```
 
@@ -141,14 +141,14 @@ Scenarios with exactly one valid platform are pinned in `PINNED_PLATFORMS` in `s
 
 **Platform presets:**
 
-| Preset              | Distro              | Notes                                                                 |
-| ------------------- | ------------------- | --------------------------------------------------------------------- |
-| `rocky8`            | Rocky Linux 8       | Default Linux (roboxes)                                               |
-| `ubuntu2204`        | Ubuntu 22.04        | (roboxes)                                                             |
-| `opensuse15`        | OpenSUSE Leap 15    | (roboxes)                                                             |
-| `windows`           | Windows Server 2022 | gusztavvargadr box; sets WinRM group                                  |
-| `windowslegacyplus` | Windows Server 2012 | jborean93 box; the only platform for `windows-legacy-plus` (pinned)   |
-| `none`              | n/a                 | VM-less scenarios (e.g. `windows-tier-matrix`); no `S1_VAGRANT_*` env |
+| Preset              | Distro              | Notes                                                                                          |
+| ------------------- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| `rocky8`            | Rocky Linux 8       | Default Linux (roboxes)                                                                        |
+| `ubuntu2204`        | Ubuntu 22.04        | (roboxes)                                                                                      |
+| `opensuse15`        | OpenSUSE Leap 15    | (roboxes)                                                                                      |
+| `windows`           | Windows Server 2022 | gusztavvargadr box; sets WinRM group                                                           |
+| `windowslegacyplus` | Windows Server 2012 | jborean93 box; the only platform for `windows-legacy-plus` (pinned)                            |
+| `none`              | n/a                 | VM-less scenarios; the only platform for `windows-tier-matrix` (pinned); no `S1_VAGRANT_*` env |
 
 **Logs** are written to `scripts/logs/molecule/<scenario>-<platform>.log`. Exit code 75
 means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
