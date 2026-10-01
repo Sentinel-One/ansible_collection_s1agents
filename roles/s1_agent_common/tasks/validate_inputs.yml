@@ -3,31 +3,20 @@
 # so runs without the variable set (e.g. info/uuid-only runs) are unaffected.
 # See docs/adr/0001-trust-model.md.
 
-- name: Validate s1_agent_management_proxy shape
+# One rule set for every proxy URL, so the two can't drift apart.
+- name: Validate proxy shape
   ansible.builtin.assert:
     that:
-      - s1_agent_management_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
-      - s1_agent_management_proxy is not search('[;|&`$"=\s]')
+      - lookup('ansible.builtin.vars', item) is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
+      - lookup('ansible.builtin.vars', item) is not search('[;|&`$"=\s]')
     fail_msg: >-
-      s1_agent_management_proxy must be a URL or host:port with no shell
-      metacharacters, quotes, '=', or whitespace. Rejected: {{ s1_agent_management_proxy }}
-  when:
-    - s1_agent_management_proxy is defined
-    - s1_agent_management_proxy is not none
-    - s1_agent_management_proxy | string | length > 0
-
-- name: Validate s1_agent_dv_proxy shape
-  ansible.builtin.assert:
-    that:
-      - s1_agent_dv_proxy is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
-      - s1_agent_dv_proxy is not search('[;|&`$"=\s]')
-    fail_msg: >-
-      s1_agent_dv_proxy must be a URL or host:port with no shell
-      metacharacters, quotes, '=', or whitespace. Rejected: {{ s1_agent_dv_proxy }}
-  when:
-    - s1_agent_dv_proxy is defined
-    - s1_agent_dv_proxy is not none
-    - s1_agent_dv_proxy | string | length > 0
+      {{ item }} must be a URL or host:port with no shell metacharacters,
+      quotes, '=', or whitespace. Rejected: {{ lookup('ansible.builtin.vars', item) }}
+  loop:
+    - s1_agent_management_proxy
+    - s1_agent_dv_proxy
+  # Skips undefined, null, and empty alike (default=None means "no default" here)
+  when: (lookup('ansible.builtin.vars', item, default='') or '') | string | length > 0
 
 - name: Validate s1_agent_customer_id
   ansible.builtin.assert:
