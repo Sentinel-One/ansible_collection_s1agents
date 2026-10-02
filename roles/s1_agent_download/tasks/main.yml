@@ -57,6 +57,7 @@
   delegate_to: localhost
   run_once: true
   become: false
+  no_log: true
 
 - name: Show s1_agent_version
   ansible.builtin.debug:
@@ -118,7 +119,8 @@
   ansible.builtin.file:
     path: "{{ s1_download_path }}"
     state: directory
-    mode: "0755"
+    mode: "0700"
+    follow: false
   delegate_to: localhost
   run_once: true
   become: false
@@ -138,3 +140,4 @@
   delay: 60 # Mgmt Console API is limited to 2 pkg downloads / 60 seconds
   delegate_to: localhost
   become: false
+  no_log: true

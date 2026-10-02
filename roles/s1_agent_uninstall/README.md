@@ -43,11 +43,11 @@ s1_validate_certs: true
 
 ## Dependencies
 
-* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
-* [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console. Note: this dependency does not exist for Linux agents when `s1_forced_remove` is `true`.
-* [s1_agent_common](../s1_agent_common/README.md) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
-* [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
+- [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+- [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console. Note: this dependency does not exist for Linux agents when `s1_forced_remove` is `true`.
+- [s1_agent_common](../s1_agent_common/README.md) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
 
 ## Example Playbooks
 

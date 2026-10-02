@@ -19,8 +19,8 @@ When defined with a valid path, a CSV file containing UUIDs for the endpoints in
 
 ## Dependencies
 
-* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbooks
 

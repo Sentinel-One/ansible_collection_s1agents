@@ -17,23 +17,23 @@ The SentinelOne.s1agents Ansible Collection is a collection of roles for managin
 
 ## Included Roles
 
-* [s1_agent_common](roles/s1_agent_common/README.md) loads common variables and configs used by all other roles.
-* [s1_agent_info](roles/s1_agent_info/README.md) gathers basic info about the agent and can be used to determine if the agent is installed and operational.
-* [s1_agent_download](roles/s1_agent_download/README.md) assists with downloading agent installation packages from the Management Console.
-* [s1_agent_install](roles/s1_agent_install/README.md) installs agent packages on endpoints.
-* [s1_agent_uninstall](roles/s1_agent_uninstall/README.md) removes the agent from endpoints.
-* [s1_agent_upgrade](roles/s1_agent_upgrade/README.md) upgrades an existing agent installed on an endpoint.
-* [s1_agent_uuid](roles/s1_agent_uuid/README.md) is used to generate a report of agent UUIDs.
-* [s1_import_gpg_key](roles/s1_import_gpg_key/README.md) ensures the SentinelOne GPG key is present on RPM based systems.
-* [s1_mgmt_get_passphrase](roles/s1_mgmt_get_passphrase/README.md) is used by other roles to retrieve the unique passphrase for each agent in the play, from the management console.
+- [s1_agent_common](roles/s1_agent_common/README.md) loads common variables and configs used by all other roles.
+- [s1_agent_info](roles/s1_agent_info/README.md) gathers basic info about the agent and can be used to determine if the agent is installed and operational.
+- [s1_agent_download](roles/s1_agent_download/README.md) assists with downloading agent installation packages from the Management Console.
+- [s1_agent_install](roles/s1_agent_install/README.md) installs agent packages on endpoints.
+- [s1_agent_uninstall](roles/s1_agent_uninstall/README.md) removes the agent from endpoints.
+- [s1_agent_upgrade](roles/s1_agent_upgrade/README.md) upgrades an existing agent installed on an endpoint.
+- [s1_agent_uuid](roles/s1_agent_uuid/README.md) is used to generate a report of agent UUIDs.
+- [s1_import_gpg_key](roles/s1_import_gpg_key/README.md) ensures the SentinelOne GPG key is present on RPM based systems.
+- [s1_mgmt_get_passphrase](roles/s1_mgmt_get_passphrase/README.md) is used by other roles to retrieve the unique passphrase for each agent in the play, from the management console.
 
 ## Dependencies
 
 The SentinelOne.s1agents collection has dependencies upon the following collections.
 
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
-* [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
-* [community.windows](https://docs.ansible.com/ansible/latest/collections/community/windows/index.html)
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
+- [community.windows](https://docs.ansible.com/ansible/latest/collections/community/windows/index.html)
 
 The dependencies can be installed by using the ansible-galaxy command `ansible-galaxy install -r requirements.yml` and the requirements file found at the root of the project.
 
@@ -80,19 +80,20 @@ The various roles in this collection access the SentinelOne Management Console v
 
 Create a `Ansible Service Accounts` role in the SentinelOne Management console and grant it the permissions:[^2]
 
-* Endpoints > Show Passphrase
-* Endpoints > Uninstall
-* Endpoints > Update Software
-* Endpoints > View
-* Accounts > View
-* Agent Packages > View
-* Groups > View
-* Local Upgrade Authorization > Edit
-* Local Upgrade Authorization > View
-* Roles > View
-* Sites > View
+- Endpoints > Show Passphrase
+- Endpoints > Uninstall
+- Endpoints > Update Software
+- Endpoints > View
+- Accounts > View
+- Agent Packages > View
+- Groups > View
+- Local Upgrade Authorization > Edit
+- Local Upgrade Authorization > View
+- Roles > View
+- Sites > View
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
+
 [^2]: This is a cumulative list of permissions required by the collection as a whole. If you wish to use a separate Service Account for each Ansible Role, see that role's README for a list of required permissions.
 
 Then add your Service Users to the `Ansible Service Accounts` role and scope it to the appropriate Site/Account/Group.
@@ -158,11 +159,11 @@ When using this collection with an on-prem management console with a self-signed
 
 Endpoints need to trust the management console's self-signed certificate before the agent can successfully communicate with. Distributing self-signed certificates to endpoints is out-of-scope for this collection.
 
-* Linux
-  * Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint and the agent will use it for agent to management console communications.
-  * While there is no official Ansible module for managing certificates on a Linux endpoint, numerous third-party solutions exist, check <https://galaxy.ansible.com/>.
-* Windows
-  * For domain joined systems, Group Policy can be used to add custom certificates to the trusted store.
-  * The official [ansible.windows.win_certificate_store](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_certificate_store_module.html) module can manage certificates in the trusted store.
+- Linux
+  - Starting with Linux agent 22.4[^3] custom certificates for on-prem management consoles can be saved to `/opt/sentinelone/certificates/custom.crt` on the endpoint and the agent will use it for agent to management console communications.
+  - While there is no official Ansible module for managing certificates on a Linux endpoint, numerous third-party solutions exist, check <https://galaxy.ansible.com/>.
+- Windows
+  - For domain joined systems, Group Policy can be used to add custom certificates to the trusted store.
+  - The official [ansible.windows.win_certificate_store](https://docs.ansible.com/ansible/latest/collections/ansible/windows/win_certificate_store_module.html) module can manage certificates in the trusted store.
 
 [^3]: See the [Release Notes](https://community.sentinelone.com/s/article/000005011)

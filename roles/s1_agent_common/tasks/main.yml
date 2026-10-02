@@ -7,6 +7,11 @@
   tags:
     - s1_gather_facts
 
+# After the read-only fact gather: the install-path rule is OS-specific.
+- name: Validate operator inputs
+  ansible.builtin.include_tasks:
+    file: validate_inputs.yml
+
 - name: Show distribution facts
   tags:
     - never
@@ -59,5 +64,19 @@
   loop_control:
     loop_var: loop_vars
     label: "{{ loop_vars | basename }}"
+  tags:
+    - always
+
+- name: Compute Windows support tier
+  ansible.builtin.include_tasks:
+    file: windows_tier.yml
+  when: ansible_os_family == 'Windows'
+  tags:
+    - always
+
+- name: Pin Legacy Plus default agent version
+  ansible.builtin.include_tasks:
+    file: windows_legacy_plus_version_pin.yml
+  when: ansible_os_family == 'Windows'
   tags:
     - always

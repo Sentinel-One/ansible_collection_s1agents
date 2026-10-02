@@ -1,0 +1,63 @@
+---
+# Resolve and create the per-run work directory used to stage installer files.
+# Sets the s1_work_dir fact (cacheable, so molecule verify can observe it).
+# Uses the operator override (s1_tmp_linux) when set, otherwise an unpredictable
+# root-owned 0700 tempfile directory. See docs/adr/0004-tempfile-work-dirs.md.
+
+- name: Resolve work directory | Linux
+  when:
+    - ansible_system == 'Linux'
+    - s1_work_dir is not defined
+  block:
+    - name: Use operator-supplied work directory | Linux
+      ansible.builtin.file:
+        path: "{{ s1_tmp_linux }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+        follow: false
+      become: true
+      when:
+        - s1_tmp_linux is defined
+        - s1_tmp_linux | length > 0
+
+    - name: Create unpredictable work directory | Linux
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: s1_install.
+      register: s1_tmp_dir_reg
+      become: true
+      when: (s1_tmp_linux is not defined) or (s1_tmp_linux | length == 0)
+
+    - name: Pin resolved work directory | Linux
+      ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
+        s1_work_dir: "{{ s1_tmp_linux if (s1_tmp_linux is defined and s1_tmp_linux | length > 0) else s1_tmp_dir_reg.path }}"
+        cacheable: true
+
+- name: Resolve work directory | Windows
+  when:
+    - ansible_os_family == 'Windows'
+    - s1_work_dir is not defined
+  block:
+    - name: Create unpredictable work directory | Windows
+      ansible.windows.win_tempfile:
+        state: directory
+        prefix: s1_install.
+      register: s1_win_tmp_dir_reg
+      when: (s1_tmp_windows is not defined) or (s1_tmp_windows | length == 0)
+
+    - name: Use operator-supplied work directory | Windows
+      ansible.windows.win_file:
+        path: "{{ s1_tmp_windows }}"
+        state: directory
+      when:
+        - s1_tmp_windows is defined
+        - s1_tmp_windows | length > 0
+
+    - name: Pin resolved work directory | Windows
+      ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
+        s1_work_dir: "{{ s1_tmp_windows if (s1_tmp_windows is defined and s1_tmp_windows | length > 0) else s1_win_tmp_dir_reg.path }}"
+        cacheable: true

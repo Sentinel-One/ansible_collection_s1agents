@@ -1,0 +1,39 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    # prepare.yml's s1_agent_version (the older, explicit 23.4.5.337 install
+    # target) was cached with cacheable: true, so it would otherwise still be
+    # defined here - which the pin task would read as "an operator already
+    # requested a version" and skip. Blanking it in-memory (not cacheable, so
+    # this doesn't disturb the disk cache) leaves s1_agent_version defined but
+    # empty for this play - the pin task's own undefined-or-none-or-empty
+    # check (windows_legacy_plus_version_pin.yml) treats that identically to
+    # a real unversioned request. Ansible re-gathers ansible_* facts and
+    # recomputes s1_windows_tier unconditionally inside s1_agent_common
+    # regardless, so nothing else needs resetting - notably not
+    # s1_molecule_installed_version / s1_molecule_installed_src, which
+    # verify.yml still needs.
+    - name: Blank the cached prior agent version so the version pin applies
+      ansible.builtin.set_fact:
+        s1_agent_version: ""
+
+    - name: Include s1_agent_upgrade with no explicit version requested
+      ansible.builtin.include_role:
+        name: s1_agent_upgrade
+      vars:
+        s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+
+    # s1_agent_upgrade's own "SentinelOne agent version installed" task
+    # (roles/s1_agent_upgrade/tasks/main.yml) already showed s1_agent_version
+    # above - only the tier is new information here.
+    - name: Show resolved Windows support tier | Windows
+      ansible.builtin.debug:
+        var: s1_windows_tier
+
+    - name: Persist facts for verify step
+      ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
+        s1_molecule_upgraded_version: "{{ s1_agent_version | regex_replace('(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)', '\\1.\\2.\\4') }}"
+        cacheable: true
