@@ -57,8 +57,7 @@ unsupported and unreliable on the hosted fleet) as the Vagrant provider.
 ## Consequences
 
 - The self-hosted VirtualBox fleet is retired.
-- Local and CI runs share one scenario definition per role; the Vagrant
-  provider is the only intentional difference between them.
+- Local and CI runs share one scenario definition per role. There are two intentional differences: the Vagrant provider, and CI's `ANSIBLE_TASK_TIMEOUT` of 1800s (matching `vm.boot_timeout`). The timeout was added after a Windows reboot left a task waiting on a dead SSH session for 2h15m; locally you can just interrupt the run.
 - External contributors get lint feedback automatically but never see a
   secret; maintainers stay in the loop for any change that needs a full test
   run.

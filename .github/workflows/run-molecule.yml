@@ -40,6 +40,9 @@ jobs:
     env:
       ANSIBLE_FORCE_COLOR: "1" # allows ansible colors to be passed to GitHub Actions
       PY_COLORS: "1" # allows molecule colors to be passed to GitHub Actions
+      # Fail a hung task (e.g. a dead SSH session after a reboot) instead of
+      # waiting hours; matches vm.boot_timeout. CI only - see ADR 0010.
+      ANSIBLE_TASK_TIMEOUT: "1800"
       VAGRANT_DEFAULT_PROVIDER: libvirt
       S1_VAGRANT_GROUP: ${{ inputs.inventory_group }}
       S1_MANAGEMENT_CONSOLE: ${{ vars.S1_MANAGEMENT_CONSOLE }}
