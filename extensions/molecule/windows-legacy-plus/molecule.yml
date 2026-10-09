@@ -49,7 +49,7 @@ provisioner:
       fact_caching_timeout: 900
       retry_files_enabled: false
     ssh_connection:
-      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
   env:
     ANSIBLE_ROLES_PATH: ../../../roles
     VAGRANT_DEFAULT_PROVIDER: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}

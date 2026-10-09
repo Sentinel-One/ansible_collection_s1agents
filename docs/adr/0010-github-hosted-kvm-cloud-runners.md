@@ -58,6 +58,7 @@ unsupported and unreliable on the hosted fleet) as the Vagrant provider.
 
 - The self-hosted VirtualBox fleet is retired.
 - Local and CI runs share one scenario definition per role. There are two intentional differences: the Vagrant provider, and CI's `ANSIBLE_TASK_TIMEOUT` of 1800s (matching `vm.boot_timeout`). The timeout was added after a Windows reboot left a task waiting on a dead SSH session for 2h15m; locally you can just interrupt the run.
+- Every scenario's `ssh_args` sets `ServerAliveInterval=15` / `ServerAliveCountMax=4`. Without them, a Windows guest that dropped its network before the reboot command's reply arrived left the shared `ControlMaster` connection dead and silent, so `win_reboot` hung until the task timeout. This hit the post-uninstall reboot hardest, since with no agent left Windows shuts down in under a minute. With the keep-alive, a dead connection fails within about a minute and `win_reboot` reconnects. In CI, Windows `uninstall` went from 0/4 to 4/4 post-uninstall reboots.
 - External contributors get lint feedback automatically but never see a
   secret; maintainers stay in the loop for any change that needs a full test
   run.
