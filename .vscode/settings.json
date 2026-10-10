@@ -13,13 +13,14 @@
     "*.conf.j2": "properties"
   },
   "[markdown]": {
-    "editor.tabSize": 4,
+    "editor.tabSize": 2,
     "editor.insertSpaces": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "files.trimTrailingWhitespace": true
   },
   "[shellscript]": {
     "editor.insertSpaces": false,
-    "editor.tabSize": 4,
+    "editor.tabSize": 4
   },
   "[yaml]": {
     "editor.tabSize": 2,
@@ -28,9 +29,8 @@
     "editor.renderControlCharacters": true,
     "editor.formatOnSave": true,
     "editor.insertSpaces": true,
+    "editor.defaultFormatter": "redhat.vscode-yaml"
   },
-  "yaml.customTags": [
-    "!vault"
-  ],
-  "yaml.format.singleQuote": true,
+  "yaml.customTags": ["!vault"],
+  "yaml.format.singleQuote": false
 }

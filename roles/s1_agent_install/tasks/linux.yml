@@ -50,27 +50,28 @@
       - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
     fail_msg: System Instability Detected
 
+- name: Create working directory | Linux
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: create_work_dir.yml
+
 - name: Set SentinelOne agent path | Linux
   ansible.builtin.set_fact:
-    s1_agent_path: "{{ s1_tmp_linux }}/{{ s1_agent_src | basename }}"
-
-- name: Create working directory | Linux
-  ansible.builtin.file:
-    path: "{{ s1_tmp_linux }}"
-    state: directory
-    mode: "0755"
+    s1_agent_path: "{{ s1_work_dir }}/{{ s1_agent_src | basename }}"
 
 - name: Copy SentinelOne agent | Linux
   ansible.builtin.copy:
     src: "{{ s1_agent_src }}"
     dest: "{{ s1_agent_path }}"
     mode: "0755"
+  become: true
 
 - name: Create configuration file | Linux
   ansible.builtin.template:
     src: linux_agent_config.cfg.j2
-    dest: "{{ s1_tmp_linux }}/s1_config.cfg"
+    dest: "{{ s1_work_dir }}/s1_config.cfg"
     mode: "0744"
+  become: true
 
 - name: Import the SentinelOne GPG Key | Red Hat Family
   ansible.builtin.include_role:
@@ -86,7 +87,7 @@
     state: present
     use_backend: '{{ (ansible_pkg_mgr == "zypper") | ternary("yum4", "auto") }}'
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
   become: true
   notify: "{{ s1_service_handler_name }}"
   when:
@@ -99,50 +100,62 @@
     - not s1_install_gpg_signed_rpm | default('no') | bool
   block:
     - name: Check if SentinelOne RPM package is installed | Linux
-      ansible.builtin.command: rpm -q --qf "%{VERSION}\n" '{{ s1_package_name }}' # noqa command-instead-of-module
-      register: s1_rpm_query
-      failed_when:
-        - s1_rpm_query is failed
-        - '"package " ~ s1_package_name ~ " is not installed" not in s1_rpm_query.stdout'
-      changed_when: false
-
-    - name: Show s1_rpm_query
-      ansible.builtin.debug:
-        var: s1_rpm_query
-      tags:
-        - never
-        - debug
+      block:
+        - name: Check if SentinelOne RPM package is installed | Linux
+          ansible.builtin.command: rpm -q --qf "%{VERSION}\n" '{{ s1_package_name }}' # noqa command-instead-of-module
+          register: s1_rpm_query
+          failed_when:
+            - s1_rpm_query is failed
+            - '"package " ~ s1_package_name ~ " is not installed" not in s1_rpm_query.stdout'
+          changed_when: false
+      always:
+        - name: Show s1_rpm_query
+          ansible.builtin.debug:
+            var: s1_rpm_query
+          tags:
+            - never
+            - debug
 
     - name: Install SentinelOne RPM package | Linux
-      ansible.builtin.command: rpm -i --nodigest '{{ s1_agent_path }}' # noqa command-instead-of-module
-      environment:
-        S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
-      become: true
-      notify: "{{ s1_service_handler_name }}"
-      register: s1_rpm_install_result
-      changed_when: '"Registration token successfully set" in s1_rpm_install_result.stdout'
-      when: '"package " ~ s1_package_name ~ " is not installed" in s1_rpm_query.stdout'
-
-    - name: Show s1_rpm_install_result
-      ansible.builtin.debug:
-        var: s1_rpm_install_result
-      tags:
-        - never
-        - debug
+      block:
+        - name: Install SentinelOne RPM package | Linux # noqa command-instead-of-module
+          ansible.builtin.command:
+            # --nodigest was an EOL accommodation for pre-23.3 unsigned RPMs.
+            # Pre-23.3 unsigned installs are no longer supported. See ADR 0002.
+            argv:
+              - rpm
+              - -i
+              - "{{ s1_agent_path }}"
+          environment:
+            S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
+          become: true
+          notify: "{{ s1_service_handler_name }}"
+          register: s1_rpm_install_result
+          changed_when: '"Registration token successfully set" in s1_rpm_install_result.stdout'
+          when: '"package " ~ s1_package_name ~ " is not installed" in s1_rpm_query.stdout'
+      always:
+        - name: Show s1_rpm_install_result
+          ansible.builtin.debug:
+            var: s1_rpm_install_result
+          tags:
+            - never
+            - debug
 
 - name: Install SentinelOne DEB package | Linux
   ansible.builtin.apt:
     deb: "{{ s1_agent_path }}"
     state: present
   environment:
-    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_tmp_linux }}/s1_config.cfg"
+    S1_AGENT_INSTALL_CONFIG_PATH: "{{ s1_work_dir }}/s1_config.cfg"
   become: true
   notify: "{{ s1_service_handler_name }}"
   when: ansible_pkg_mgr in apt_pkg_mgrs
 
 - name: Remove working directory | Linux
   ansible.builtin.file:
-    path: "{{ s1_tmp_linux }}"
+    path: "{{ s1_work_dir }}"
     state: absent
+    follow: false
+  become: true
   tags:
     - molecule-notest

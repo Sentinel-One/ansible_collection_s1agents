@@ -1,0 +1,22 @@
+---
+# Mock a Legacy Plus tier and a requested version, then re-run only the
+# version-pin task (roles/s1_agent_common/tasks/windows_legacy_plus_version_pin.yml)
+# and persist the resulting s1_agent_version for this case. Tier
+# classification itself is proven separately by resolve_windows_tier_case.yml;
+# this only proves the pin task. See
+# docs/adr/0008-windows-support-tier-routing.md.
+
+- name: "Mock Legacy Plus tier and requested version for pin case: {{ s1_pin_case.case }}"
+  ansible.builtin.set_fact:
+    s1_windows_tier: legacy_plus
+    s1_agent_version: "{{ s1_pin_case.s1_agent_version }}"
+
+- name: "Apply the Legacy Plus default version pin: {{ s1_pin_case.case }}"
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: windows_legacy_plus_version_pin.yml
+
+- name: "Persist resolved version for pin case: {{ s1_pin_case.case }}"
+  ansible.builtin.set_fact:
+    s1_molecule_pin_cases: "{{ s1_molecule_pin_cases | default({}) | combine({s1_pin_case.case: s1_agent_version}) }}"
+    cacheable: true

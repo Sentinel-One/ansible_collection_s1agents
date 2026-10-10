@@ -6,3 +6,9 @@
     - name: Include s1_agent_common
       ansible.builtin.include_role:
         name: s1_agent_common
+
+    - name: Persist real Windows support tier
+      ansible.builtin.set_fact:
+        s1_molecule_real_windows_tier: "{{ s1_windows_tier }}"
+        cacheable: true
+      when: ansible_os_family == 'Windows'

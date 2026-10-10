@@ -1,0 +1,15 @@
+---
+# Pin s1_agent_version to the manually-maintained Legacy Plus default
+# (s1_legacy_plus_default_version, vars/windows.yml) when no version was
+# explicitly requested, before s1_agent_download ever runs. Without this,
+# s1_agent_download's release_n_minus fallback would silently fetch the
+# latest GA release, which then fails the windows_legacy_plus.yml ceiling
+# assert after an unnecessary download. See
+# docs/adr/0008-windows-support-tier-routing.md.
+
+- name: Pin Legacy Plus default agent version when none requested | Windows
+  ansible.builtin.set_fact:
+    s1_agent_version: "{{ s1_legacy_plus_default_version }}"
+  when:
+    - s1_windows_tier == 'legacy_plus'
+    - s1_agent_version is not defined or s1_agent_version is none or s1_agent_version | length == 0

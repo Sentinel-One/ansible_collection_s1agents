@@ -1,0 +1,53 @@
+---
+# Classify the host into a Windows support tier (s1_windows_tier: legacy |
+# legacy_plus | modern) and normalize OS bitness (s1_os_bitness: 64-bit |
+# 32-bit) from a locale-independent signal. See CONTEXT.md (### Windows
+# support tiers) and docs/adr/0008-windows-support-tier-routing.md.
+#
+# Molecule's fact-mocked tier cases pre-set s1_os_bitness via set_fact before
+# re-including this file, so the win_command probe below is skipped and only
+# the classification runs against the mocked inputs.
+
+- name: Determine OS bitness | Windows
+  ansible.windows.win_command: powershell.exe -NoProfile -Command "[Environment]::Is64BitOperatingSystem"
+  changed_when: false
+  register: s1_win_is_64bit_reg
+  when: s1_os_bitness is not defined
+
+- name: Set s1_os_bitness | Windows
+  ansible.builtin.set_fact:
+    s1_os_bitness: "{{ (s1_win_is_64bit_reg.stdout | trim == 'True') | ternary('64-bit', '32-bit') }}"
+  when: s1_os_bitness is not defined
+
+# ansible_distribution (WMI Caption) against the known 64-bit Legacy Plus
+# editions matrix: an entry matches if its `match` substring is present and
+# (when set) its `not_match` substring is absent, e.g. "Windows 8" matches
+# "Windows 8" but not "Windows 8.1".
+- name: Match Caption against known Legacy Plus 64-bit editions | Windows
+  ansible.builtin.set_fact:
+    s1_windows_legacy_plus_caption_match: >-
+      {{
+        (s1_windows_legacy_plus_candidates
+          | rejectattr('not_match', 'defined')
+          | list | length > 0)
+        or
+        (s1_windows_legacy_plus_candidates
+          | selectattr('not_match', 'defined')
+          | rejectattr('not_match', 'in', ansible_distribution)
+          | list | length > 0)
+      }}
+  vars:
+    s1_windows_legacy_plus_candidates: "{{ s1_legacy_plus_x64_editions | selectattr('match', 'in', ansible_distribution) | list }}"
+
+# Precedence: the Legacy floor is checked first so a 32-bit Legacy OS (e.g.
+# 32-bit XP) lands in legacy, not legacy_plus. Everything past that floor is
+# legacy_plus if 32-bit (any supported 32-bit Windows) or a 64-bit Caption
+# match; everything else is modern, which by construction is always 64-bit.
+- name: Resolve Windows support tier | Windows
+  ansible.builtin.set_fact:
+    s1_windows_tier: >-
+      {{
+        'legacy' if ansible_distribution_version is version('6.1', '<')
+        else 'legacy_plus' if (s1_os_bitness == '32-bit' or s1_windows_legacy_plus_caption_match)
+        else 'modern'
+      }}

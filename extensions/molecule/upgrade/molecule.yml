@@ -8,8 +8,6 @@ driver:
   name: vagrant
   provider:
     name: ${VAGRANT_DEFAULT_PROVIDER:-virtualbox}
-    options:
-      linked_clone: true
 
 platforms:
   - name: ${S1_MOLECULE_HOSTNAME:-blue-firefly}-${S1_VAGRANT_DISTRO:-rocky8}
@@ -24,8 +22,6 @@ platforms:
       synced_folder: false
     instance_raw_config_args:
       - "vm.boot_timeout = 1800"
-    provider_options:
-      linked_clone: true
 
 provisioner:
   name: ansible
@@ -33,12 +29,15 @@ provisioner:
     defaults:
       gathering: explicit
       fact_caching: jsonfile
-      fact_caching_connection: ${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}
+      fact_caching_connection: /tmp/s1_fact_cache
       fact_caching_timeout: 900
       retry_files_enabled: false
     ssh_connection:
       # Required for connecting to RHEL 6.x
-      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+      ssh_args: >-
+        -C -o ControlMaster=auto -o ControlPersist=60s
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=4
+        -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
   env:
     ANSIBLE_ROLES_PATH: ../../../roles
     # ANSIBLE_VERBOSITY: 3
@@ -66,6 +65,7 @@ provisioner:
       Darwin:
   playbooks:
     cleanup: ../common/templates/cleanup-uninstall-agent.yml
+    side_effect: side_effect.yml
 
 verifier:
   name: ansible

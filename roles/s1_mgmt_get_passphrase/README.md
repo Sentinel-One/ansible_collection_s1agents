@@ -13,12 +13,12 @@ An endpoint with the SentinelOne agent installed and operational. A valid Sentin
 
 In order to successfully query agent passphrases via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Endpoints > View
-* Endpoints > Show Passphrase
-* Accounts > View
-* Groups > View
-* Roles > View
-* Sites > View
+- Endpoints > View
+- Endpoints > Show Passphrase
+- Accounts > View
+- Groups > View
+- Roles > View
+- Sites > View
 
 ## Role Variables
 
@@ -46,13 +46,13 @@ The number of results to return with each call to the packages API endpoint.
 s1_agent_passphrase_report: /home/jdoe/passphrase.csv
 ```
 
-When defined with a valid path, a CSV file containing passphrases  for the endpoints in the play will be saved to this location on the Ansible controller. **This report contains sensitive information.**
+When defined with a valid path, a CSV file containing passphrases for the endpoints in the play will be saved to this location on the Ansible controller. **This report contains sensitive information.**
 
 ## Dependencies
 
-* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbook
 
@@ -60,7 +60,7 @@ When defined with a valid path, a CSV file containing passphrases  for the endpo
 
 Retrieve agent passphrases for all endpoints. The passphrase will be saved to the `s1_agent_passphrase` fact on each endpoint and can be used by subsequent tasks in the same play.
 
-*Warning: this sample play is very insecure - it prints the agent's passphrase to stdout. It is provided as an example to show that the `s1_agent_passphrase` fact can be used by later tasks in the play.*
+_Warning: this sample play is very insecure - it prints the agent's passphrase to stdout. It is provided as an example to show that the `s1_agent_passphrase` fact can be used by later tasks in the play._
 
 ```yaml
 ---

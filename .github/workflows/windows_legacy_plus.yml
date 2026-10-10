@@ -1,0 +1,26 @@
+name: Windows Legacy Plus lifecycle
+
+# Dispatch-only: this fixture is known-red on hosted runners (an external
+# limitation) and its authoritative gate is a local run. See ADR 0011.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: windows-legacy-plus - windowslegacyplus
+    # Belt-and-suspenders same-repo guard, matching ci-release.yml.
+    if: github.repository == 'Sentinel-One/ansible_collection_s1agents'
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: windows-legacy-plus
+      platform_preset: windowslegacyplus
+      inventory_group: Windows
+      connection: ssh
+    secrets: inherit

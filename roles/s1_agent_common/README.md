@@ -57,7 +57,7 @@ Note: after an agent has been installed on one endpoint, the [s1_agent_info](../
 
 ## Dependencies
 
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbook
 

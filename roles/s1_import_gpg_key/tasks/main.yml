@@ -4,19 +4,19 @@
   when: ansible_pkg_mgr in rpm_pkg_mgrs
   block:
     - name: Create working directory | Linux
-      ansible.builtin.file:
-        path: "{{ s1_tmp_linux }}"
-        state: directory
-        mode: "0755"
+      ansible.builtin.include_role:
+        name: s1_agent_common
+        tasks_from: create_work_dir.yml
 
     - name: Copy SentinelOne GPG key | Linux
       ansible.builtin.copy:
         src: sentinel_one.gpg
-        dest: "{{ s1_tmp_linux }}"
+        dest: "{{ s1_work_dir }}"
         mode: "0755"
+      become: true
 
     - name: Import SentinelOne GPG key | Linux
       ansible.builtin.rpm_key:
         state: '{{ s1_s1_rpm_key_state | default("present") }}'
-        key: "{{ s1_tmp_linux }}/sentinel_one.gpg"
+        key: "{{ s1_work_dir }}/sentinel_one.gpg"
       become: true

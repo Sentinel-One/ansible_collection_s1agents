@@ -46,3 +46,16 @@
               - s1_agent_info is defined
               - s1_agent_info.service_status == ('running' if ansible_os_family != 'Windows' else 'started')
               - s1_agent_info.agent_enabled == (true | bool)
+
+    - name: Verify work directory hardening | Linux
+      when: ansible_os_family != 'Windows'
+      block:
+        - name: Assert the agent was staged in a non-predictable work directory
+          ansible.builtin.assert:
+            that:
+              - s1_work_dir is defined
+              - s1_work_dir is string
+              - s1_work_dir != '/tmp/s1_install'
+              - s1_work_dir is match('^/.+/.+')
+            # yamllint disable-line rule:line-length
+            fail_msg: "Expected the agent staged in an unpredictable per-run work directory, but s1_work_dir was {{ s1_work_dir | default('undefined') }}."

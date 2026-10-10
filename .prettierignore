@@ -1,0 +1,10 @@
+# Prettier formats Markdown and JSON only. All YAML is owned by ansible-lint
+# (which bundles yamllint); keeping prettier off YAML avoids dueling formatters
+# over quote style, indentation, and block scalars. See docs/adr/0006.
+*.yml
+*.yaml
+
+# Caches and vendored trees that are not part of this source.
+.ansible/
+.cache/
+.molecule-logs/

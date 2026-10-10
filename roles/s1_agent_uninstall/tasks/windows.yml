@@ -11,6 +11,7 @@
         wait_for_children: true
         product_id: "{{ s1_agent_info.product_id }}"
       become: true
+      no_log: true
       register: s1_uninstall_log
       notify: "{{ s1_reboot_handler_name }}"
   rescue:

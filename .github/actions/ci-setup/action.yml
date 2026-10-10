@@ -1,30 +1,81 @@
 name: CI Setup
-description: Sets up Python and Ansible for jobs during CI workflow
+description: >-
+  Bootstraps the uv-managed toolchain (.venv from requirements-dev.txt, Galaxy
+  collections) and, when requested, the KVM/libvirt/Vagrant virtualization stack
 
 inputs:
-  ansible-version:
-    description: "Ansible Version"
-    required: true
-  python-version:
-    description: "Python Version"
-    required: true
+  enable_kvm:
+    description: "Install the KVM/libvirt/Vagrant virtualization stack"
+    required: false
+    default: "false"
 
 runs:
   using: composite
   steps:
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ inputs.python-version }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
 
-    - name: Install ansible-core (${{ inputs.ansible-version }})
+    - name: Create venv and install dev toolchain
       shell: bash
       run: |
-        pip install https://github.com/ansible/ansible/archive/${{ inputs.ansible-version }}.tar.gz --disable-pip-version-check
+        uv venv --python 3.12
+        uv pip install -r requirements-dev.txt
+        # Ansible resolves python3 from PATH for the local connection, so put
+        # the venv first to keep every later invocation on it.
+        echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
 
-    - name: Install requirements for molecule tests
+    - name: Install Galaxy collection dependencies
+      shell: bash
+      run: .venv/bin/ansible-galaxy collection install -r requirements.yml
+
+    # /dev/kvm is not exposed to the runner user by default; this is GitHub's
+    # documented udev rule. See docs/research/github-actions-nested-vms.md.
+    - name: Enable KVM device access
+      if: inputs.enable_kvm == 'true'
       shell: bash
       run: |
-        pip uninstall molecule-vagrant --yes
-        pip install ansible-dev-tools pywinrm "molecule<25.2.0" python-vagrant molecule-plugins ansible-lint flake8 --disable-pip-version-check
-        if [ -f requirements.txt ]; then pip install -r requirements.txt --disable-pip-version-check; fi
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+          | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    # Ubuntu's own apt repos don't ship a current Vagrant package; HashiCorp's
+    # official apt repo is the vendor-documented install path.
+    - name: Add HashiCorp apt repository
+      if: inputs.enable_kvm == 'true'
+      shell: bash
+      run: |
+        wget -O- https://apt.releases.hashicorp.com/gpg \
+          | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" \
+          | sudo tee /etc/apt/sources.list.d/hashicorp.list
+
+    # sshpass backs windows-legacy-plus: that box rejects Vagrant's insecure
+    # keypair, so its molecule.yml authenticates with a password.
+    - name: Install KVM/libvirt/Vagrant virtualization stack
+      if: inputs.enable_kvm == 'true'
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          qemu-kvm libvirt-daemon-system libvirt-dev \
+          ebtables dnsmasq-base vagrant cpu-checker sshpass
+        # Takes effect only via `sg libvirt` - this session predates it. See ADR 0012.
+        sudo usermod -aG libvirt "$(whoami)"
+        sudo systemctl restart libvirtd
+        vagrant plugin install vagrant-libvirt
+
+    # Turns a runner-image regression that removes nested virt into a legible
+    # failure instead of an opaque Vagrant boot timeout.
+    - name: Guard KVM availability
+      if: inputs.enable_kvm == 'true'
+      shell: bash
+      run: |
+        if [ ! -e /dev/kvm ]; then
+          echo "::error::/dev/kvm is not present on this runner - nested virtualization is unavailable"
+          exit 1
+        fi
+        if ! kvm-ok; then
+          echo "::error::kvm-ok reports hardware-accelerated virtualization is unavailable"
+          exit 1
+        fi
