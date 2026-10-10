@@ -34,7 +34,10 @@ provisioner:
       retry_files_enabled: false
     ssh_connection:
       # Required for connecting to RHEL 6.x
-      ssh_args: -C -o ControlMaster=auto -o ControlPersist=60s -o ServerAliveInterval=15 -o ServerAliveCountMax=4 -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
+      ssh_args: >-
+        -C -o ControlMaster=auto -o ControlPersist=60s
+        -o ServerAliveInterval=15 -o ServerAliveCountMax=4
+        -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedKeyTypes=+ssh-rsa
   env:
     ANSIBLE_ROLES_PATH: ../../../roles
     # ANSIBLE_VERBOSITY: 3
