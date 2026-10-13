@@ -20,7 +20,7 @@
         - name: Get SentinelOne GPG key | Linux
           ansible.builtin.rpm_key:
             state: present
-            key: "{{ s1_tmp_linux }}/sentinel_one.gpg"
+            key: "{{ s1_work_dir }}/sentinel_one.gpg"
           become: true
           register: s1_molecule_rpm_key
 

@@ -19,6 +19,31 @@
   become: yes
   when: ansible_os_family == 'Debian'
 
+- name: Repoint Suse repos at the openSUSE mirror redirector
+  # The box's baked repos point at https://mirrors.edge.kernel.org, a dead
+  # mirror for this Leap release. download.opensuse.org's cert chain isn't
+  # trusted by this box's stale CA bundle, so use http - fine for OS
+  # packages, which are GPG-signed and verified independently of TLS.
+  # Unlike the kernel.org mirror, download.opensuse.org's root has no
+  # /opensuse/ path segment, so that's stripped too.
+  ansible.builtin.shell: sed -i 's#https://mirrors\.edge\.kernel\.org/opensuse#http://download.opensuse.org#g' /etc/zypp/repos.d/*.repo # noqa command-instead-of-module no-changed-when
+  become: yes
+  when: ansible_os_family == "Suse"
+
+- name: Refresh zypper metadata on Suse
+  ansible.builtin.command: zypper --non-interactive refresh # noqa command-instead-of-module no-changed-when
+  become: yes
+  when: ansible_os_family == "Suse"
+
+- name: Update CA certificates on Suse
+  # This box's baked CA bundle predates its cert chain, which is why the
+  # openSUSE mirror repo above needs http instead of https. Roles later in
+  # the play make real HTTPS calls to the Management Console, so refresh
+  # the trust store now that repo access works, rather than leaving it stale.
+  ansible.builtin.command: zypper --non-interactive install ca-certificates ca-certificates-mozilla # noqa command-instead-of-module
+  become: yes
+  when: ansible_os_family == "Suse"
+
 - name: Install python3-dnf on Suse
   ansible.builtin.command: 'zypper --non-interactive install python3-xml python3-dnf' # noqa command-instead-of-module
   become: yes

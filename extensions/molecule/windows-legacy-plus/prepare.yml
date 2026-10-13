@@ -1,0 +1,22 @@
+---
+# Legacy Plus can only run 23.4.x (ADR 0008). Pin an explicit, older 23.4.x
+# release here - not s1_legacy_plus_default_version, the pinned target
+# converge.yml upgrades to - so converge.yml's upgrade (run with no explicit
+# version) has a real, older agent to upgrade from and can prove the
+# auto-picked pin resolves to a newer version than what's already installed.
+- name: Prepare
+  hosts: all
+  gather_facts: true
+  gather_subset:
+    - "!all"
+    - "!hardware"
+    - min
+  tasks:
+    - name: Set prior agent version | Windows
+      ansible.builtin.set_fact:
+        s1_agent_version: "23.4.5.337"
+        cacheable: true
+
+    - name: Include tasks to install agent
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/install_s1_agent.yml"

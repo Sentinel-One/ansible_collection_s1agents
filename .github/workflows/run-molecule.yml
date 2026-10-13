@@ -1,0 +1,118 @@
+name: Run molecule scenario (reusable)
+
+# One call = one guest VM = one job, always under libvirt (ci-setup
+# enable_kvm: true). Platform fan-out is a matrix at the caller. See ADR 0010.
+on:
+  workflow_call:
+    inputs:
+      scenario:
+        description: "Molecule scenario name (e.g. default, upgrade, uuid)"
+        required: true
+        type: string
+      platform_preset:
+        description: "Platform preset: rocky8, ubuntu2204, opensuse15, windows, or windowslegacyplus"
+        required: true
+        type: string
+      inventory_group:
+        description: "Ansible inventory group the guest joins (Linux or Windows)"
+        required: true
+        type: string
+      connection:
+        description: >-
+          Ansible connection type. Every scenario's molecule.yml hardcodes
+          ssh; the job guards this input and fails fast on anything else.
+        required: false
+        type: string
+        default: ssh
+    secrets:
+      S1_AGENT_SITE_TOKEN:
+        required: true
+      S1_API_TOKEN:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: "${{ inputs.scenario }} - ${{ inputs.platform_preset }} (${{ inputs.connection }}, libvirt)"
+    runs-on: ubuntu-24.04
+    env:
+      ANSIBLE_FORCE_COLOR: "1" # allows ansible colors to be passed to GitHub Actions
+      PY_COLORS: "1" # allows molecule colors to be passed to GitHub Actions
+      # Fail a hung task (e.g. a dead SSH session after a reboot) instead of
+      # waiting hours; matches vm.boot_timeout. CI only - see ADR 0010.
+      ANSIBLE_TASK_TIMEOUT: "1800"
+      VAGRANT_DEFAULT_PROVIDER: libvirt
+      S1_VAGRANT_GROUP: ${{ inputs.inventory_group }}
+      S1_MANAGEMENT_CONSOLE: ${{ vars.S1_MANAGEMENT_CONSOLE }}
+      S1_AGENT_SITE_TOKEN: ${{ secrets.S1_AGENT_SITE_TOKEN }}
+      S1_API_TOKEN: ${{ secrets.S1_API_TOKEN }}
+      MOLECULE_SCENARIO: ${{ inputs.scenario }}
+      PLATFORM_PRESET: ${{ inputs.platform_preset }}
+      CONNECTION: ${{ inputs.connection }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Fail loudly rather than silently give ssh behavior under another label.
+      - name: Guard connection type
+        shell: bash
+        run: |
+          if [ "$CONNECTION" != "ssh" ]; then
+            echo "::error::connection '$CONNECTION' is not supported - every in-scope scenario connects over ssh"
+            exit 1
+          fi
+
+      # Mirrors scripts/molecule.py's PRESETS - duplicated deliberately, since
+      # that script is local-only. See ADR 0010.
+      - name: Resolve platform preset
+        id: preset
+        shell: bash
+        run: |
+          case "$PLATFORM_PRESET" in
+            rocky8)
+              echo "distro=rocky8" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            ubuntu2204)
+              echo "distro=ubuntu2204" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            opensuse15)
+              echo "distro=opensuse15" >> "$GITHUB_OUTPUT"
+              echo "repo=roboxes" >> "$GITHUB_OUTPUT"
+              ;;
+            windows)
+              echo "distro=windows-server-2022-standard" >> "$GITHUB_OUTPUT"
+              echo "repo=gusztavvargadr" >> "$GITHUB_OUTPUT"
+              ;;
+            windowslegacyplus)
+              echo "distro=WindowsServer2012" >> "$GITHUB_OUTPUT"
+              echo "repo=jborean93" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::unknown platform_preset '$PLATFORM_PRESET' (expected rocky8, ubuntu2204, opensuse15, windows, or windowslegacyplus)"
+              exit 1
+              ;;
+          esac
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "true"
+
+      - name: Report disk usage before box creation
+        run: df -h
+
+      # Molecule drives Vagrant, which needs the libvirt socket; sg picks up
+      # ci-setup's group add without a fresh login. See ADR 0012.
+      - name: Molecule test
+        working-directory: extensions
+        env:
+          S1_VAGRANT_DISTRO: ${{ steps.preset.outputs.distro }}
+          S1_VAGRANT_REPO: ${{ steps.preset.outputs.repo }}
+        run: sg libvirt -c 'molecule test -s "$MOLECULE_SCENARIO"'
+
+      - name: Report disk usage after box creation
+        run: df -h

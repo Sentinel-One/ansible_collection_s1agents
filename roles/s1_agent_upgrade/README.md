@@ -15,17 +15,30 @@ Inventory hosts on which the agent is being installed must be running on a suppo
 
 In order to successfully set `Confirm Local Upgrade` via the API, the user account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Endpoints > View
-* Endpoints > Update Software
-* Endpoints > Uninstall
-* Accounts > View
-* Groups > View
-* Local Upgrade Authorization > Edit
-* Local Upgrade Authorization > View
-* Roles > View
-* Sites > View
+- Endpoints > View
+- Endpoints > Update Software
+- Endpoints > Uninstall
+- Accounts > View
+- Groups > View
+- Local Upgrade Authorization > Edit
+- Local Upgrade Authorization > View
+- Roles > View
+- Sites > View
 
 Best practice is to create a new "Confirm Local Upgrade via API" role with these permissions. Then create a **Service User** and add them to the role.
+
+### Windows Legacy Plus hosts require PowerShell 4.0+
+
+Upgrading a Windows "Legacy Plus" host (see `s1_windows_tier` in [CONTEXT.md](../../CONTEXT.md)) requires PowerShell 4.0 or newer. `ansible.windows.win_package` unconditionally computes an installer checksum via `Get-FileHash`, which does not exist before PowerShell 4 - every `ansible.windows` release from 2.8.0 onward includes this behavior. The role fails before ever reaching `win_package`.
+
+Windows Server editions (Server 2008 R2 SP1, Server 2012) can be upgraded to PowerShell 4.0+ via an official Microsoft Windows Management Framework (WMF) update.
+
+For hosts that can't be upgraded to PowerShell 4.0+, you can work around this at your own risk:
+
+1. In your own `requirements.yml`, pin `ansible.windows` to a version before 2.8.0 (e.g. `<2.8.0`) - you must pin it explicitly in your own environment, otherwise Ansible Galaxy resolves the latest release.
+2. `--skip-tags s1_legacy_plus_powershell_check` to your ansible-playbook command to skip the PowerShell version check.
+
+Without both steps, the upgrade will either be blocked by this role's own assertion, or proceed and crash inside `win_package` on the unsupported `Get-FileHash` call.
 
 ## Role Variables
 
@@ -42,12 +55,6 @@ s1_api_token:
 This is mandatory and is the API token[^1] associated with the user which will running the role.
 
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
-
-```yaml
-s1_agent_site_token:
-```
-
-The Site or Group token for existing Windows agent, used by the SentinelOneInstaller package in cases where the installer fix a corrupted install prior to completing the upgrade.
 
 ### Configuring package variants
 
@@ -101,10 +108,10 @@ s1_tmp_linux: /tmp/s1_install
 s1_tmp_windows: "{{ ansible_env.TEMP}}\\s1_install"
 s1_validate_certs: true
 s1_product_id:
-  v22_3_1_185_64_bit: '{547BC474-095C-4BFF-9D4E-7B6D2805C890}'
-  v22_3_1_185_32_bit: '{5548CA13-E999-4066-8F6E-D31776C2143C}'
-  v22_2_4_558_64_bit: '{5A990909-DD22-48FA-BD8B-F564AFC81C4B}'
-  v22_2_4_558_32_bit: '{009923EA-54DD-4CF5-BF76-BE5C7EA048EE}'
+  v22_3_1_185_64_bit: "{547BC474-095C-4BFF-9D4E-7B6D2805C890}"
+  v22_3_1_185_32_bit: "{5548CA13-E999-4066-8F6E-D31776C2143C}"
+  v22_2_4_558_64_bit: "{5A990909-DD22-48FA-BD8B-F564AFC81C4B}"
+  v22_2_4_558_32_bit: "{009923EA-54DD-4CF5-BF76-BE5C7EA048EE}"
 ```
 
 #### s1_agent_download
@@ -113,17 +120,17 @@ s1_product_id:
 s1_agent_version:
 s1_release_n_minus: 1
 s1_package_availability:
-    - Ga
+  - Ga
 ```
 
 ## Dependencies
 
-* [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
-* [s1_agent_download](../s1_agent_download/) role: automatically downloads the SentinelOne agent if `s1_agent_src` variable is undefined. Requires that the `s1_management_console` and `s1_api_token` variables are defined.
-* [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console. Requires that `s1_management_console` and `s1_api_token` are defined.
-* [s1_import_gpg_key](../s1_import_gpg_key/) role: only executed on the Red Hat family of operating systems.
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
+- [s1_agent_download](../s1_agent_download/) role: automatically downloads the SentinelOne agent if `s1_agent_src` variable is undefined. Requires that the `s1_management_console` and `s1_api_token` variables are defined.
+- [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console. Requires that `s1_management_console` and `s1_api_token` are defined.
+- [s1_import_gpg_key](../s1_import_gpg_key/) role: only executed on the Red Hat family of operating systems.
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbooks
 

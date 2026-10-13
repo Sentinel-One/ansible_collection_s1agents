@@ -1,0 +1,37 @@
+---
+# VM-less scenario (issue 01 of .scratch/windows-tier-ci-split): proves Windows
+# support-tier classification and the Legacy Plus default-version pin on the
+# runner itself, with no guest, no virtualization stack, and no console
+# secrets. See docs/adr/0008-windows-support-tier-routing.md.
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: default
+  options:
+    managed: false
+    ansible_connection_options:
+      ansible_connection: local
+
+platforms:
+  - name: windows-tier-matrix
+    groups:
+      - all
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_fact_cache
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+  env:
+    ANSIBLE_ROLES_PATH: ../../../roles
+
+verifier:
+  name: ansible

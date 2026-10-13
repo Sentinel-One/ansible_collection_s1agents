@@ -1,0 +1,45 @@
+---
+# Prove the Legacy tier's fail-loud routing to unsupported.yml, for real,
+# without provisioning a guest: unsupported.yml fails before performing any
+# work, so it is safe to let the role's own routing decide. include_role is
+# deliberately not used here - both s1_agent_install and s1_agent_upgrade
+# depend on s1_agent_common (see their meta/main.yml), and include_role
+# always processes role dependencies, even with tasks_from, which would
+# re-gather real controller facts over the mocked ones below (the same
+# clobbering risk documented in converge.yml for s1_agent_common itself).
+# Instead this includes the role's tasks/main.yml file directly, bypassing
+# dependency resolution, with role_name mocked so the rendered failure
+# message matches what the role produces for itself. See
+# docs/adr/0008-windows-support-tier-routing.md.
+
+- name: "Load s1_supported_os_family for the routing case: {{ s1_routing_case.case }}"
+  ansible.builtin.include_vars:
+    file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/vars/main.yml"
+
+- name: "Mock a Legacy-tier Windows host and role preconditions: {{ s1_routing_case.case }}"
+  ansible.builtin.set_fact:
+    role_name: "{{ s1_routing_case.role }}"
+    ansible_os_family: Windows
+    ansible_distribution: Microsoft Windows XP Professional
+    ansible_distribution_version: "5.1.2600"
+    s1_os_bitness: 32-bit
+    s1_windows_tier: legacy
+    # Skips s1_agent_download (both roles) and the site-token/version/info
+    # asserts each role runs before reaching its Legacy-tier route.
+    s1_agent_src: /dev/null
+    s1_agent_version: "1.0.0.0"
+    s1_agent_site_token: "{{ {'site_key': 'mock-site-key', 'url': 'https://mock.example.invalid'} | to_json | b64encode }}"
+    s1_agent_info:
+      installed: true
+      version: "1.0.0.0"
+
+- name: "Run {{ s1_routing_case.case }}/tasks/main.yml directly, expecting the fail-loud route"
+  block:
+    - name: "Include {{ s1_routing_case.case }}/tasks/main.yml"
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/{{ s1_routing_case.role }}/tasks/main.yml"
+  rescue:
+    - name: "Persist the Legacy-tier routing failure: {{ s1_routing_case.case }}"
+      ansible.builtin.set_fact:
+        s1_molecule_routing_cases: "{{ (s1_molecule_routing_cases | default({})) | combine({s1_routing_case.case: {'failed': true, 'msg': ansible_failed_result.msg | default('')}}) }}"
+        cacheable: true

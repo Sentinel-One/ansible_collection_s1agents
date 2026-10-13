@@ -15,8 +15,8 @@ None
 
 ## Dependencies
 
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbooks
 

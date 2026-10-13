@@ -40,3 +40,4 @@
   delay: 10
   become: no
   delegate_to: localhost
+  no_log: true

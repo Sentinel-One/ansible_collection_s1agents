@@ -30,7 +30,7 @@ s1_tmp_linux: /tmp/s1_install
 
 ## Dependencies
 
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
 
 ## Example Playbooks
 

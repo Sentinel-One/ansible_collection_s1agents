@@ -2,6 +2,8 @@
 /changelogs/.plugin-cache.yaml
 *.env
 *.env.yml
+.scratch/
+scripts/logs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -132,3 +134,11 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+security_findings.csv
+DECISIONS_EOL.md
+SECURITY_TRIAGE.md
+.ansible/
+
+# Cache recreated by a locally-installed trunk daemon; not part of this project's
+# toolchain (linting is prettier + ansible-lint + trufflehog, see docs/adr/0006).
+.trunk/

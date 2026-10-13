@@ -14,11 +14,11 @@ A valid SentinelOne license, access to the SentinelOne Management Console and an
 
 In order to successfully query and download packages via the API, the account associated with the API token, `s1_api_token`, must be granted the permissions:
 
-* Accounts > View
-* Groups > View
-* Agent Packages > View
-* Roles > View
-* Sites > View
+- Accounts > View
+- Groups > View
+- Agent Packages > View
+- Roles > View
+- Sites > View
 
 Best practice is to create a new "Download packages via API" role with these permissions. Then create a **Service User** and add them to the role.
 
@@ -87,10 +87,10 @@ Limits the results returned by the packages API to only packages applicable to W
 
 ```yaml
 s1_package_availability:
-    - Beta
-    - Ea
-    - Ga
-    - other
+  - Beta
+  - Ea
+  - Ga
+  - other
 ```
 
 Determines the availability of the package to download. This further limits `s1_agent_version` and `s1_release_n_minus`. Acceptable values are `Beta`, `Ea`, `Ga` and `other`. All available options are shown here, but by default, only `Ga` releases are downloaded.
@@ -106,8 +106,8 @@ s1_validate_certs: true
 
 ## Dependencies
 
-* [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
-* [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
+- [s1_agent_common](../s1_agent_common/) role: configures common variables for all roles in the collection
+- [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 
 ## Example Playbooks
 
