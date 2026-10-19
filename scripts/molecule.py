@@ -171,6 +171,7 @@ PRESETS: dict[str, dict[str, str]] = {
 PINNED_PLATFORMS: dict[str, str] = {
     "windows-legacy-plus": "windowslegacyplus",
     "windows-tier-matrix": "none",
+    "input-validation": "none",
 }
 
 

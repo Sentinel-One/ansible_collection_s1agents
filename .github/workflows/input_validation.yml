@@ -1,0 +1,55 @@
+name: Input Validation
+
+# VM-less, secret-less regression cases for validate_inputs.yml; a plain job
+# like the Windows Tier Matrix workflow. See ADR 0001.
+on:
+  push:
+    branches:
+      - "release/**"
+    paths:
+      - "roles/s1_agent_common/tasks/validate_inputs.yml"
+      - "extensions/molecule/input-validation/**"
+      - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
+      - ".github/workflows/input_validation.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_agent_common/tasks/validate_inputs.yml"
+      - "extensions/molecule/input-validation/**"
+      - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
+      - ".github/workflows/input_validation.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: input-validation
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "false"
+
+      - name: Molecule test
+        working-directory: extensions
+        run: molecule test -s input-validation

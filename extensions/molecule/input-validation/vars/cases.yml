@@ -1,0 +1,197 @@
+---
+# One case per accept/reject rule in roles/s1_agent_common/tasks/validate_inputs.yml.
+# Each case mocks ansible_os_family and sets only the inputs it names; every
+# other validated input is left empty, which validate_inputs treats as unset.
+# A new bypass gets a new reject case here before its fix.
+s1_input_cases:
+  # --- s1_agent_custom_install_path | Linux ---
+  - case: linux_path_msi_transforms_payload
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: '/a/b/" TRANSFORMS="\\host\share\x.mst' }
+    expect: reject
+  - case: linux_path_usr_lib
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /usr/lib }
+    expect: reject
+  - case: linux_path_etc_ssl
+    os_family: Debian
+    inputs: { s1_agent_custom_install_path: /etc/ssl }
+    expect: reject
+  - case: linux_path_var_lib
+    os_family: Suse
+    inputs: { s1_agent_custom_install_path: /var/lib/x }
+    expect: reject
+  - case: linux_path_boot
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /boot/x }
+    expect: reject
+  - case: linux_path_root
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: / }
+    expect: reject
+  - case: linux_path_single_component
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /usr }
+    expect: reject
+  - case: linux_path_dotdot_traversal
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /data/../etc }
+    expect: reject
+  - case: linux_path_dot_component_hides_os_dir
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /./etc }
+    expect: reject
+  - case: linux_path_dot_component_mid_path
+    os_family: Debian
+    inputs: { s1_agent_custom_install_path: /data/./sentinelone }
+    expect: reject
+  - case: linux_path_trailing_dot_component
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /data/sentinelone/. }
+    expect: reject
+  - case: linux_path_whitespace
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /data/s1 agent }
+    expect: reject
+  - case: linux_path_windows_shape
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: 'C:\S1Data' }
+    expect: reject
+  - case: linux_path_data_sentinelone
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /data/sentinelone }
+    expect: accept
+  - case: linux_path_opt_sentinelone_data
+    os_family: Debian
+    inputs: { s1_agent_custom_install_path: /opt/sentinelone-data }
+    expect: accept
+  - case: linux_path_opt_sentinelone
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /opt/sentinelone }
+    expect: accept
+  - case: linux_path_dotted_name_is_not_a_dot_component
+    os_family: RedHat
+    inputs: { s1_agent_custom_install_path: /data/.s1agent }
+    expect: accept
+
+  # --- s1_agent_custom_install_path | Windows ---
+  - case: windows_path_msi_transforms_payload
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: '/a/b/" TRANSFORMS="\\host\share\x.mst' }
+    expect: reject
+  - case: windows_path_drive_root
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\' }
+    expect: reject
+  - case: windows_path_dotdot_traversal
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\a\..\b' }
+    expect: reject
+  - case: windows_path_dot_component_is_drive_root
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\.' }
+    expect: reject
+  - case: windows_path_dot_component_mid_path
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\.\S1Data' }
+    expect: reject
+  - case: windows_path_whitespace
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\S1 Data' }
+    expect: reject
+  - case: windows_path_quote
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\S1"Data' }
+    expect: reject
+  - case: windows_path_linux_shape
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: /data/sentinelone }
+    expect: reject
+  - case: windows_path_s1data
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\S1Data' }
+    expect: accept
+  - case: windows_path_nested
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'D:\Agents\SentinelOne' }
+    expect: accept
+
+  # --- proxies (one rule set, looped over both variables) ---
+  - case: mgmt_proxy_quote
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: 'proxy:8080"x' }
+    expect: reject
+  - case: mgmt_proxy_equals
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: proxy=TRANSFORMS }
+    expect: reject
+  - case: mgmt_proxy_shell_metachar
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: proxy.example.com;id }
+    expect: reject
+  - case: dv_proxy_quote
+    os_family: RedHat
+    inputs: { s1_agent_dv_proxy: 'proxy:8080"x' }
+    expect: reject
+  - case: dv_proxy_equals
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: proxy=TRANSFORMS }
+    expect: reject
+  - case: mgmt_proxy_url
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: 'http://proxy.example.com:8080' }
+    expect: accept
+  - case: dv_proxy_host_port
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'proxy.example.com:3128' }
+    expect: accept
+  - case: both_proxies_valid
+    os_family: RedHat
+    inputs:
+      s1_agent_management_proxy: 'http://proxy.example.com:8080'
+      s1_agent_dv_proxy: 'proxy.example.com:3128'
+    expect: accept
+  - case: dv_proxy_bad_while_mgmt_proxy_valid
+    os_family: Debian
+    inputs:
+      s1_agent_management_proxy: 'http://proxy.example.com:8080'
+      s1_agent_dv_proxy: 'proxy:8080"x'
+    expect: reject
+  - case: proxy_explicit_null
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: null }
+    expect: accept
+
+  # --- s1_agent_customer_id ---
+  - case: customer_id_valid
+    os_family: RedHat
+    inputs: { s1_agent_customer_id: acme-prod_01.eu }
+    expect: accept
+  - case: customer_id_quote
+    os_family: Windows
+    inputs: { s1_agent_customer_id: 'acme" TRANSFORMS="x' }
+    expect: reject
+
+  # --- s1_agent_src ---
+  - case: src_absolute_path
+    os_family: RedHat
+    inputs: { s1_agent_src: /tmp/s1_agent_cache/SentinelAgent.rpm }
+    expect: accept
+  - case: src_relative_path
+    os_family: RedHat
+    inputs: { s1_agent_src: SentinelAgent.rpm }
+    expect: reject
+  - case: src_shell_metachar
+    os_family: Debian
+    inputs: { s1_agent_src: /tmp/agent.deb;id }
+    expect: reject
+
+  # --- nothing set ---
+  - case: all_unset_linux
+    os_family: RedHat
+    inputs: {}
+    expect: accept
+  - case: all_unset_windows
+    os_family: Windows
+    inputs: {}
+    expect: accept

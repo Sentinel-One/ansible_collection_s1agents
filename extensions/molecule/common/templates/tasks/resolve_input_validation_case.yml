@@ -1,0 +1,46 @@
+---
+# Run validate_inputs.yml for one case and record whether it accepted or
+# rejected the inputs. Every validated input is reset each case (to the
+# case's value, else empty, which validate_inputs skips like unset), so no
+# value leaks from one case into the next. The file is included directly,
+# not via include_role, so s1_agent_common's fact gathering can't overwrite
+# the mocked ansible_os_family.
+
+- name: "Mock inputs for validation case: {{ s1_input_case.case }}"
+  ansible.builtin.set_fact:
+    ansible_os_family: "{{ s1_input_case.os_family }}"
+    s1_agent_custom_install_path: "{{ s1_input_case.inputs.s1_agent_custom_install_path | default('') }}"
+    s1_agent_management_proxy: "{{ s1_input_case.inputs.s1_agent_management_proxy | default('') }}"
+    s1_agent_dv_proxy: "{{ s1_input_case.inputs.s1_agent_dv_proxy | default('') }}"
+    s1_agent_customer_id: "{{ s1_input_case.inputs.s1_agent_customer_id | default('') }}"
+    s1_agent_src: "{{ s1_input_case.inputs.s1_agent_src | default('') }}"
+
+- name: "Run validate_inputs.yml: {{ s1_input_case.case }}"
+  block:
+    - name: "Include validate_inputs.yml: {{ s1_input_case.case }}"
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/tasks/validate_inputs.yml"
+
+    - name: "Persist accept: {{ s1_input_case.case }}"
+      ansible.builtin.set_fact:
+        s1_molecule_input_cases: "{{ s1_molecule_input_cases | default({}) | combine({s1_input_case.case: {'result': 'accept', 'msg': ''}}) }}"
+        cacheable: true
+  rescue:
+    # A looped assert (the proxy check) reports per-item messages under results.
+    - name: "Collect the failure message: {{ s1_input_case.case }}"
+      ansible.builtin.set_fact:
+        s1_input_case_msg: >-
+          {{ (ansible_failed_result.results | selectattr('failed', 'defined') | selectattr('failed')
+              | map(attribute='msg') | join(' / '))
+             if ansible_failed_result.results is defined else (ansible_failed_result.msg | default('')) }}
+
+    # Every validate_inputs fail_msg names the rejected value; any other failure
+    # (a templating error, a missing file) is an error, never a passing reject.
+    - name: "Persist reject: {{ s1_input_case.case }}"
+      ansible.builtin.set_fact:
+        s1_molecule_input_cases: >-
+          {{ s1_molecule_input_cases | default({})
+             | combine({s1_input_case.case: {
+                 'result': 'reject' if 'Rejected:' in s1_input_case_msg else 'error',
+                 'msg': s1_input_case_msg}}) }}
+        cacheable: true
