@@ -27,7 +27,6 @@ rules:
   key-duplicates: enable
   line-length:
     max: 160
-    level: warning
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: true
   new-line-at-end-of-file: enable

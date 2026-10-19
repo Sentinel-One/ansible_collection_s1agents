@@ -41,5 +41,6 @@
   rescue:
     - name: "Persist the Legacy-tier routing failure: {{ s1_routing_case.case }}"
       ansible.builtin.set_fact:
+        # yamllint disable-line rule:line-length
         s1_molecule_routing_cases: "{{ (s1_molecule_routing_cases | default({})) | combine({s1_routing_case.case: {'failed': true, 'msg': ansible_failed_result.msg | default('')}}) }}"
         cacheable: true

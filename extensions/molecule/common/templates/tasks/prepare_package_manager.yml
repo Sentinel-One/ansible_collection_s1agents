@@ -26,6 +26,7 @@
   # packages, which are GPG-signed and verified independently of TLS.
   # Unlike the kernel.org mirror, download.opensuse.org's root has no
   # /opensuse/ path segment, so that's stripped too.
+  # yamllint disable-line rule:line-length
   ansible.builtin.shell: sed -i 's#https://mirrors\.edge\.kernel\.org/opensuse#http://download.opensuse.org#g' /etc/zypp/repos.d/*.repo # noqa command-instead-of-module no-changed-when
   become: yes
   when: ansible_os_family == "Suse"
