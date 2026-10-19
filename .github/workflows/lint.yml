@@ -34,3 +34,6 @@ jobs:
 
       - name: ansible-lint
         run: ansible-lint
+
+      - name: molecule.py unit tests
+        run: python scripts/test_molecule.py
