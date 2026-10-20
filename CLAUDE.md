@@ -1,237 +1,49 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with
-code in this repository.
+## Build / Lint / Test
 
-## Collection Overview
+All tools run from the repo-local `.venv`. Do not activate it. uv is the installer only, not uv project mode (ADR 0007).
 
-This is the `sentinelone.s1agents` Ansible collection (`galaxy.yml`) that
-manages the full lifecycle of the SentinelOne agent on Linux and Windows
-endpoints. It interacts with both target endpoints (via Ansible modules) and the
-SentinelOne Management Console (via REST API using `s1_api_token`).
+- Bootstrap: `uv venv --python 3.12 && uv pip install -r requirements-dev.txt`, then `.venv/bin/ansible-galaxy collection install -r requirements.yml` and `.venv/bin/pre-commit install-hooks`. Install `uv` and `trufflehog` once per machine.
+- `uv run scripts/smoke_check.py` — checks that `requirements-dev.txt` installs and each tool runs. It uses a temporary venv and does not change `.venv`.
+- `.venv/bin/ansible-lint` — Ansible rules (`production` profile) and yamllint. CI's required Lint job runs this.
+- `.venv/bin/pre-commit run --all-files` — prettier (Markdown and JSON only) and the trufflehog secret scan. The git hooks are not installed. Run it on demand.
+- `uv run scripts/test_molecule.py` — unit tests for `scripts/molecule.py`.
+- `.venv/bin/python scripts/molecule.py gate` — runs every scenario in `scripts/gate.yml`.
+- `.venv/bin/python scripts/molecule.py test <scenario> [--platform <preset>]` — runs one scenario. Presets are in `PRESETS` in `scripts/molecule.py`. Without `--platform`, the run uses the pin in `PINNED_PLATFORMS`, else `linux` (rocky8).
+- `ansible-galaxy collection build` — builds `sentinelone-s1agents-<version>.tar.gz`.
 
-## Roles
+Run ansible-lint and pre-commit before you commit (ADR 0006). A `PreToolUse` hook also runs ansible-lint and trufflehog before each `git push`.
 
-| Role                     | Purpose                                                                                          |
-| ------------------------ | ------------------------------------------------------------------------------------------------ |
-| `s1_agent_common`        | Loads OS-specific vars (distro package names, product IDs); must run before all other roles      |
-| `s1_agent_info`          | Gathers installed agent status without making changes                                            |
-| `s1_agent_download`      | Downloads agent packages from the Management Console API to `s1_download_path` on the controller |
-| `s1_agent_install`       | Installs the agent package on endpoints                                                          |
-| `s1_agent_upgrade`       | Upgrades an existing agent; handles the 2-step upgrade path required for Linux ≥25.1.3           |
-| `s1_agent_uninstall`     | Removes the agent; requires passphrase retrieval on newer agents                                 |
-| `s1_agent_uuid`          | Reports agent UUIDs from the management console                                                  |
-| `s1_import_gpg_key`      | Imports the SentinelOne GPG key on RPM-based systems                                             |
-| `s1_mgmt_get_passphrase` | Fetches per-endpoint uninstall/upgrade passphrase from the Management Console API                |
+### Molecule
 
-`s1_agent_common` loads vars from `roles/s1_agent_common/vars/<os_family>.yml`
-(e.g. `redhat.yml`, `debian.yml`, `windows.yml`, `suse.yml`). The `windows.yml`
-file contains the `s1_product_id` map (version→GUID) that drives Windows
-idempotence — this needs periodic updates as new agent versions release.
+- Scenarios are in `extensions/molecule/<scenario>/`. Shared templates are in `extensions/molecule/common/templates/`.
+- Most scenarios use the Vagrant driver and a live Management Console. They need `S1_MANAGEMENT_CONSOLE`, `S1_AGENT_SITE_TOKEN` and `S1_API_TOKEN`. The `S1_VAGRANT_*`, `S1_MOLECULE_HOSTNAME` and `VAGRANT_DEFAULT_PROVIDER` variables have defaults.
+- **The molecule VMs are AMD64.** On an ARM64 host (`uname -m` shows `arm64` or `aarch64`), do not run VM scenarios locally. Push the branch, then use the CI runs that the push starts as the test result. VM-less scenarios still run locally.
+- `windows-tier-matrix` and `input-validation` are VM-less (preset `none`). They need no console and no `S1_*` variables.
+- Logs go to `scripts/logs/molecule/<scenario>-<platform>.log`.
+- Exit code 75 means a transient infrastructure failure (expired proxy auth or an SSH reset). Re-authenticate and run again. It is not a test failure.
+- `HOST-SETUP` means a problem on this machine, not in the code. The output names the fix.
+- `windows-legacy-plus`: the local run is the gate for the Legacy Plus tier. On hosted CI it always fails, and that failure is expected. Validate changes to Legacy Plus install or upgrade code locally, on an AMD64 host. This scenario needs `sshpass` on the controller. Its version pins and `ANSIBLE_SKIP_TAGS` are necessary (ADR 0011).
 
-## Key Variables
+## Architecture
 
-- `s1_management_console` — URL of the SentinelOne console
-- `s1_api_token` — API token (never commit; pass via vault or env)
-- `s1_agent_site_token` — Site token for registering new agents
-- `s1_download_path` — Controller-local cache dir (default
-  `/tmp/s1_agent_cache`)
-- `s1_agent_version` — Specific agent version to install/upgrade to
-- `s1_validate_certs` — Set `false` for on-prem consoles with self-signed certs
+The `sentinelone.s1agents` collection manages the SentinelOne agent lifecycle on Linux and Windows endpoints. It calls the Management Console REST API with `s1_api_token`.
 
-## Linting
+- `s1_agent_common` must run before the other roles. It loads `roles/s1_agent_common/vars/<os_family>.yml` and runs `tasks/validate_inputs.yml` (ADR 0001).
+- The other roles: `s1_agent_info`, `s1_agent_download`, `s1_agent_install`, `s1_agent_upgrade`, `s1_agent_uninstall`, `s1_agent_uuid`, `s1_import_gpg_key`, `s1_mgmt_get_passphrase`. Each role has a `README.md`.
+- Windows support tiers: ADR 0008.
 
-Linting is split by domain — see `docs/adr/0006-linting-toolchain.md`. Run both
-before committing.
+## Conventions
 
-**pre-commit** drives prettier (Markdown + JSON formatting) and trufflehog
-(committed-secret scanning). The git hooks are intentionally **not** installed;
-run on demand. pre-commit provisions its own Node runtime for prettier, so no
-system Node is required. trufflehog must be installed locally.
+- **Harness scripts go in `scripts/`.** Do you write a script to test or prove a change? Then save it in `scripts/` and commit it with the change. Do not leave it in the scratchpad. Give it a PEP 723 block and run it with `uv run`. Ansible test cases go in a molecule scenario instead.
+- **Windows product IDs:** for each new Windows agent version, add its GUID to `s1_product_id` in `roles/s1_agent_common/vars/windows.yml`. If you do not, the idempotence check fails on the install task.
+- **Linux 2-step upgrade:** an agent older than 22.2.2.2 cannot go directly to 22.3 or later. See `playbooks/example_upgrade_linux_with_gpg_signed_package.yml`.
+- **Secrets:** do not commit `s1_api_token` or site tokens. Pass them through vault or the environment.
+- **Markdown:** do not hard-wrap prose. Prettier does not format YAML. ansible-lint owns YAML.
 
-```bash
-pre-commit run --all-files   # prettier (md/json) + trufflehog secret scan
-```
+## Agent docs
 
-Prettier formats Markdown and JSON only; all YAML is excluded (`.prettierignore`) and owned by ansible-lint. Do not hard-wrap markdown prose.
-
-**ansible-lint** checks Ansible correctness (FQCN, task naming, idempotence,
-`production` profile) and bundles yamllint for YAML style. Runs from the
-project `.venv` (see below):
-
-```bash
-.venv/bin/ansible-lint
-```
-
-## Python Environment
-
-The dev/test toolchain (ansible-core, ansible-lint, yamllint, molecule,
-pre-commit, etc.) is declared in `requirements-dev.txt` at the repo root and
-installed into a single repo-local `.venv` with **uv** (used as a fast,
-pip-compatible installer — not uv project mode). See
-`docs/adr/0007-uv-managed-venv-toolchain.md` for the rationale.
-
-Bootstrap a fresh clone:
-
-```bash
-# prerequisites (once per machine): uv + trufflehog
-#   uv:         curl -LsSf https://astral.sh/uv/install.sh | sh
-#   trufflehog: brew install trufflehog   (or per-OS install)
-
-uv venv --python 3.12
-uv pip install -r requirements-dev.txt
-.venv/bin/ansible-galaxy collection install -r requirements.yml
-.venv/bin/pre-commit install-hooks    # provisions prettier's Node runtime
-```
-
-Every tool then runs as `.venv/bin/<tool>` (`.venv/bin/ansible-lint`,
-`.venv/bin/yamllint`, `.venv/bin/molecule`, `.venv/bin/pre-commit`) — no
-activation needed. `.venv/` is gitignored; never commit it.
-
-To confirm the manifest still installs cleanly and every tool resolves, without
-spinning up any molecule VMs:
-
-```bash
-uv run scripts/smoke_check.py
-```
-
-This builds a throwaway venv, checks each pinned tool reports a version, and
-deletes the throwaway venv when done — it never touches your working `.venv`.
-
-## Testing with Molecule
-
-Molecule scenarios live in `extensions/molecule/<scenario>/`. All scenarios use
-the **Vagrant driver** (VirtualBox or libvirt) and require a live SentinelOne
-Management Console.
-
-### Required Environment Variables
-
-```bash
-export S1_MANAGEMENT_CONSOLE=https://your-console.sentinelone.net
-export S1_AGENT_SITE_TOKEN=<site-token>
-export S1_API_TOKEN=<api-token>
-export S1_DOWNLOAD_PATH=/tmp/s1_agent_cache   # optional, has default
-
-# VM configuration (all have defaults)
-export S1_VAGRANT_DISTRO=rocky8               # Vagrant box suffix
-export S1_VAGRANT_REPO=roboxes               # Vagrant box namespace
-export S1_VAGRANT_GROUP=Linux                # Ansible group: Linux or Windows
-export S1_MOLECULE_HOSTNAME=blue-firefly     # VM hostname prefix
-export VAGRANT_DEFAULT_PROVIDER=virtualbox   # or libvirt
-```
-
-### Running Tests
-
-All tests run through `scripts/molecule.py`. Run from the repo root through the
-project `.venv` (see [Python Environment](#python-environment)).
-
-```bash
-# Run all gate scenarios (same as CI)
-.venv/bin/python scripts/molecule.py gate
-
-# Run a single scenario against one platform preset
-.venv/bin/python scripts/molecule.py test <scenario> --platform <preset>
-
-# Omit --platform: uses the scenario's pinned platform (windows-legacy-plus ->
-# windowslegacyplus, windows-tier-matrix and input-validation -> none), otherwise linux (rocky8)
-.venv/bin/python scripts/molecule.py test <scenario>
-```
-
-Scenarios with exactly one valid platform are pinned in `PINNED_PLATFORMS` in `scripts/molecule.py`. Passing any other `--platform` for them is rejected up front.
-
-**Platform presets:**
-
-| Preset              | Distro              | Notes                                                                                                                 |
-| ------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `rocky8`            | Rocky Linux 8       | Default Linux (roboxes)                                                                                               |
-| `ubuntu2204`        | Ubuntu 22.04        | (roboxes)                                                                                                             |
-| `opensuse15`        | OpenSUSE Leap 15    | (roboxes)                                                                                                             |
-| `windows`           | Windows Server 2022 | gusztavvargadr box; sets WinRM group                                                                                  |
-| `windowslegacyplus` | Windows Server 2012 | jborean93 box; the only platform for `windows-legacy-plus` (pinned)                                                   |
-| `none`              | n/a                 | VM-less scenarios; the only platform for `windows-tier-matrix` and `input-validation` (pinned); no `S1_VAGRANT_*` env |
-
-**Logs** are written to `scripts/logs/molecule/<scenario>-<platform>.log`. Exit code 75
-means transient infra (proxy auth expired or VM SSH reset) — re-authenticate and
-retry rather than treating it as a test failure.
-
-**macOS note:** Windows tests set `OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES`
-automatically.
-
-**Real-fact Windows fixture:** `extensions/molecule/windows-legacy-plus` is in `scripts/gate.yml`, and **the local run is the authoritative gate for the Legacy Plus tier** — it passes locally and cannot pass on hosted CI runners, where the install crashes deterministically inside GitHub's libvirt/KVM stack for reasons outside this repo's control (the same installer on the same box installs fine locally, so this is environmental, not a bad package). That's an _external limitation_, so CI is scoped to match: `ci-release.yml` runs it as its own job outside `release`'s `needs:`, non-blocking and expected to be red — a canary, not a gate — and `windows_legacy_plus.yml` is `workflow_dispatch`-only, with no push or pull_request trigger. If you change Legacy Plus install/upgrade code, validate it with a local `windows-legacy-plus` run; don't wait on CI for it. See `docs/adr/0011-legacy-plus-lifecycle-known-red-canary.md`.
-
-That fixture connects over SSH with password auth (its box doesn't accept Vagrant's default insecure keypair), which requires `sshpass` on the controller — install once per machine (`brew install sshpass` or your OS equivalent). Its scenario-local `requirements.yml` pins `ansible.windows<2.8.0` and `community.windows<3.0.0`, paired with an `ANSIBLE_SKIP_TAGS` bypass of the roles' PowerShell 4+ assert; all three are load-bearing, since the box genuinely ships PowerShell 3.0. The retired `windows-2012r2` fixture's sole claim (the Server 2012 R2 exclusion) now lives as a captured-fact case in `windows-tier-matrix` instead.
-
-To run raw molecule steps for development (from `extensions/`, with the `.venv`
-activated so bare `molecule` resolves — `source ../.venv/bin/activate`):
-
-```bash
-cd extensions
-S1_VAGRANT_DISTRO=rocky8 molecule converge -s default
-S1_VAGRANT_DISTRO=ubuntu2204 molecule verify -s upgrade
-```
-
-### Molecule Scenarios
-
-All scenarios live in `extensions/molecule/<scenario>/`. The gate matrix is in
-`scripts/gate.yml`.
-
-| Scenario              | Platforms       | Tests                                                                                                        |
-| --------------------- | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `common`              | Linux + Windows | `s1_agent_common` var loading                                                                                |
-| `default`             | Linux + Windows | Full install → verify                                                                                        |
-| `download`            | Linux + Windows | Package download from console                                                                                |
-| `gpgkey`              | Linux (RPM)     | GPG key import                                                                                               |
-| `input-validation`    | none (VM-less)  | `validate_inputs.yml` accept/reject cases, one per closed injection or root-delete bypass                    |
-| `info-installed`      | Linux + Windows | `s1_agent_info` with agent present                                                                           |
-| `info-missing`        | Linux + Windows | `s1_agent_info` without agent present                                                                        |
-| `passphrase`          | Linux + Windows | Passphrase retrieval from console                                                                            |
-| `uninstall`           | Linux + Windows | Agent removal with passphrase                                                                                |
-| `upgrade`             | Linux + Windows | Agent upgrade flow                                                                                           |
-| `uuid`                | Linux + Windows | UUID report from console                                                                                     |
-| `windows-tier-matrix` | none (VM-less)  | Windows support-tier classification (exhaustive) + Legacy Plus version pin + `legacy` tier fail-loud routing |
-
-`extensions/molecule/common/` also provides shared Jinja2 templates
-(`templates/prepare-basic.yml`, `templates/cleanup-basic.yml`) used by other
-scenarios.
-
-## Building the Collection
-
-```bash
-ansible-galaxy collection build          # creates sentinelone-s1agents-<version>.tar.gz
-ansible-galaxy collection install sentinelone-s1agents-*.tar.gz --force
-```
-
-## Installing Dependencies
-
-```bash
-ansible-galaxy collection install -r requirements.yml
-```
-
-## Windows Idempotence Note
-
-When adding support for new Windows agent versions, update the `s1_product_id`
-map in `roles/s1_agent_common/vars/windows.yml` with the new version's GUID.
-Without this, molecule idempotence tests will falsely fail on the install task.
-
-## Linux 2-Step Upgrade
-
-Agents 22.2 and older cannot be upgraded directly to newer versions. See
-`playbooks/example_upgrade_linux_with_gpg_signed_package.yml` for the 2-step
-upgrade pattern.
-
-## Agent skills
-
-### Issue tracker
-
-Issues and PRDs live as local markdown under `.scratch/<feature>/` (no external
-PR triage surface). See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Five canonical states with default strings (needs-triage, needs-info,
-ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See
-`docs/agents/domain.md`.
+- Domain: `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+- Issues and PRDs: local Markdown in `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+- Triage labels: `docs/agents/triage-labels.md`.
