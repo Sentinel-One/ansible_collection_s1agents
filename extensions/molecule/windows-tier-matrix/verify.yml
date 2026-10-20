@@ -48,11 +48,29 @@
       loop: "{{ s1_expected_ceiling_cases | dict2items }}"
 
     - name: Assert every capped case still classifies as modern
+      vars:
+        s1_capped_cases: >-
+          {{ s1_molecule_ceiling_cases | dict2items
+             | rejectattr('value.ceiling', 'in', ['', 'unset']) | list }}
       ansible.builtin.assert:
         that:
           - s1_molecule_tier_cases[item.key] == 'modern'
         fail_msg: "Capped case {{ item.key }} resolved to tier {{ s1_molecule_tier_cases[item.key] }}, expected modern."
-      loop: "{{ s1_molecule_ceiling_cases | dict2items | rejectattr('value.ceiling', 'in', ['', 'unset']) | list }}"
+      loop: "{{ s1_capped_cases }}"
+
+    - name: Assert the capped-case filter matched the expected cases, so the modern-tier assert is not vacuous
+      vars:
+        s1_capped_cases: >-
+          {{ s1_molecule_ceiling_cases | dict2items
+             | rejectattr('value.ceiling', 'in', ['', 'unset']) | list }}
+      ansible.builtin.assert:
+        that:
+          - >-
+            s1_capped_cases | map(attribute='key') | list
+            | intersect(['ceiling_windows10_1507', 'ceiling_windows10_1511',
+            'ceiling_storage_server2012r2', 'ceiling_overlap_lowest_wins'])
+            | length == 4
+        fail_msg: "Capped-case filter returned {{ s1_capped_cases | map(attribute='key') | list }}."
 
     - name: Assert every ceiling-matrix row's generated case resolves to that row
       ansible.builtin.assert:

@@ -26,6 +26,7 @@
   rescue:
     - name: "Persist the failing ceiling assert: {{ s1_ceiling_assert_case.case }}"
       ansible.builtin.set_fact:
-        # yamllint disable-line rule:line-length
-        s1_molecule_ceiling_assert_cases: "{{ (s1_molecule_ceiling_assert_cases | default({})) | combine({s1_ceiling_assert_case.case: {'failed': true, 'msg': ansible_failed_result.msg | default('')}}) }}"
+        s1_molecule_ceiling_assert_cases: >-
+          {{ (s1_molecule_ceiling_assert_cases | default({})) | combine({s1_ceiling_assert_case.case: {
+            'failed': true, 'msg': ansible_failed_result.msg | default('')}}) }}
         cacheable: true

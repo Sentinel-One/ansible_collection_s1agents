@@ -232,9 +232,8 @@ Decisions:
   release below the ceiling, which must have an `s1_product_id` entry) in
   `s1_agent_common`, before `s1_agent_download` runs.
 - **Read-only and uninstall roles untouched**, so a capped host can still be
-  inventoried and removed. An explicit too-new version still downloads once
-  before the install/upgrade assert runs, since `s1_agent_download` runs first
-  in the usual order; accepted.
+  inventoried and removed. The assert runs before `s1_agent_download` in both
+  roles, so an explicit too-new version fails before anything is downloaded.
 - **Out of scope.** Windows Embedded variants (e.g. Embedded 8.1 Industry) have
   different Captions and are not matched, as with 64-bit POSReady 7 above.
 - **Tested VM-less.** No guest exists for the capped OSes (the `windows` preset

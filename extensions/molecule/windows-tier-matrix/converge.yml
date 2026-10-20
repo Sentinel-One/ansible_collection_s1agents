@@ -155,6 +155,10 @@
     # host the lowest ceiling wins, compared as versions ("26.10" is newer than
     # "26.2", not older). The matrix is overridden for this one case only, with
     # the lowest-ceiling row deliberately in the middle, then restored.
+    - name: Remember the real ceiling matrix
+      ansible.builtin.set_fact:
+        s1_ceiling_matrix_original: "{{ s1_modern_ceiling_x64_editions }}"
+
     - name: Override the ceiling matrix with overlapping rows
       ansible.builtin.set_fact:
         s1_modern_ceiling_x64_editions:
@@ -178,9 +182,10 @@
           ansible_distribution_version: "6.3.9600"
           s1_os_bitness: 64-bit
 
+    # set_fact outranks include_vars, so restore with set_fact too.
     - name: Restore the real ceiling matrix
-      ansible.builtin.include_vars:
-        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_common/vars/windows.yml"
+      ansible.builtin.set_fact:
+        s1_modern_ceiling_x64_editions: "{{ s1_ceiling_matrix_original }}"
 
     # Version ceiling default version pin cases: capped host with no version
     # (pin applies), capped host with an explicit version (left alone), and an
