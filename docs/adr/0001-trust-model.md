@@ -18,6 +18,7 @@ quoting rather than treating them as standing RCEs.
   Asserts are conditional (`defined and not none → must match`) so info/uuid-only
   runs are unaffected.
 - Validation runs right after `s1_agent_common`'s read-only fact gather, before any change to the endpoint, so OS-specific rules (e.g. the Linux vs. Windows `s1_agent_custom_install_path` shape) can key on `ansible_os_family`.
+- Every accept/reject rule is pinned by a case in the VM-less `input-validation` molecule scenario (`extensions/molecule/input-validation/vars/cases.yml`). A newly found bypass gets a failing reject case there before its fix.
 - The genuinely real boundary — an unprivileged local user on the `root`/`SYSTEM`
   endpoint — is treated as a hard boundary regardless of how variables are
   supplied. Those findings (the `/tmp` race, passphrase on argv) are fixed

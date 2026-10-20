@@ -12,6 +12,46 @@
     - name: Clean yum metadata
       ansible.builtin.command: yum clean metadata # noqa: no-changed-when
 
+- name: Check for systemd-resolved config on Debian
+  ansible.builtin.stat:
+    path: /etc/systemd/resolved.conf
+  register: s1_molecule_resolved_conf
+  when: ansible_os_family == 'Debian'
+
+- name: Create the resolved.conf.d directory on Debian
+  ansible.builtin.file:
+    path: /etc/systemd/resolved.conf.d
+    state: directory
+    mode: "0755"
+  become: yes
+  when:
+    - ansible_os_family == 'Debian'
+    - s1_molecule_resolved_conf.stat.exists
+
+- name: Turn off DNSSEC validation on Debian
+  # The box ships DNSSEC=yes in resolved.conf. Behind resolvers that don't pass
+  # DNSSEC records, every lookup fails with "DNSSEC validation failed:
+  # missing-key" and apt reports "Failed to update apt cache: unknown reason".
+  # The apt repos are signed, so package integrity doesn't rely on DNSSEC.
+  ansible.builtin.copy:
+    dest: /etc/systemd/resolved.conf.d/molecule-no-dnssec.conf
+    content: |
+      [Resolve]
+      DNSSEC=no
+    mode: "0644"
+  become: yes
+  register: s1_molecule_dnssec_dropin
+  when:
+    - ansible_os_family == 'Debian'
+    - s1_molecule_resolved_conf.stat.exists
+
+- name: Restart systemd-resolved on Debian
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+  become: yes
+  when: s1_molecule_dnssec_dropin is changed
+
 - name: Update apt cache on Debian
   ansible.builtin.apt:
     update_cache: true
@@ -26,6 +66,7 @@
   # packages, which are GPG-signed and verified independently of TLS.
   # Unlike the kernel.org mirror, download.opensuse.org's root has no
   # /opensuse/ path segment, so that's stripped too.
+  # yamllint disable-line rule:line-length
   ansible.builtin.shell: sed -i 's#https://mirrors\.edge\.kernel\.org/opensuse#http://download.opensuse.org#g' /etc/zypp/repos.d/*.repo # noqa command-instead-of-module no-changed-when
   become: yes
   when: ansible_os_family == "Suse"

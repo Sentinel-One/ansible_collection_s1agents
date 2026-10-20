@@ -1,0 +1,32 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Load input-validation cases
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/vars/cases.yml"
+
+    - name: Assert every case was resolved
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_input_cases | default({}) | length == s1_input_cases | length
+        fail_msg: >-
+          Expected {{ s1_input_cases | length }} resolved cases, got
+          {{ s1_molecule_input_cases | default({}) | length }}. Did converge run?
+
+    - name: Assert each case was accepted or rejected as expected
+      vars:
+        s1_input_case_result: "{{ s1_molecule_input_cases[s1_input_case.case] }}"
+      ansible.builtin.assert:
+        that:
+          - s1_input_case_result.result == s1_input_case.expect
+        fail_msg: >-
+          {{ s1_input_case.case }}: expected {{ s1_input_case.expect }}, got
+          {{ s1_input_case_result.result }} for {{ s1_input_case.inputs }} on
+          {{ s1_input_case.os_family }}. {{ s1_input_case_result.msg }}
+        quiet: true
+      loop: "{{ s1_input_cases }}"
+      loop_control:
+        loop_var: s1_input_case
+        label: "{{ s1_input_case.case }}"

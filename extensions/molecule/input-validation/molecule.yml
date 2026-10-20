@@ -1,0 +1,38 @@
+---
+# VM-less scenario: proves roles/s1_agent_common/tasks/validate_inputs.yml
+# accepts and rejects each operator input as intended, on the runner itself,
+# with no guest and no console secrets. Every rule there closes a specific
+# injection or root-delete bypass; vars/cases.yml keeps one case per bypass, so
+# loosening a rule turns this scenario red. See docs/adr/0001-trust-model.md.
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: default
+  options:
+    managed: false
+    ansible_connection_options:
+      ansible_connection: local
+
+platforms:
+  - name: input-validation
+    groups:
+      - all
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_fact_cache
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+  env:
+    ANSIBLE_ROLES_PATH: ../../../roles
+
+verifier:
+  name: ansible

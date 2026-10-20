@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Load input-validation cases
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_SCENARIO_DIRECTORY') }}/vars/cases.yml"
+
+    - name: Resolve each input-validation case
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_input_validation_case.yml"
+      loop: "{{ s1_input_cases }}"
+      loop_control:
+        loop_var: s1_input_case
+        label: "{{ s1_input_case.case }}"

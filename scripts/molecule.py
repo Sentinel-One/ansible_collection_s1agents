@@ -25,6 +25,10 @@ Config precedence (low -> high): process env (op run's injected secrets included
 Output is streamed to .molecule-logs/<scenario>-<platform>.log (gitignored); a compact
 summary is printed to stdout. Exit 0 = pass, molecule's code = real failure, 75 = transient
 infrastructure (proxy TLS reset / SSH connection reset) — re-authenticate the proxy and retry.
+A known controller-setup problem (HOST_SIGNATURES) is labelled HOST-SETUP with a fix hint
+and exits non-zero, since retrying won't clear it.
+
+Unit tests for the pure logic here: uv run scripts/test_molecule.py
 
 See docs/adr/0005-molecule-test-harness.md.
 """
@@ -123,6 +127,15 @@ TRANSIENT_SIGNATURES = (
     "Connection closed by",
 )
 
+# Signatures that mean "this controller's setup is broken" — a retry won't help,
+# but it isn't a code/test failure either. Each maps to the hint printed for it.
+HOST_SIGNATURES: dict[str, str] = {
+    "Vagrant found a port collision": (
+        "Vagrant's forwarded-port check false-positives on macOS 26, so Windows boxes\n"
+        "    can't place WinRM/RDP. See docs/vagrant-port-collision.md for the fix."
+    ),
+}
+
 # Platform presets -> the S1_VAGRANT_* (and extra) env the molecule.yml consumes.
 PRESETS: dict[str, dict[str, str]] = {
     "linux": {"S1_VAGRANT_DISTRO": "rocky8", "S1_VAGRANT_REPO": "roboxes", "S1_VAGRANT_GROUP": "Linux"},
@@ -158,6 +171,7 @@ PRESETS: dict[str, dict[str, str]] = {
 PINNED_PLATFORMS: dict[str, str] = {
     "windows-legacy-plus": "windowslegacyplus",
     "windows-tier-matrix": "none",
+    "input-validation": "none",
 }
 
 
@@ -197,27 +211,57 @@ def build_env(platform: str) -> dict[str, str]:
 
 
 def _unignored_fatals(log_text: str) -> list[str]:
-    """Return fatal/unreachable lines Ansible did NOT recover from.
+    """Return fatal/failed-item results Ansible did NOT recover from, one string per result.
 
-    Ansible prints '...ignoring' on the line right after a fatal result whose
-    task carries ignore_errors/ignore_unreachable — e.g. a pre-VM connectivity
-    probe that's expected to fail before the box exists. Those lines must not
-    count as evidence of what actually broke the run.
+    A result is a single line, or a multi-line JSON body ending at a bare '}'.
+    Ansible prints '...ignoring' right after a result whose task carries
+    ignore_errors/ignore_unreachable — e.g. a pre-VM connectivity probe that's
+    expected to fail before the box exists. Those results must not count as
+    evidence of what actually broke the run.
     """
     lines = [ANSI_RE.sub("", ln) for ln in log_text.splitlines()]
     out = []
     for i, line in enumerate(lines):
-        if not line.lstrip().startswith("fatal:"):
+        head = line.lstrip()
+        if not (head.startswith("fatal:") or head.startswith("failed: [")):
             continue
-        lookahead = lines[i + 1 : i + 3]
-        if any("...ignoring" in nxt for nxt in lookahead):
+        end = i
+        if line.rstrip().endswith("{"):
+            while end + 1 < len(lines) and lines[end].rstrip() != "}":
+                end += 1
+        if any("...ignoring" in nxt for nxt in lines[end + 1 : end + 3]):
             continue
-        out.append(line)
+        out.append("\n".join(lines[i : end + 1]))
     return out
 
 
+def host_problem(log_text: str) -> str | None:
+    """Return the HOST_SIGNATURES key found in the log, if any."""
+    return next((sig for sig in HOST_SIGNATURES if sig in log_text), None)
+
+
+def failure_reason(log_text: str) -> str:
+    """One line naming what broke the run: the last unignored failure's msg, else a CRITICAL line.
+
+    The last, not the first: a run stops at its final failure, while earlier
+    ones may have been rescued (block/rescue prints no '...ignoring').
+    """
+    fatals = _unignored_fatals(log_text)
+    if fatals:
+        block = fatals[-1]
+        m = re.search(r'"msg": "((?:[^"\\]|\\.)*)"', block)
+        item = re.search(r"\(item=([^)]*)\)", block.splitlines()[0])
+        text = m.group(1) if m else block.splitlines()[0].strip()
+        return (f"{item.group(1)}: {text}" if item else text)[:240]
+    for line in log_text.splitlines():
+        clean = ANSI_RE.sub("", line).strip()
+        if "CRITICAL" in clean:
+            return clean[:240]
+    return ""
+
+
 def classify(rc: int, log_text: str) -> str:
-    """Return 'pass', 'transient', or 'fail'.
+    """Return 'pass', 'host', 'transient', or 'fail'.
 
     Transient signatures are matched only against unignored fatal/unreachable
     lines (falling back to the full log if none are found — e.g. a molecule-
@@ -229,6 +273,8 @@ def classify(rc: int, log_text: str) -> str:
         return "pass"
     fatals = _unignored_fatals(log_text)
     haystack = "\n".join(fatals) if fatals else log_text
+    if host_problem(haystack):
+        return "host"
     if any(sig in haystack for sig in TRANSIENT_SIGNATURES):
         return "transient"
     return "fail"
@@ -282,12 +328,18 @@ def run_one(action: str, scenario: str, platform: str) -> tuple[str, int, Path]:
     label = f"[{scenario}/{platform}]"
     if result == "pass":
         print(f"{label} PASS  ({'; '.join(recap_lines(log_text)) or 'ok'})")
+    elif result == "host":
+        print(f"{label} HOST-SETUP (rc={rc})")
+        print(f"  ⚠ {host_problem(log_text)}: a controller problem, not a code/test failure.")
+        print(f"    {HOST_SIGNATURES[host_problem(log_text)]}")
     elif result == "transient":
         print(f"{label} TRANSIENT-INFRA (rc={rc})")
         print("  ⚠ proxy auth likely expired (TLS UNEXPECTED_EOF) or SSH reset during boot.")
         print("    Re-authenticate the proxy and re-run; this is not a code/test failure.")
     else:
         print(f"{label} FAIL (rc={rc})  {'; '.join(recap_lines(log_text)) or ''}")
+        if err := failure_reason(log_text):
+            print(f"  error: {err}")
     print(f"  log: {logpath.relative_to(REPO_ROOT)}")
     return result, rc, logpath
 
@@ -315,8 +367,9 @@ def load_gate() -> list[dict]:
 def aggregate_exit(results: list[str], rcs: list[int]) -> int:
     if all(r == "pass" for r in results):
         return 0
-    if any(r == "fail" for r in results):
-        return next((rc for r, rc in zip(results, rcs) if r == "fail" and rc), 1)
+    # A host-setup problem won't clear on retry, so it isn't reported as transient.
+    if any(r in ("fail", "host") for r in results):
+        return next((rc for r, rc in zip(results, rcs) if r in ("fail", "host") and rc), 1)
     return EXIT_TRANSIENT  # only transient failures
 
 
@@ -348,14 +401,20 @@ def main() -> int:
 
     if args.action == "gate":
         rotate_logs()
-        results, rcs = [], []
+        results, rcs, misses = [], [], []
         for entry in load_gate():
             scenario = entry["scenario"]
             for platform in entry.get("platforms", ["linux"]):
-                result, rc, _ = run_one("test", scenario, platform)
+                result, rc, logpath = run_one("test", scenario, platform)
                 results.append(result)
                 rcs.append(rc)
+                if result != "pass":
+                    log_text = logpath.read_text(errors="replace")
+                    why = host_problem(log_text) if result == "host" else failure_reason(log_text)
+                    misses.append(f"  {result.upper():<9} {scenario}/{platform}  {why}")
         print(f"\n=== gate: {results.count('pass')}/{len(results)} passed ===")
+        if misses:
+            print("\n".join(misses))
         return aggregate_exit(results, rcs)
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)

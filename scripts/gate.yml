@@ -31,6 +31,10 @@
 #   "none" preset (scripts/molecule.py) since it has no Vagrant platform to
 #   fan out over.
 #
+# input-validation (VM-less, default driver) — accept/reject cases for
+#   roles/s1_agent_common/tasks/validate_inputs.yml, one per closed bypass.
+#   See extensions/molecule/input-validation and ADR 0001.
+#
 # Consolidated matrix (18 runs vs 38 exhaustive).  Several scenarios are
 # fully exercised as sub-steps of a more comprehensive scenario and are
 # omitted from the default gate to reduce wall-clock time.
@@ -60,4 +64,6 @@
 - scenario: windows-legacy-plus
   platforms: [windowslegacyplus]
 - scenario: windows-tier-matrix
+  platforms: [none]
+- scenario: input-validation
   platforms: [none]
