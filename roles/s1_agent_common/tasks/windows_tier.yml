@@ -51,3 +51,31 @@
         else 'legacy_plus' if (s1_os_bitness == '32-bit' or s1_windows_legacy_plus_caption_match)
         else 'modern'
       }}
+
+# Version ceiling (modern hosts only; Legacy Plus has its own 24.1 ceiling
+# enforced by its flow). Pick the lowest-ceiling row of
+# s1_modern_ceiling_x64_editions that matches the Caption and, when the row
+# sets build_lt, the build (third component of ansible_distribution_version,
+# present for NT 10+). Rows are compared with the version test, not as strings
+# ("26.10" > "26.2"). Result is empty when no row matches.
+- name: Match host against known version-ceiling editions | Windows
+  ansible.builtin.set_fact:
+    s1_windows_ceiling_row_json: >-
+      {%- set ns = namespace(best=none) -%}
+      {%- set parts = ansible_distribution_version.split('.') -%}
+      {%- set build = (parts[2] | int) if (parts | length > 2) else none -%}
+      {%- for row in s1_modern_ceiling_x64_editions -%}
+      {%- if s1_windows_tier == 'modern'
+          and row.match in ansible_distribution
+          and (row.not_match is not defined or row.not_match not in ansible_distribution)
+          and (row.build_lt is not defined or (build is not none and build < row.build_lt))
+          and (ns.best is none or row.ceiling is version(ns.best.ceiling, '<')) -%}
+      {%- set ns.best = row -%}
+      {%- endif -%}
+      {%- endfor -%}
+      {{ (ns.best if ns.best is not none else {}) | to_json }}
+
+- name: Set s1_windows_version_ceiling | Windows
+  ansible.builtin.set_fact:
+    s1_windows_version_ceiling: "{{ (s1_windows_ceiling_row_json | from_json).ceiling | default('') }}"
+    s1_windows_ceiling_default_version: "{{ (s1_windows_ceiling_row_json | from_json).default_version | default('') }}"

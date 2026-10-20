@@ -27,6 +27,10 @@ In order to successfully set `Confirm Local Upgrade` via the API, the user accou
 
 Best practice is to create a new "Confirm Local Upgrade via API" role with these permissions. Then create a **Service User** and add them to the role.
 
+### Windows hosts that Agent 26.2 no longer supports
+
+Upgrading Agent 26.2 or newer on Windows 8.1 64-bit, Server / Storage Server 2012 R2 64-bit, Windows 10 1507 or Windows 10 1511 fails that host before anything is downloaded, because SentinelOne dropped these operating systems effective with 26.2 and the installer refuses to run on them. Other hosts in the play continue. If `s1_agent_version` is not set, these hosts are pinned to the last supported release (26.1.2.177). The host stays in the Modern tier; see `s1_windows_version_ceiling` in [CONTEXT.md](../../CONTEXT.md) (Version ceiling).
+
 ### Windows Legacy Plus hosts require PowerShell 4.0+
 
 Upgrading a Windows "Legacy Plus" host (see `s1_windows_tier` in [CONTEXT.md](../../CONTEXT.md)) requires PowerShell 4.0 or newer. `ansible.windows.win_package` unconditionally computes an installer checksum via `Get-FileHash`, which does not exist before PowerShell 4 - every `ansible.windows` release from 2.8.0 onward includes this behavior. The role fails before ever reaching `win_package`.

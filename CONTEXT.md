@@ -67,10 +67,21 @@ these to `unsupported.yml` (fail-loud). _Avoid_: conflating with Legacy Plus
 
 **Modern**: 64-bit Windows that is neither Legacy nor Legacy Plus. Reached via
 the normal `with_first_found` dispatch (candidate `windows_<bitness>.yml`) and
-carries **no agent-version assertion** — per [ADR
+carries **no agent-version assertion by default** — per [ADR
 0002](./docs/adr/0002-remove-eol-accommodations-not-gate.md), EOL versions
-(e.g. 23.1–23.4.x) still install/upgrade here exactly as they do today; only
-Legacy Plus's ceiling is a genuine technical constraint worth gating.
+(e.g. 23.1–23.4.x) still install/upgrade here exactly as they do today. Only a
+genuine technical constraint is gated: Legacy Plus's ceiling, and the _version
+ceiling_ on the specific Modern OSes below. Being capped does not change a
+host's tier.
+
+**Version ceiling**: The first Agent version a Windows host's OS cannot run —
+the installer itself refuses it. A host with a ceiling fails (that host only)
+when asked to install or upgrade to that version or newer. Legacy Plus has one
+(24.1). Certain Modern OSes also have one: Agent 26.2 is the first version that
+does not support Windows 8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and
+Windows 10 builds before 1607 (1507, 1511, incl. LTSB 2015). Distinct from EOL,
+which is a support-policy phase that the collection does not gate (ADR 0002).
+_Avoid_: calling a ceiling an EOL gate, or treating a capped host as a new tier.
 
 **Normalized OS bitness** (`s1_os_bitness`): A collection-owned `64-bit` /
 `32-bit` token derived in `s1_agent_common` from

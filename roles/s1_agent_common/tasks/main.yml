@@ -80,3 +80,10 @@
   when: ansible_os_family == 'Windows'
   tags:
     - always
+
+- name: Pin version-ceiling default agent version
+  ansible.builtin.include_tasks:
+    file: windows_version_ceiling_pin.yml
+  when: ansible_os_family == 'Windows'
+  tags:
+    - always

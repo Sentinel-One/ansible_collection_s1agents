@@ -1,0 +1,24 @@
+---
+# Mock a Modern host's resolved version ceiling and a requested version, then
+# re-run only the ceiling default-version pin task
+# (roles/s1_agent_common/tasks/windows_version_ceiling_pin.yml) and persist the
+# resulting s1_agent_version for this case. Ceiling resolution itself is proven
+# by resolve_windows_tier_case.yml; this only proves the pin task. See
+# docs/adr/0008-windows-support-tier-routing.md (Amendment).
+
+- name: "Mock ceiling facts and requested version for ceiling pin case: {{ s1_ceiling_pin_case.case }}"
+  ansible.builtin.set_fact:
+    s1_windows_tier: modern
+    s1_windows_version_ceiling: "{{ s1_ceiling_pin_case.ceiling }}"
+    s1_windows_ceiling_default_version: "{{ s1_ceiling_pin_case.default_version }}"
+    s1_agent_version: "{{ s1_ceiling_pin_case.s1_agent_version }}"
+
+- name: "Apply the version ceiling default version pin: {{ s1_ceiling_pin_case.case }}"
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: windows_version_ceiling_pin.yml
+
+- name: "Persist resolved version for ceiling pin case: {{ s1_ceiling_pin_case.case }}"
+  ansible.builtin.set_fact:
+    s1_molecule_ceiling_pin_cases: "{{ s1_molecule_ceiling_pin_cases | default({}) | combine({s1_ceiling_pin_case.case: s1_agent_version}) }}"
+    cacheable: true

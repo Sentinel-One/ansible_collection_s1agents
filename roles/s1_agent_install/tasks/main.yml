@@ -36,6 +36,12 @@
     fail_msg: s1_agent_site_token is not valid
     success_msg: s1_agent_site_token is valid
 
+- name: Assert requested agent version is below the Windows version ceiling
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: windows_version_ceiling.yml
+  when: ansible_os_family == 'Windows'
+
 - name: Download Agent from Management Console
   ansible.builtin.include_role:
     name: s1_agent_download
