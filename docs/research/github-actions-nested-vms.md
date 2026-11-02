@@ -38,7 +38,7 @@ repository?
 - **Licensing is clear for KVM/Vagrant, murky-but-fine for VirtualBox base.**
   KVM/QEMU/libvirt are GPL — no concern. Vagrant is BSL 1.1; internal CI/testing
   use is explicitly permitted (only reselling a competing hosted/embedded Vagrant
-  offering is barred). VirtualBox's *base* package is GPLv3 (fine); only the
+  offering is barred). VirtualBox's _base_ package is GPLv3 (fine); only the
   proprietary **Extension Pack (PUEL)** is a commercial-licensing trap — another
   reason to avoid VirtualBox entirely.
 - **One caveat:** GitHub does **not** contractually "support" nested
@@ -118,8 +118,8 @@ the image: https://github.com/actions/runner-images/issues/7541
   do Vagrant, QEMU, KVM, or libvirt):
   - https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2404-Readme.md
   - https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md
-  (Historically older images shipped VirtualBox + Vagrant for GitHub's own image
-  builds; current images do not list them.)
+    (Historically older images shipped VirtualBox + Vagrant for GitHub's own image
+    builds; current images do not list them.)
 - **GitHub's own VirtualBox builds are broken on the hosted fleet.**
   runner-images issue #10678 ("Virtualbox builds failing on latest update")
   reports that from ~**18 September 2024**, VirtualBox VMs across Ubuntu
@@ -148,7 +148,7 @@ Concrete, primary-source-derived snippet for an Ubuntu runner:
 ```yaml
 jobs:
   molecule:
-    runs-on: ubuntu-24.04      # standard, free for public repos
+    runs-on: ubuntu-24.04 # standard, free for public repos
     steps:
       - uses: actions/checkout@v4
 
@@ -181,6 +181,7 @@ jobs:
 ```
 
 Notes / sources:
+
 - The `udev` rule is verbatim from GitHub's changelog
   (https://github.blog/changelog/2024-04-02-github-actions-hardware-accelerated-android-virtualization-now-available/).
 - `qemu-kvm`/`libvirt` are the packages requested in runner-images issue #7541
@@ -207,12 +208,12 @@ Notes / sources:
 Standard GitHub-hosted runner specs (from the official runner reference,
 https://docs.github.com/en/actions/reference/runners/github-hosted-runners):
 
-| Runner | Public repo | Private repo | Disk |
-| --- | --- | --- | --- |
+| Runner                              | Public repo    | Private repo  | Disk      |
+| ----------------------------------- | -------------- | ------------- | --------- |
 | ubuntu-latest / 22.04 / 24.04 (x64) | 4 vCPU / 16 GB | 2 vCPU / 8 GB | 14 GB SSD |
-| windows-latest / 2022 / 2025 (x64) | 4 vCPU / 16 GB | 2 vCPU / 8 GB | 14 GB SSD |
-| macOS (Intel) | 4 vCPU / 14 GB | same | 14 GB SSD |
-| macOS (arm64/M1) | 3 vCPU / 7 GB | same | 14 GB SSD |
+| windows-latest / 2022 / 2025 (x64)  | 4 vCPU / 16 GB | 2 vCPU / 8 GB | 14 GB SSD |
+| macOS (Intel)                       | 4 vCPU / 14 GB | same          | 14 GB SSD |
+| macOS (arm64/M1)                    | 3 vCPU / 7 GB  | same          | 14 GB SSD |
 
 The public-repo doubling to 4 vCPU / 16 GB was announced in "GitHub-hosted
 runners: Double the power for open source" (**17 Jan 2024**, rollout from
