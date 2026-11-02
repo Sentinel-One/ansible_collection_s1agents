@@ -4,8 +4,8 @@ The collection needs consistent formatting for its docs and JSON, correctness
 checks for its Ansible content, and a guard against committed secrets — without
 depending on a licensed meta-linter to bundle those tools together. We assign
 each concern to the narrowest tool that owns it and orchestrate them with the
-`pre-commit` framework, which provisions its own runtimes (including the Node
-that prettier needs on machines that have none).
+`pre-commit` framework. trufflehog and prettier run as locally installed
+binaries (`language: system`), installed once per machine.
 
 - **prettier** formats **Markdown and JSON only** (`proseWrap: always`). All
   YAML is excluded via `.prettierignore` so prettier never competes with
@@ -37,3 +37,25 @@ was used before. Editor integration lives in `.vscode/settings.json`
   `.venv` (see
   [ADR 0007](./0007-uv-managed-venv-toolchain.md)), so every tool here runs as
   `.venv/bin/<tool>` with no personal environment setup required.
+
+## Amendment: prettier is a local install
+
+The prettier hook originally used `mirrors-prettier`, so `pre-commit` would
+download Node and prettier itself. That download goes to the npm registry, and
+behind a TLS-inspecting proxy it fails with `ECONNRESET` whenever proxy auth has
+lapsed, which blocked `pre-commit run --all-files` entirely (including the
+trufflehog hook). prettier is now a `repo: local` hook with `language: system`,
+the same shape as trufflehog, running with the flags the mirror hook used
+(`--write --list-different --ignore-unknown`). Considered and rejected:
+`language: node` (still fetches from the npm registry on first use) and a
+`package.json` with a repo-local `node_modules` (adds a second package manager
+to a repo whose toolchain is otherwise uv-only, ADR 0007).
+
+- Prerequisite: `brew install prettier`, once per machine. The hook is no longer
+  pinned to a version, so a machine's prettier can drift from another's; an
+  unexpected Markdown reflow after upgrading prettier is the sign. Formatting
+  was verified against 3.9.10, which left every tracked Markdown and JSON file
+  unchanged except two files that had never been formatted (the previously
+  pinned 3.5.3 is not needed to reproduce the repo's formatting).
+- The hook fails with ``Executable `prettier` not found`` if it is not
+  installed.

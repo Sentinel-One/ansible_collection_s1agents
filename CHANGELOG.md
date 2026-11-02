@@ -5,8 +5,7 @@
 ### Breaking changes
 
 - **Windows installs and upgrades to Agent 26.2 or newer now fail on Windows
-  8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and Windows 10 1507 /
-  1511.** SentinelOne dropped these operating systems effective with Agent
+  8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and Windows 10 1507 / 1511.** SentinelOne dropped these operating systems effective with Agent
   26.2, and the installer refuses to run on them. `s1_agent_install` and
   `s1_agent_upgrade` now fail the affected host before downloading anything,
   and a play that names no `s1_agent_version` is pinned to 26.1.2.177 on these

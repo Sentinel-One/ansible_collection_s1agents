@@ -35,12 +35,13 @@ on any machine and removes every hardcoded personal env name.
   ansible-lint, yamllint, molecule `<25.2.0`, molecule-plugins, python-vagrant,
   pywinrm). `pre-commit` is the sole deliberate version change (`>=3.5,<4`, off
   the abandoned 2.19.0).
-- `pre-commit` remains the orthogonal hook runner (Node/prettier + trufflehog per
+- `pre-commit` remains the orthogonal hook runner (prettier + trufflehog per
   [ADR 0006](./0006-linting-toolchain.md)) but is installed **into the same
   `.venv`**, so there is one PATH for every tool.
-- Two prerequisites live outside pip and must be installed per machine: **uv**
-  (the installer) and **trufflehog** (the secret-scan binary; prettier's Node is
-  provisioned by pre-commit itself).
+- Three prerequisites live outside pip and must be installed per machine: **uv**
+  (the installer), **trufflehog** (the secret-scan binary) and **prettier**
+  (`brew install prettier`; see the amendment in
+  [ADR 0006](./0006-linting-toolchain.md)).
 - `scripts/molecule.py` no longer sets `PYENV_VERSION`; it prepends `.venv/bin` to
   `PATH` so molecule and the `ansible-playbook`/`ansible` it spawns all resolve to
   the `.venv` (resolution is PATH-based — there is no `ansible.cfg` or pinned
