@@ -29,6 +29,27 @@
         loop_var: s1_editions_entry
         label: "{{ s1_editions_entry.match }}"
 
+    # Build one version-ceiling case per s1_modern_ceiling_x64_editions row,
+    # for the same reason as the editions cases above. Each Caption comes from
+    # the row's `match` alone; rows with a build threshold get a version one
+    # build below it, so the case lands inside the cap. Every row is expected
+    # to resolve to its own ceiling and default version, tier modern.
+    - name: Build one version-ceiling case per ceiling-matrix row
+      ansible.builtin.set_fact:
+        s1_tier_cases_ceiling_matrix: >-
+          {{ (s1_tier_cases_ceiling_matrix | default([])) + [{
+            'case': 'ceiling_row_' ~ (s1_ceiling_entry.match | lower | regex_replace('[^a-z0-9]+', '_')),
+            'ansible_distribution': 'Microsoft ' ~ s1_ceiling_entry.match,
+            'ansible_distribution_version': (
+              ('10.0.' ~ (s1_ceiling_entry.build_lt | default(0) - 1))
+              if s1_ceiling_entry.build_lt is defined else '6.3.9600'),
+            's1_os_bitness': '64-bit',
+          }] }}
+      loop: "{{ s1_modern_ceiling_x64_editions }}"
+      loop_control:
+        loop_var: s1_ceiling_entry
+        label: "{{ s1_ceiling_entry.match }}"
+
     # Fact-mocked Windows support-tier classification cases (ADR 0008): one
     # legacy case (version floor beats the 32-bit short-circuit), one
     # legacy_plus case matched purely by bitness (Windows 10 32-bit, NT 10.0
@@ -61,11 +82,50 @@
             ansible_distribution: Microsoft Windows Server 2012 R2 Standard Evaluation
             ansible_distribution_version: "6.3.9600.0"
             s1_os_bitness: 64-bit
+          # Version-ceiling cases (ADR 0008 amendment): capped Modern OSes,
+          # the 1607 boundary, uncapped controls, and 32-bit hosts that stay
+          # Legacy Plus with no ceiling.
+          - case: ceiling_storage_server2012r2
+            ansible_distribution: Microsoft Windows Storage Server 2012 R2 Standard
+            ansible_distribution_version: "6.3.9600"
+            s1_os_bitness: 64-bit
+          - case: ceiling_windows10_1507
+            ansible_distribution: Microsoft Windows 10 Enterprise 2015 LTSB
+            ansible_distribution_version: "10.0.10240"
+            s1_os_bitness: 64-bit
+          - case: ceiling_windows10_1511
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.10586"
+            s1_os_bitness: 64-bit
+          - case: uncapped_windows10_1607
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.14393"
+            s1_os_bitness: 64-bit
+          - case: uncapped_windows10_2004
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.19041"
+            s1_os_bitness: 64-bit
+          - case: uncapped_windows10_21h2
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.19044"
+            s1_os_bitness: 64-bit
+          - case: uncapped_windows10_22h2
+            ansible_distribution: Microsoft Windows 10 Pro
+            ansible_distribution_version: "10.0.19045"
+            s1_os_bitness: 64-bit
+          - case: uncapped_server2022
+            ansible_distribution: Microsoft Windows Server 2022 Standard
+            ansible_distribution_version: "10.0.20348"
+            s1_os_bitness: 64-bit
+          - case: legacy_plus_windows81_32bit
+            ansible_distribution: Microsoft Windows 8.1 Pro
+            ansible_distribution_version: "6.3.9600"
+            s1_os_bitness: 32-bit
       block:
         - name: Resolve each fact-mocked tier case
           ansible.builtin.include_tasks:
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_windows_tier_case.yml"
-          loop: "{{ s1_tier_cases + s1_tier_cases_editions_matrix }}"
+          loop: "{{ s1_tier_cases + s1_tier_cases_editions_matrix + s1_tier_cases_ceiling_matrix }}"
           loop_control:
             loop_var: s1_tier_case
             label: "{{ s1_tier_case.case }}"
@@ -90,6 +150,101 @@
           loop_control:
             loop_var: s1_pin_case
             label: "{{ s1_pin_case.case }}"
+
+    # Version ceiling overlap (ADR 0008 amendment): when several rows match one
+    # host the lowest ceiling wins, compared as versions ("26.10" is newer than
+    # "26.2", not older). The matrix is overridden for this one case only, with
+    # the lowest-ceiling row deliberately in the middle, then restored.
+    - name: Remember the real ceiling matrix
+      ansible.builtin.set_fact:
+        s1_ceiling_matrix_original: "{{ s1_modern_ceiling_x64_editions }}"
+
+    - name: Override the ceiling matrix with overlapping rows
+      ansible.builtin.set_fact:
+        s1_modern_ceiling_x64_editions:
+          - match: "Windows 8.1"
+            ceiling: "26.10"
+            default_version: "26.9.9.999"
+          - match: "Windows 8.1"
+            ceiling: "26.2"
+            default_version: "26.1.2.177"
+          - match: "Windows 8.1"
+            ceiling: "27.1"
+            default_version: "27.0.0.1"
+
+    - name: Resolve the overlapping-rows ceiling case
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_windows_tier_case.yml"
+      vars:
+        s1_tier_case:
+          case: ceiling_overlap_lowest_wins
+          ansible_distribution: Microsoft Windows 8.1 Pro
+          ansible_distribution_version: "6.3.9600"
+          s1_os_bitness: 64-bit
+
+    # set_fact outranks include_vars, so restore with set_fact too.
+    - name: Restore the real ceiling matrix
+      ansible.builtin.set_fact:
+        s1_modern_ceiling_x64_editions: "{{ s1_ceiling_matrix_original }}"
+
+    # Version ceiling default version pin cases: capped host with no version
+    # (pin applies), capped host with an explicit version (left alone), and an
+    # uncapped Modern host with no version (left alone).
+    - name: Version ceiling default version pin cases
+      vars:
+        s1_ceiling_pin_cases:
+          - case: capped_unset_version
+            ceiling: "26.2"
+            default_version: "26.1.2.177"
+            s1_agent_version: ""
+          - case: capped_explicit_version
+            ceiling: "26.2"
+            default_version: "26.1.2.177"
+            s1_agent_version: "25.2.6.442"
+          - case: uncapped_unset_version
+            ceiling: ""
+            default_version: ""
+            s1_agent_version: ""
+      block:
+        - name: Resolve each version ceiling pin case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_ceiling_pin_case.yml"
+          loop: "{{ s1_ceiling_pin_cases }}"
+          loop_control:
+            loop_var: s1_ceiling_pin_case
+            label: "{{ s1_ceiling_pin_case.case }}"
+
+    # Version ceiling assert cases: below the ceiling passes; the ceiling
+    # itself and anything newer fail; a host with no ceiling passes any version.
+    - name: Version ceiling assert cases
+      vars:
+        s1_ceiling_assert_cases:
+          - case: below_ceiling
+            ceiling: "26.2"
+            s1_agent_version: "26.1.2.177"
+          - case: at_ceiling
+            ceiling: "26.2"
+            s1_agent_version: "26.2"
+          - case: patch_of_ceiling
+            ceiling: "26.2"
+            s1_agent_version: "26.2.0.100"
+          - case: above_ceiling
+            ceiling: "26.2"
+            s1_agent_version: "26.3.1.5"
+          - case: multi_digit_minor_below_ceiling
+            ceiling: "26.10"
+            s1_agent_version: "26.2.1.1"
+          - case: no_ceiling
+            ceiling: ""
+            s1_agent_version: "27.0.0.1"
+      block:
+        - name: Resolve each version ceiling assert case
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/resolve_ceiling_assert_case.yml"
+          loop: "{{ s1_ceiling_assert_cases }}"
+          loop_control:
+            loop_var: s1_ceiling_assert_case
+            label: "{{ s1_ceiling_assert_case.case }}"
 
     # Legacy tier fail-loud routing (ADR 0008): s1_agent_install and
     # s1_agent_upgrade both route Legacy-tier Windows hosts to unsupported.yml,

@@ -1,0 +1,32 @@
+---
+# Mock a Windows host's resolved version ceiling and a requested version, then
+# run the shared ceiling assert
+# (roles/s1_agent_common/tasks/windows_version_ceiling.yml) and persist whether
+# it failed and with what message. block/rescue turns the expected failure into
+# data rather than a scenario failure. See
+# docs/adr/0008-windows-support-tier-routing.md (Amendment).
+
+- name: "Mock ceiling facts and requested version for ceiling assert case: {{ s1_ceiling_assert_case.case }}"
+  ansible.builtin.set_fact:
+    ansible_distribution: Microsoft Windows 8.1 Pro
+    s1_windows_version_ceiling: "{{ s1_ceiling_assert_case.ceiling }}"
+    s1_agent_version: "{{ s1_ceiling_assert_case.s1_agent_version }}"
+
+- name: "Run the version ceiling assert: {{ s1_ceiling_assert_case.case }}"
+  block:
+    - name: "Include the version ceiling assert: {{ s1_ceiling_assert_case.case }}"
+      ansible.builtin.include_role:
+        name: s1_agent_common
+        tasks_from: windows_version_ceiling.yml
+    - name: "Persist the passing ceiling assert: {{ s1_ceiling_assert_case.case }}"
+      ansible.builtin.set_fact:
+        s1_molecule_ceiling_assert_cases: >-
+          {{ (s1_molecule_ceiling_assert_cases | default({})) | combine({s1_ceiling_assert_case.case: {'failed': false, 'msg': ''}}) }}
+        cacheable: true
+  rescue:
+    - name: "Persist the failing ceiling assert: {{ s1_ceiling_assert_case.case }}"
+      ansible.builtin.set_fact:
+        s1_molecule_ceiling_assert_cases: >-
+          {{ (s1_molecule_ceiling_assert_cases | default({})) | combine({s1_ceiling_assert_case.case: {
+            'failed': true, 'msg': ansible_failed_result.msg | default('')}}) }}
+        cacheable: true

@@ -1,0 +1,16 @@
+---
+# Pin s1_agent_version to the matched version-ceiling row's default_version
+# (s1_windows_ceiling_default_version, resolved in windows_tier.yml from
+# s1_modern_ceiling_x64_editions in vars/windows.yml) when the host has a
+# ceiling and no version was explicitly requested, before s1_agent_download
+# ever runs. Without this, s1_agent_download's release_n_minus fallback would
+# fetch the latest GA release, which the ceiling assert then rejects after an
+# unnecessary download. Counterpart of windows_legacy_plus_version_pin.yml.
+# See docs/adr/0008-windows-support-tier-routing.md (Amendment).
+
+- name: Pin version-ceiling default agent version when none requested | Windows
+  ansible.builtin.set_fact:
+    s1_agent_version: "{{ s1_windows_ceiling_default_version }}"
+  when:
+    - s1_windows_version_ceiling | default('') | length > 0
+    - s1_agent_version is not defined or s1_agent_version is none or s1_agent_version | length == 0

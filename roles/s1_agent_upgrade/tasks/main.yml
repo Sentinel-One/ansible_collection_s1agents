@@ -7,6 +7,12 @@
       - ansible_os_family in s1_supported_os_family or ansible_distribution in s1_supported_linux_distribution
     fail_msg: The {{ ansible_distribution }} operating system is not supported by the SentinelOne Agent. Please review the System Requirements Knowledge Base.
 
+- name: Assert requested agent version is below the Windows version ceiling
+  ansible.builtin.include_role:
+    name: s1_agent_common
+    tasks_from: windows_version_ceiling.yml
+  when: ansible_os_family == 'Windows'
+
 - name: Download Agent from Management Console
   ansible.builtin.include_role:
     name: s1_agent_download

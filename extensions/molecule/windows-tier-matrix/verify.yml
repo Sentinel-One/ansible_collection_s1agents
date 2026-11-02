@@ -20,6 +20,66 @@
           legacy_plus_bitness=legacy_plus, modern_exclusion_windows81=modern,
           modern_exclusion_server2012r2=modern.
 
+    - name: Assert fact-mocked version-ceiling cases resolved as expected
+      vars:
+        s1_expected_ceiling_cases:
+          modern_exclusion_windows81: "26.2"
+          modern_exclusion_server2012r2: "26.2"
+          ceiling_storage_server2012r2: "26.2"
+          ceiling_windows10_1507: "26.2"
+          ceiling_windows10_1511: "26.2"
+          uncapped_windows10_1607: ""
+          uncapped_windows10_2004: ""
+          uncapped_windows10_21h2: ""
+          uncapped_windows10_22h2: ""
+          uncapped_server2022: ""
+          legacy: ""
+          legacy_plus_bitness: ""
+          legacy_plus_windows81_32bit: ""
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_ceiling_cases[item.key].ceiling == item.value
+          - item.value == '' or s1_molecule_ceiling_cases[item.key].default_version == '26.1.2.177'
+          - item.value != '' or s1_molecule_ceiling_cases[item.key].default_version == ''
+        fail_msg: >-
+          Ceiling case {{ item.key }} resolved to
+          {{ s1_molecule_ceiling_cases[item.key] }}, expected ceiling
+          '{{ item.value }}'.
+      loop: "{{ s1_expected_ceiling_cases | dict2items }}"
+
+    - name: Assert every capped case still classifies as modern
+      vars:
+        s1_capped_cases: >-
+          {{ s1_molecule_ceiling_cases | dict2items
+             | rejectattr('value.ceiling', 'in', ['', 'unset']) | list }}
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_tier_cases[item.key] == 'modern'
+        fail_msg: "Capped case {{ item.key }} resolved to tier {{ s1_molecule_tier_cases[item.key] }}, expected modern."
+      loop: "{{ s1_capped_cases }}"
+
+    - name: Assert the capped-case filter matched the expected cases, so the modern-tier assert is not vacuous
+      vars:
+        s1_capped_cases: >-
+          {{ s1_molecule_ceiling_cases | dict2items
+             | rejectattr('value.ceiling', 'in', ['', 'unset']) | list }}
+      ansible.builtin.assert:
+        that:
+          - >-
+            s1_capped_cases | map(attribute='key') | list
+            | intersect(['ceiling_windows10_1507', 'ceiling_windows10_1511',
+            'ceiling_storage_server2012r2', 'ceiling_overlap_lowest_wins'])
+            | length == 4
+        fail_msg: "Capped-case filter returned {{ s1_capped_cases | map(attribute='key') | list }}."
+
+    - name: Assert every ceiling-matrix row's generated case resolves to that row
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_ceiling_cases['ceiling_row_' ~ (item.match | lower | regex_replace('[^a-z0-9]+', '_'))].ceiling == item.ceiling
+          - s1_molecule_ceiling_cases['ceiling_row_' ~ (item.match | lower | regex_replace('[^a-z0-9]+', '_'))].default_version == item.default_version
+        fail_msg: "Ceiling-matrix row {{ item.match }} did not resolve to its own ceiling/default version."
+      loop: "{{ s1_modern_ceiling_x64_editions }}"
+
     - name: Compute the set of generated editions-matrix case keys
       ansible.builtin.set_fact:
         s1_editions_matrix_case_keys: "{{ s1_molecule_tier_cases.keys() | select('match', '^legacy_plus_caption_') | list }}"
@@ -57,6 +117,49 @@
           {{ s1_molecule_pin_cases }}. Expected
           unset_version={{ s1_legacy_plus_default_version }},
           explicit_version=23.4.5.337.
+
+    - name: Assert the overlapping ceiling rows resolved to the lowest ceiling
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_ceiling_cases['ceiling_overlap_lowest_wins'].ceiling == '26.2'
+          - s1_molecule_ceiling_cases['ceiling_overlap_lowest_wins'].default_version == '26.1.2.177'
+        fail_msg: >-
+          Overlapping ceiling rows resolved to
+          {{ s1_molecule_ceiling_cases['ceiling_overlap_lowest_wins'] }},
+          expected ceiling 26.2 with default version 26.1.2.177.
+
+    - name: Assert version ceiling pin cases resolved as expected
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_ceiling_pin_cases['capped_unset_version'] == '26.1.2.177'
+          - s1_molecule_ceiling_pin_cases['capped_explicit_version'] == '25.2.6.442'
+          - s1_molecule_ceiling_pin_cases['uncapped_unset_version'] == ''
+        fail_msg: >-
+          One or more version ceiling pin cases resolved incorrectly:
+          {{ s1_molecule_ceiling_pin_cases }}. Expected
+          capped_unset_version=26.1.2.177,
+          capped_explicit_version=25.2.6.442, uncapped_unset_version=''.
+
+    - name: Assert version ceiling assert cases passed or failed as expected
+      vars:
+        s1_ceiling_assert_results: "{{ s1_molecule_ceiling_assert_cases }}"
+      ansible.builtin.assert:
+        that:
+          - not s1_ceiling_assert_results['below_ceiling'].failed
+          - s1_ceiling_assert_results['at_ceiling'].failed
+          - s1_ceiling_assert_results['patch_of_ceiling'].failed
+          - s1_ceiling_assert_results['above_ceiling'].failed
+          - not s1_ceiling_assert_results['multi_digit_minor_below_ceiling'].failed
+          - not s1_ceiling_assert_results['no_ceiling'].failed
+        fail_msg: "Version ceiling assert cases misbehaved: {{ s1_ceiling_assert_results }}."
+
+    - name: Assert a failing ceiling assert names the OS, the requested version and the ceiling
+      ansible.builtin.assert:
+        that:
+          - "'Windows 8.1 Pro' in s1_molecule_ceiling_assert_cases['above_ceiling'].msg"
+          - "'26.3.1.5' in s1_molecule_ceiling_assert_cases['above_ceiling'].msg"
+          - "'26.2' in s1_molecule_ceiling_assert_cases['above_ceiling'].msg"
+        fail_msg: "Ceiling failure message is missing the OS, version or ceiling: {{ s1_molecule_ceiling_assert_cases['above_ceiling'].msg }}."
 
     - name: Assert the Legacy tier's fail-loud routing failed with the expected message
       vars:

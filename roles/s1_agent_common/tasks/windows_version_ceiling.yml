@@ -1,0 +1,19 @@
+---
+# Assert the requested Agent version is below the host's version ceiling
+# (s1_windows_version_ceiling, resolved in windows_tier.yml; empty when the OS
+# has none). The ceiling is the first version the OS cannot run - the
+# installer itself refuses it - so this fails that host early, before any
+# download or install work. Referenced by s1_agent_install and s1_agent_upgrade
+# via include_role/tasks_from so there is one copy to maintain. See
+# docs/adr/0008-windows-support-tier-routing.md (Amendment).
+
+- name: Assert requested agent version is below the Windows version ceiling | Windows
+  ansible.builtin.assert:
+    that:
+      - s1_agent_version is version(s1_windows_version_ceiling, '<')
+    fail_msg: >-
+      {{ ansible_distribution }} cannot run SentinelOne Agent
+      {{ s1_agent_version }} - Agent {{ s1_windows_version_ceiling }} and
+      newer no longer support this operating system. Use a release older
+      than {{ s1_windows_version_ceiling }}.
+  when: s1_windows_version_ceiling | default('') | length > 0

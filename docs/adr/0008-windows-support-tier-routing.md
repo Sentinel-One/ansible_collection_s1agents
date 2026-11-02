@@ -36,11 +36,12 @@ Each tier is reached with `include_tasks` off `s1_windows_tier`, mirroring the
 existing `s1_agent_info` RHEL-6 dispatch shape. Only `windows_legacy_plus.yml`
 carries a version assertion — a ceiling, `s1_agent_version < 24.1` — since
 those OSes genuinely cannot run newer versions. The Modern flow carries no
-version assertion at all: 23.1–23.4.x are EOL there but still install/upgrade
-today with no gate, and per [ADR
+version assertion _by default_: 23.1–23.4.x are EOL there but still
+install/upgrade today with no gate, and per [ADR
 0002](./0002-remove-eol-accommodations-not-gate.md) that's a support-policy
 question this collection deliberately doesn't gate, not a technical
-incompatibility worth asserting on.
+incompatibility worth asserting on. The one exception is the version ceiling
+on specific Modern OSes — see [Amendment](#amendment-version-ceiling-on-modern-oses).
 
 ## Why the fact plumbing forces this shape
 
@@ -185,3 +186,57 @@ legacy_plus` and no version was requested — for both `s1_agent_install` and
   auto-started (unlike 2012 R2's broken OpenSSH path), so it connects over
   `ssh` with password auth (requires `sshpass` on the controller) like the
   Server 2022 preset rather than forcing `winrm`.
+
+## Amendment: version ceiling on Modern OSes
+
+Effective with Agent 26.2, SentinelOne no longer supports Windows 8.1 64-bit,
+Server / Storage Server 2012 R2 64-bit, Windows 10 1507 and Windows 10 1511
+(64-bit). The installer itself refuses to run on them. All four classify as
+`modern`, which carried no version assertion, so a play installing or upgrading
+to the newest GA release (including the `release_n_minus` fallback when no
+version is named) would download 26.2+ and fail late inside the installer.
+
+This is a _technical_ limit — the OS cannot run the version — not a
+support-policy choice, so it passes the test ADR 0002 and the Legacy Plus
+ceiling already use: gate only what the OS genuinely cannot run, never EOL
+alone. ADR 0002 is unchanged.
+
+Decisions:
+
+- **No new tier.** Capped hosts stay `modern`; `s1_windows_tier` is unchanged.
+  The tiers map SentinelOne's support definitions, and these hosts are still
+  in the Modern group. The cap is a separate fact, `s1_windows_version_ceiling`
+  (empty when the host has none), plus `s1_windows_ceiling_default_version`.
+- **Data-driven.** `s1_modern_ceiling_x64_editions` (`vars/windows.yml`) has
+  one row per cap: Caption `match`, optional `not_match`, optional `build_lt`,
+  `ceiling`, `default_version`. The next OS drop is one new row. If several
+  rows match a host the lowest ceiling wins (compared as versions, so `26.10`
+  is newer than `26.2`).
+- **Windows 10 by build.** 1507/1511 share the Caption `Windows 10 …` with
+  every later build, so the row carries `build_lt: 14393` (1607 is the first
+  supported build) against the third component of `ansible_distribution_version`,
+  which carries the build for NT 10+. NT 6.x hosts have no build component and
+  only match rows without `build_lt`.
+- **Modern only.** The ceiling is computed only when the tier is `modern`.
+  32-bit Windows 8.1 / Windows 10 stay Legacy Plus with their 24.1 ceiling.
+- **One assert, in common.** `s1_agent_common/tasks/windows_version_ceiling.yml`
+  asserts `s1_agent_version < ceiling` when a ceiling exists. `s1_agent_install`
+  and `s1_agent_upgrade` reference it via `include_role` / `tasks_from`, before
+  the download, so there is a single copy. Considered and rejected: an assert
+  duplicated into each role's `windows_64-bit.yml`, which would have two copies
+  and could not be exercised without a VM.
+- **Fails the host only.** A failed `assert` fails that host; nothing in the
+  roles sets play-wide fatal behaviour.
+- **Default-version pin.** As for Legacy Plus, a capped host with no requested
+  version is pinned to the row's `default_version` (a manually-maintained
+  release below the ceiling, which must have an `s1_product_id` entry) in
+  `s1_agent_common`, before `s1_agent_download` runs.
+- **Read-only and uninstall roles untouched**, so a capped host can still be
+  inventoried and removed. The assert runs before `s1_agent_download` in both
+  roles, so an explicit too-new version fails before anything is downloaded.
+- **Out of scope.** Windows Embedded variants (e.g. Embedded 8.1 Industry) have
+  different Captions and are not matched, as with 64-bit POSReady 7 above.
+- **Tested VM-less.** No guest exists for the capped OSes (the `windows` preset
+  is Server 2022), so the `windows-tier-matrix` scenario covers ceiling
+  resolution (one generated case per matrix row plus explicit and
+  negative-control cases), the overlap rule, the pin and the assert.

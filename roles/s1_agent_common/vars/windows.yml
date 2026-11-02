@@ -40,6 +40,35 @@ s1_legacy_plus_x64_editions:
   - match: "Server 2012"
     not_match: "Server 2012 R2"
 
+# Version ceilings for Modern (64-bit) Windows OSes that newer Agent releases
+# no longer run (s1_windows_version_ceiling, see
+# docs/adr/0008-windows-support-tier-routing.md, Amendment). A host matching a
+# row stays `modern`; it fails (that host only) when asked to install or
+# upgrade to `ceiling` or newer, and is pinned to `default_version` when no
+# version is requested. Per row:
+#   match / not_match  Caption (ansible_distribution) substrings, as in the
+#                      Legacy Plus matrix above.
+#   build_lt           optional; row applies only to NT 10+ hosts whose build
+#                      (third component of ansible_distribution_version) is
+#                      below this. Needed where one Caption spans many builds.
+#   ceiling            first Agent version the OS cannot run.
+#   default_version    newest release below the ceiling. Must have an
+#                      s1_product_id entry below. Update by hand with the row.
+# If several rows match, the lowest ceiling wins.
+# Agent 26.2 drops Windows 8.1, Server / Storage Server 2012 R2 and Windows 10
+# 1507 / 1511 (builds 10240 / 10586; 1607 is build 14393, the first supported).
+s1_modern_ceiling_x64_editions:
+  - match: "Windows 8.1"
+    ceiling: "26.2"
+    default_version: "26.1.2.177"
+  - match: "Server 2012 R2"
+    ceiling: "26.2"
+    default_version: "26.1.2.177"
+  - match: "Windows 10"
+    build_lt: 14393
+    ceiling: "26.2"
+    default_version: "26.1.2.177"
+
 # Manually-maintained default s1_agent_version for Legacy Plus hosts that
 # request no explicit version (see docs/adr/0008-windows-support-tier-routing.md).
 # Without this, s1_agent_download's release_n_minus fallback would silently

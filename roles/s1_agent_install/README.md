@@ -11,6 +11,10 @@ A valid SentinelOne license, access to the SentinelOne Management Console and ac
 
 Inventory hosts on which the agent is being installed must be running on a supported Operating System and meet its [minimum system requirements](https://community.sentinelone.com/s/topic/0TO69000000as1iGAA/system-requirements).
 
+### Windows hosts that Agent 26.2 no longer supports
+
+Installing Agent 26.2 or newer on Windows 8.1 64-bit, Server / Storage Server 2012 R2 64-bit, Windows 10 1507 or Windows 10 1511 fails that host before anything is downloaded, because SentinelOne dropped these operating systems effective with 26.2 and the installer refuses to run on them. Other hosts in the play continue. If `s1_agent_version` is not set, these hosts are pinned to the last supported release (26.1.2.177). The host stays in the Modern tier; see `s1_windows_version_ceiling` in [CONTEXT.md](../../CONTEXT.md) (Version ceiling).
+
 ### Windows Legacy Plus hosts require PowerShell 4.0+
 
 Installing on a Windows "Legacy Plus" host (see `s1_windows_tier` in [CONTEXT.md](../../CONTEXT.md)) requires PowerShell 4.0 or newer. `ansible.windows.win_package` unconditionally computes an installer checksum via `Get-FileHash`, which does not exist before PowerShell 4 - every `ansible.windows` release from 2.8.0 onward includes this behavior. The role fails before ever reaching `win_package`.

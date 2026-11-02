@@ -4,6 +4,14 @@
 
 ### Breaking changes
 
+- **Windows installs and upgrades to Agent 26.2 or newer now fail on Windows
+  8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and Windows 10 1507 / 1511.** SentinelOne dropped these operating systems effective with Agent
+  26.2, and the installer refuses to run on them. `s1_agent_install` and
+  `s1_agent_upgrade` now fail the affected host before downloading anything,
+  and a play that names no `s1_agent_version` is pinned to 26.1.2.177 on these
+  hosts. Other hosts in the play are unaffected, and `s1_agent_info`,
+  `s1_agent_uninstall` and `s1_agent_uuid` still work on them. See the
+  Amendment in [ADR 0008](./docs/adr/0008-windows-support-tier-routing.md).
 - **Fresh installs of pre-23.3 unsigned RPMs are no longer supported.**
   The `rpm -i --nodigest` flag that allowed unsigned packages lacking a header
   digest to install has been removed (see [ADR 0002](./docs/adr/0002-remove-eol-accommodations-not-gate.md)).
