@@ -100,6 +100,23 @@ download checksum + the rpm header/payload digest.
 `s1_install_gpg_signed_rpm: true`) with full GPG signature verification. The
 recommended path for versions that ship signed RPMs.
 
+**Custom install path** (`s1_agent_custom_install_path`): An operator-chosen
+directory that the Linux agent installs into instead of `/opt/sentinelone`. The
+installer leaves `/opt/sentinelone` as a symlink to it. _Avoid_: install
+location, data path (the Windows `INSTALL_PATH_DATA` property is a different
+setting).
+
+### Removal
+
+**Graceful uninstall**: Removing the agent through its own uninstaller, which
+is authorised by the endpoint's passphrase. The default.
+
+**Forced remove** (`s1_forced_remove`): Removing the agent without its
+uninstaller, by deleting its files, service and package records directly as
+root. Runs only when the operator asks for it, never as a fallback from a failed
+graceful uninstall. See [ADR 0014](./docs/adr/0014-no-automatic-forced-remove.md).
+_Avoid_: forced uninstall, cleanup.
+
 ### Secrets & tokens
 
 **Site token** (`s1_agent_site_token`): Base64 registration token (decodes to
@@ -127,6 +144,12 @@ supply variables via job-template surveys. Here the variable-setter is _not_ the
 play author, so unvalidated operator inputs become a real hardening obligation
 for this collection as a vendor — see
 [ADR 0001](./docs/adr/0001-trust-model.md).
+
+**Management Console trust**: The Management Console is part of the trusted
+control plane, as operator variables are: its API responses are trusted as much
+as the play author, because a console can already run scripts on every agent it
+manages. See [ADR 0001](./docs/adr/0001-trust-model.md). _Avoid_: treating a
+hostile console as an attacker model for this collection.
 
 **Endpoint local-user boundary**: The one privilege boundary that is real
 regardless of trust model: the play runs as `root`/`SYSTEM`, so secrets on argv
