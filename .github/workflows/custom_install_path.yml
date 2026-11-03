@@ -1,0 +1,68 @@
+name: Custom Install Path
+
+# Thin caller over the reusable run-molecule workflow, native `on: paths`
+# filtering only - no third-party action, no token. See ADR 0010.
+on:
+  push:
+    branches:
+      - "release/**"
+    paths:
+      - "roles/s1_agent_install/**"
+      - "!roles/s1_agent_install/README.md"
+      - "extensions/molecule/custom-install-path/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/custom_install_path.yml"
+      - ".github/workflows/run-molecule.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_agent_install/**"
+      - "!roles/s1_agent_install/README.md"
+      - "extensions/molecule/custom-install-path/**"
+      - "extensions/molecule/common/templates/**"
+      - ".github/workflows/custom_install_path.yml"
+      - ".github/workflows/run-molecule.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: "${{ matrix.scenario }} - ${{ matrix.platform.preset }}"
+    # Fork pull requests are gated out so they never receive secrets by any
+    # automatic path. No pull_request_target anywhere - see ADR 0010.
+    if: >-
+      github.event_name == 'push' ||
+      github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - custom-install-path
+        platform:
+          - preset: rocky8
+            group: Linux
+          - preset: ubuntu2204
+            group: Linux
+    uses: ./.github/workflows/run-molecule.yml
+    with:
+      scenario: ${{ matrix.scenario }}
+      platform_preset: ${{ matrix.platform.preset }}
+      inventory_group: ${{ matrix.platform.group }}
+      connection: ssh
+    secrets: inherit

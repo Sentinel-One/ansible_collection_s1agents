@@ -1,0 +1,46 @@
+---
+# Dump-only: no assertions. Writes the on-disk layout to the CI log so a human
+# can read whether the installer puts the agent directly in the custom install
+# path or in a subdirectory of it. Every command tolerates failure.
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Dump the custom install path layout
+      become: true
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: |
+          set -o pipefail
+          echo "--- readlink -f /opt/sentinelone"
+          readlink -f /opt/sentinelone
+          echo "--- stat /opt/sentinelone (no dereference)"
+          stat /opt/sentinelone
+          echo "--- stat -L /opt/sentinelone (dereferenced)"
+          stat -L /opt/sentinelone
+          echo "--- ls -la /opt"
+          ls -la /opt
+          echo "--- find /srv -maxdepth 3 (owner:group type path)"
+          find /srv -maxdepth 3 -printf '%u:%g %y %p\n'
+          echo "--- canary /srv/keep.txt"
+          ls -l /srv/keep.txt
+          echo "--- sentinelctl status"
+          /opt/sentinelone/bin/sentinelctl status
+          echo "--- sentinelctl config"
+          /opt/sentinelone/bin/sentinelctl config
+          echo "--- sentinelctl version"
+          /opt/sentinelone/bin/sentinelctl version
+          echo "--- sentinel processes"
+          ps -eo user,args | grep -i '[s]entinel'
+          echo "--- mounts mentioning sentinel or /srv"
+          grep -E 'sentinel|/srv' /proc/mounts
+          echo "--- package file list under /srv or /opt (head)"
+          { rpm -ql SentinelAgent 2>/dev/null || dpkg -L sentinelagent 2>/dev/null; } | grep -E '^/(srv|opt)' | head -40
+          exit 0
+      register: s1_layout_dump
+      changed_when: false
+      failed_when: false
+
+    - name: Show the layout dump
+      ansible.builtin.debug:
+        msg: "{{ s1_layout_dump.stdout_lines + s1_layout_dump.stderr_lines }}"
