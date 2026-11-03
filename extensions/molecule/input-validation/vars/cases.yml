@@ -228,6 +228,36 @@ s1_input_cases:
     inputs: { s1_agent_package_name: ..hidden.rpm }
     expect: reject
 
+  # --- s1_agent_site_token (TSS-28: nothing but base64 may reach the installer) ---
+  - case: site_token_well_formed
+    os_family: Windows
+    inputs: { s1_agent_site_token: eyJ1cmwiOiJodHRwczovL3giLCJzaXRlX2tleSI6ImsifQ== }
+    expect: accept
+  - case: site_token_padded_then_transforms
+    os_family: Windows
+    inputs: { s1_agent_site_token: 'eyJ1cmwiOiJodHRwczovL3giLCJzaXRlX2tleSI6ImsifQ== TRANSFORMS=\\host\share\x.mst' }
+    expect: reject
+  - case: site_token_padded_then_msilogging
+    os_family: Windows
+    inputs: { s1_agent_site_token: 'eyJ1cmwiOiJodHRwczovL3giLCJzaXRlX2tleSI6ImsifQ== MSILOGGING=voicewarmup MSILOGFILE=C:\x.log' }
+    expect: reject
+  - case: site_token_whitespace
+    os_family: RedHat
+    inputs: { s1_agent_site_token: 'eyJ1cmwiOiJodHRwczovL3giLCJzaXRlX2tleSI6ImsifQ== ' }
+    expect: reject
+  - case: site_token_quote
+    os_family: Windows
+    inputs: { s1_agent_site_token: 'eyJ1cmwiOiJodHRwczovL3giLCJzaXRlX2tleSI6ImsifQ=="' }
+    expect: reject
+  - case: site_token_base64_not_json
+    os_family: RedHat
+    inputs: { s1_agent_site_token: bm90IGpzb24gYXQgYWxs }
+    expect: reject
+  - case: site_token_json_missing_site_key
+    os_family: RedHat
+    inputs: { s1_agent_site_token: eyJ1cmwiOiAiaHR0cHM6Ly94In0= }
+    expect: reject
+
   # --- nothing set ---
   - case: all_unset_linux
     os_family: RedHat

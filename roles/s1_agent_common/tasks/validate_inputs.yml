@@ -97,3 +97,38 @@
     - s1_agent_package_name is defined
     - s1_agent_package_name is not none
     - s1_agent_package_name | string | length > 0
+
+# The shape check runs first and alone, so a malformed token is a validation
+# failure, not a templating error. Python's b64decode ignores text after the
+# padding, so decoding alone would let '<token>== TRANSFORMS=...' through and
+# it would become an extra MSI property (TSS-28). The token is never echoed.
+- name: Validate s1_agent_site_token shape
+  ansible.builtin.assert:
+    that:
+      - s1_agent_site_token is match('^[A-Za-z0-9+/]+={0,2}$')
+    fail_msg: >-
+      s1_agent_site_token must be a base64 string and nothing else: no
+      whitespace, quotes, or trailing text. Rejected: (value not shown)
+  when:
+    - s1_agent_site_token is defined
+    - s1_agent_site_token is not none
+    - s1_agent_site_token | string | length > 0
+
+- name: Validate s1_agent_site_token payload
+  when:
+    - s1_agent_site_token is defined
+    - s1_agent_site_token is not none
+    - s1_agent_site_token | string | length > 0
+  block:
+    - name: Decode s1_agent_site_token and check its keys
+      ansible.builtin.assert:
+        that:
+          - (s1_agent_site_token | b64decode | from_json).site_key is defined
+          - (s1_agent_site_token | b64decode | from_json).url is defined
+        quiet: true
+  rescue:
+    - name: Fail with a message that does not echo the token
+      ansible.builtin.fail:
+        msg: >-
+          s1_agent_site_token must decode to JSON with url and site_key.
+          Rejected: (value not shown)
