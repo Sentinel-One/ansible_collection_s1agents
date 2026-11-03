@@ -48,7 +48,13 @@
       block:
         - name: Upgrade SentinelOne agent | Linux
           ansible.builtin.command:
-            cmd: /opt/sentinelone/bin/sentinelctl control upgrade {{ s1_agent_path }}
+            # A list of arguments, so a package path can never add arguments.
+            # The passphrase goes on stdin, never argv. See ADR 0003.
+            argv:
+              - /opt/sentinelone/bin/sentinelctl
+              - control
+              - upgrade
+              - "{{ s1_agent_path }}"
             stdin: "{{ s1_agent_passphrase }}"
           notify: "{{ s1_service_handler_name }}"
           become: true
