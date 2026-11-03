@@ -90,6 +90,12 @@
     s1_agent_src: "{{ s1_download_path }}/{{ s1_agent_package_name }}"
     s1_agent_version: "{{ s1_download_src.version }}"
 
+# Console-derived values get the same checks as operator values, before the
+# name is used in a path or a command.
+- name: Validate console-derived package name and source path
+  ansible.builtin.include_tasks:
+    file: "{{ role_path }}/../s1_agent_common/tasks/validate_inputs.yml"
+
 - name: Show package details
   tags:
     - debug

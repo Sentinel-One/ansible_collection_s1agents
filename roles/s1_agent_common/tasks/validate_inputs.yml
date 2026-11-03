@@ -81,3 +81,19 @@
     - s1_agent_src is defined
     - s1_agent_src is not none
     - s1_agent_src | string | length > 0
+
+# Set by s1_agent_download from the Management Console's fileName. Hygiene, not
+# a boundary (ADR 0001, Management Console trust): the selection filters stay
+# as they are; this only constrains the characters of the selected name.
+- name: Validate s1_agent_package_name
+  ansible.builtin.assert:
+    that:
+      - s1_agent_package_name is match('^[A-Za-z0-9][A-Za-z0-9._-]*$')
+    fail_msg: >-
+      s1_agent_package_name must start with an alphanumeric and contain only
+      alphanumerics, dots, underscores, and hyphens (no '/', whitespace, or
+      quotes). Rejected: {{ s1_agent_package_name }}
+  when:
+    - s1_agent_package_name is defined
+    - s1_agent_package_name is not none
+    - s1_agent_package_name | string | length > 0

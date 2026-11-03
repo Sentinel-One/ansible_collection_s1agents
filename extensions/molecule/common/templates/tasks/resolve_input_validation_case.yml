@@ -14,6 +14,7 @@
     s1_agent_dv_proxy: "{{ s1_input_case.inputs.s1_agent_dv_proxy | default('') }}"
     s1_agent_customer_id: "{{ s1_input_case.inputs.s1_agent_customer_id | default('') }}"
     s1_agent_src: "{{ s1_input_case.inputs.s1_agent_src | default('') }}"
+    s1_agent_package_name: "{{ s1_input_case.inputs.s1_agent_package_name | default('') }}"
 
 - name: "Run validate_inputs.yml: {{ s1_input_case.case }}"
   block:

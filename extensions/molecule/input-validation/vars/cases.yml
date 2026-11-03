@@ -186,6 +186,48 @@ s1_input_cases:
     inputs: { s1_agent_src: /tmp/agent.deb;id }
     expect: reject
 
+  # --- s1_agent_package_name (console-derived; hygiene, see ADR 0001) ---
+  - case: package_name_rpm_x86_64
+    os_family: RedHat
+    inputs: { s1_agent_package_name: SentinelAgent_linux_x86_64_v24_1_2_3.rpm }
+    expect: accept
+  - case: package_name_rpm_hyphen_variant
+    os_family: RedHat
+    inputs: { s1_agent_package_name: SentinelAgent-linux-x86_64-v23_4_1_2.rpm }
+    expect: accept
+  - case: package_name_deb
+    os_family: Debian
+    inputs: { s1_agent_package_name: SentinelAgent_linux_x86_64_v24_1_2_3.deb }
+    expect: accept
+  - case: package_name_aarch64
+    os_family: Debian
+    inputs: { s1_agent_package_name: SentinelAgent-aarch64_linux_v24_1_2_3.deb }
+    expect: accept
+  - case: package_name_signed
+    os_family: RedHat
+    inputs: { s1_agent_package_name: Signed-SentinelAgent_linux_x86_64_v24_1_2_3.rpm }
+    expect: accept
+  - case: package_name_windows_installer
+    os_family: Windows
+    inputs: { s1_agent_package_name: SentinelOneInstaller_windows_64bit_v24_1_2_3.exe }
+    expect: accept
+  - case: package_name_path_traversal
+    os_family: RedHat
+    inputs: { s1_agent_package_name: ../../etc/cron.d/SentinelAgent.rpm }
+    expect: reject
+  - case: package_name_space_extra_args
+    os_family: RedHat
+    inputs: { s1_agent_package_name: 'SentinelAgent.rpm --nogpgcheck' }
+    expect: reject
+  - case: package_name_quote
+    os_family: Windows
+    inputs: { s1_agent_package_name: 'SentinelOneInstaller".exe' }
+    expect: reject
+  - case: package_name_leading_dot
+    os_family: RedHat
+    inputs: { s1_agent_package_name: ..hidden.rpm }
+    expect: reject
+
   # --- nothing set ---
   - case: all_unset_linux
     os_family: RedHat
