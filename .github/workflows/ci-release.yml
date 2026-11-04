@@ -41,6 +41,8 @@ jobs:
           - { scenario: info-missing, preset: ubuntu2204, group: Linux }
           - { scenario: info-missing, preset: opensuse15, group: Linux }
           - { scenario: info-missing, preset: windows, group: Windows }
+          - { scenario: custom-install-path, preset: rocky8, group: Linux }
+          - { scenario: custom-install-path, preset: ubuntu2204, group: Linux }
           - { scenario: gpgkey, preset: rocky8, group: Linux }
           - { scenario: gpgkey, preset: opensuse15, group: Linux }
           - { scenario: uuid, preset: rocky8, group: Linux }
