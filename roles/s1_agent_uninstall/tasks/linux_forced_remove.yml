@@ -37,6 +37,16 @@
   become: true
   register: s1_default_path_stat
 
+- name: Look at the symlink target | Linux
+  ansible.builtin.stat:
+    path: "{{ s1_default_path_stat.stat.lnk_source }}"
+    follow: false
+  become: true
+  register: s1_symlink_target_stat
+  when:
+    - s1_default_path_stat.stat.islnk | default(false)
+    - s1_default_path_stat.stat.lnk_source is defined
+
 - name: Look for the agent marker in the symlink target | Linux
   ansible.builtin.stat:
     path: "{{ s1_default_path_stat.stat.lnk_source }}/bin/sentinelctl"
@@ -71,6 +81,10 @@
     - s1_agent_custom_install_path is defined
     - s1_agent_custom_install_path | default('') | string | length > 0
     - not (s1_custom_target_ok | default(false) | bool)
+    # A link whose target is already gone is a rerun after a partial failure:
+    # nothing is left to delete, so there is nothing to warn about.
+    - not ((s1_default_path_stat.stat.islnk | default(false))
+      and not (s1_symlink_target_stat.stat.exists | default(false)))
 
 - name: Unmount SentinelOne directories | Linux
   ansible.posix.mount:
@@ -102,11 +116,12 @@
   become: true
   when: s1_custom_target_ok | default(false) | bool
 
-- name: Remove the default SentinelOne directory or symlink | Linux
+- name: Remove the default SentinelOne directory | Linux
   ansible.builtin.file:
     path: "{{ s1_agent_default_install_path }}"
     state: absent
   become: true
+  when: not (s1_default_path_stat.stat.islnk | default(false))
 
 - name: Remove the sentinelone user | Linux
   ansible.builtin.user:
@@ -142,3 +157,12 @@
     - '"package " ~ s1_package_name ~ " is not installed" not in rpm_remove.stderr'
   when:
     - ansible_pkg_mgr in rpm_pkg_mgrs
+
+# The symlink is the breadcrumb that leads to a custom install, so it goes last:
+# a rerun after any earlier failure still sees the same layout.
+- name: Remove the default SentinelOne symlink | Linux
+  ansible.builtin.file:
+    path: "{{ s1_agent_default_install_path }}"
+    state: absent
+  become: true
+  when: s1_default_path_stat.stat.islnk | default(false)
