@@ -1,21 +1,42 @@
 ---
 # tasks file for s1_agent_uninstall
 
-- name: Uninstall SentinelOne Agent using package guid
-  when: not s1_forced_remove | default('false') | bool
+# Two ways to uninstall: the MSI package by product GUID (default), or the
+# agent's own uninstall.exe (s1_windows_use_uninstall_exe: true, or as the retry
+# when the MSI uninstall fails). If both fail the host fails and points at the
+# Knowledge Base.
+- name: Uninstall the SentinelOne agent | Windows
   block:
-    - name: Uninstall SentinelOne agent | Windows
-      ansible.windows.win_package:
-        state: absent
-        arguments: UNINSTALL_KEY="{{ s1_agent_passphrase }}"
-        wait_for_children: true
-        product_id: "{{ s1_agent_info.product_id }}"
-      become: true
-      no_log: true
-      register: s1_uninstall_log
-      notify: "{{ s1_reboot_handler_name }}"
-  rescue:
-    - name: Include tasks to retry a failed uninstall | Windows
+    - name: Uninstall SentinelOne Agent using package guid
+      when: not s1_windows_use_uninstall_exe | default(false) | bool
+      block:
+        - name: Uninstall SentinelOne agent | Windows
+          ansible.windows.win_package:
+            state: absent
+            arguments: UNINSTALL_KEY="{{ s1_agent_passphrase }}"
+            wait_for_children: true
+            product_id: "{{ s1_agent_info.product_id }}"
+          become: true
+          no_log: true
+          register: s1_uninstall_log
+          notify: "{{ s1_reboot_handler_name }}"
+      rescue:
+        - name: Include tasks to retry a failed uninstall | Windows
+          ansible.builtin.include_tasks:
+            file: "{{ loop_fallback_remove }}"
+          with_first_found:
+            - files:
+                - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml"
+                - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml"
+                - "{{ ansible_distribution | lower }}_fallback_remove.yml"
+                - "{{ ansible_os_family | lower }}_fallback_remove.yml"
+                - "{{ ansible_system | lower }}_fallback_remove.yml"
+                - unsupported.yml
+          loop_control:
+            loop_var: loop_fallback_remove
+            label: "{{ loop_fallback_remove | basename }}"
+
+    - name: Include tasks to uninstall with the agent's own uninstall.exe | Windows
       ansible.builtin.include_tasks:
         file: "{{ loop_fallback_remove }}"
       with_first_found:
@@ -29,19 +50,14 @@
       loop_control:
         loop_var: loop_fallback_remove
         label: "{{ loop_fallback_remove | basename }}"
-
-- name: Include fallback tasks to remove the SeintinelOne agent | Windows
-  ansible.builtin.include_tasks:
-    file: "{{ loop_fallback_remove }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_fallback_remove.yml"
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_fallback_remove.yml"
-        - "{{ ansible_distribution | lower }}_fallback_remove.yml"
-        - "{{ ansible_os_family | lower }}_fallback_remove.yml"
-        - "{{ ansible_system | lower }}_fallback_remove.yml"
-        - unsupported.yml
-  loop_control:
-    loop_var: loop_fallback_remove
-    label: "{{ loop_fallback_remove | basename }}"
-  when: s1_forced_remove | default('false') | bool
+      when: s1_windows_use_uninstall_exe | default(false) | bool
+  rescue:
+    - name: Fail the host and point at the Knowledge Base | Windows
+      ansible.builtin.fail:
+        msg: >-
+          The uninstall of the SentinelOne agent failed on
+          {{ inventory_hostname }}, including the retry with the agent's own
+          uninstall.exe. The most common cause is a wrong or stale passphrase.
+          See the Knowledge Base article on uninstalling the agent when the
+          normal uninstall fails:
+          https://community.sentinelone.com/s/article/000005374

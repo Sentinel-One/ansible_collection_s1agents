@@ -258,6 +258,28 @@ s1_input_cases:
     inputs: { s1_agent_site_token: eyJ1cmwiOiAiaHR0cHM6Ly94In0= }
     expect: reject
 
+  # --- s1_forced_remove (removed on Linux, renamed on Windows) ---
+  - case: forced_remove_true_linux
+    os_family: RedHat
+    inputs: { s1_forced_remove: true }
+    expect: reject
+  - case: forced_remove_true_string_debian
+    os_family: Debian
+    inputs: { s1_forced_remove: 'true' }
+    expect: reject
+  - case: forced_remove_true_windows
+    os_family: Windows
+    inputs: { s1_forced_remove: true }
+    expect: reject
+  - case: forced_remove_false_linux
+    os_family: RedHat
+    inputs: { s1_forced_remove: false }
+    expect: accept
+  - case: forced_remove_false_windows
+    os_family: Windows
+    inputs: { s1_forced_remove: false }
+    expect: accept
+
   # --- nothing set ---
   - case: all_unset_linux
     os_family: RedHat

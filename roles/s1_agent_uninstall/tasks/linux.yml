@@ -1,9 +1,12 @@
 ---
 # tasks file for s1_agent_uninstall
 
+# The only Linux removal is the agent's own graceful uninstall, authorised by
+# the endpoint's passphrase. There is no forced remove: from agent 25.1 the
+# kernel can protect the agent (BPF with LSM), which blocks deleting its
+# service and files, and an unrequested root delete was a route to TSS-25.
+# See docs/adr/0014-no-automatic-forced-remove.md.
 - name: Uninstall SentinelOne Agent using sentinelctl commands
-  when:
-    - not s1_forced_remove | default('false') | bool
   block:
     - name: Uninstall SentinelOne agent | Linux
       ansible.builtin.command:
@@ -17,29 +20,11 @@
       until: s1_sentinelctl_uninstall.rc == 0
       changed_when: "'Successfully uninstalled agent' in s1_sentinelctl_uninstall.stdout"
   rescue:
-    # A failed graceful uninstall never escalates to forced remove: that is an
-    # unrequested root delete (ADR 0014). The agent stays installed.
-    - name: Fail the host and point at forced remove | Linux
+    - name: Fail the host and point at the Knowledge Base | Linux
       ansible.builtin.fail:
         msg: >-
           The graceful uninstall of the SentinelOne agent failed on
           {{ inventory_hostname }}. The most common cause is a wrong or stale
-          passphrase. The agent is still installed. To remove it without the
-          agent's own uninstaller (deleting its files, service and package
-          records as root), rerun with s1_forced_remove: true.
-
-- name: Include tasks to forcibly remove the SeintinelOne agent | Linux
-  ansible.builtin.include_tasks:
-    file: "{{ loop_forced_remove }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
-        - "{{ ansible_distribution | lower }}_forced_remove.yml"
-        - "{{ ansible_os_family | lower }}_forced_remove.yml"
-        - "{{ ansible_system | lower }}_forced_remove.yml"
-        - unsupported.yml
-  loop_control:
-    loop_var: loop_forced_remove
-    label: "{{ loop_forced_remove | basename }}"
-  when: s1_forced_remove | default('false') | bool
+          passphrase. The agent is still installed. See the Knowledge Base
+          article on uninstalling the agent when the normal uninstall fails:
+          https://community.sentinelone.com/s/article/000005374

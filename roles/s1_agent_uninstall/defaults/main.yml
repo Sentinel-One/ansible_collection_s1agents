@@ -6,5 +6,5 @@ s1_management_console: "{{ undef(hint='You must specify your SentinelOne Managem
 
 # API token with permissions to access the Packages tab and download agent packages
 s1_api_token: "{{ undef(hint='You must specify your SentinelOne API Token') }}"
-# Clean up the SentinelOne Agent using Linux OS commands instead of sentinelctl. Consult with support before setting this to true.
-# s1_forced_remove: false
+# Windows only: uninstall with the agent's own uninstall.exe instead of the MSI package. Also used as the retry when the MSI uninstall fails.
+# s1_windows_use_uninstall_exe: false

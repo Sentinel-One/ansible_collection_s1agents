@@ -81,7 +81,6 @@ provisioner:
         s1_api_token: ${S1_API_TOKEN}
         s1_agent_customer_id: ansible_collection_dev
         s1_download_path: ${S1_DOWNLOAD_PATH:-/tmp/s1_agent_cache}
-        s1_forced_remove: false
       Windows:
         ansible_become_method: runas
         ansible_become_user: vagrant

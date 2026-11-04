@@ -52,7 +52,7 @@
 
 # The installer puts the agent directly in the custom install path (no
 # subdirectory), so a shared directory such as /srv or a home directory would
-# become the agent's install directory, and a forced remove would later delete
+# become the agent's install directory and the agent could later be removed with
 # it. Refuse before anything on the endpoint changes. An existing agent install
 # is fine (reruns stay idempotent).
 - name: Look at the custom install path | Linux

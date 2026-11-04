@@ -6,7 +6,7 @@
     name: s1_mgmt_get_passphrase
   when:
     - s1_agent_info.installed
-    - s1_agent_passphrase is undefined or (ansible_system == 'Linux' and not s1_forced_remove | default('false') | bool)
+    - s1_agent_passphrase is undefined or ansible_system == 'Linux'
 
 - name: Include OS specific tasks
   ansible.builtin.include_tasks:
@@ -25,4 +25,4 @@
     label: "{{ loop_family | basename }}"
   when:
     - s1_agent_info.installed
-    - (s1_agent_passphrase is defined) or (s1_forced_remove | default('false') | bool)
+    - s1_agent_passphrase is defined

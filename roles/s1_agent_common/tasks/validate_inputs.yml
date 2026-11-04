@@ -35,7 +35,7 @@
     that:
       # Whole value: absolute, at least two components, no quotes or whitespace
       - s1_agent_custom_install_path is match('^/[^/\s"\']+(/[^/\s"\']+)+/?$')
-      # Never an operating-system directory (a forced remove deletes it as root)
+      # Never an operating-system directory
       - s1_agent_custom_install_path is not match('^/(bin|boot|dev|etc|lib|lib32|lib64|libx32|proc|root|run|sbin|sys|usr|var)(/|$)')
       # No '..' and no '.' component (/./etc would slip past the check above)
       - s1_agent_custom_install_path is not search('\.\.')
@@ -132,3 +132,23 @@
         msg: >-
           s1_agent_site_token must decode to JSON with url and site_key.
           Rejected: (value not shown)
+
+# Ansible has no deprecation mechanism for variables, so a removed option would
+# be silently ignored. s1_forced_remove is removed on Linux (agent 25.1+ can be
+# kernel-protected, so deleting the agent is not possible; see ADR 0014) and
+# renamed on Windows. Fail before any change when it is set to true. A false
+# value is the old default and harmless.
+- name: Validate s1_forced_remove is not set
+  ansible.builtin.assert:
+    that:
+      - not (s1_forced_remove | bool)
+    fail_msg: >-
+      {{ 's1_forced_remove was renamed to s1_windows_use_uninstall_exe on Windows. Set that instead.'
+         if ansible_os_family == 'Windows'
+         else 's1_forced_remove was removed on Linux: from agent 25.1 the kernel can protect the agent, so it cannot be ripped out.
+                 See https://community.sentinelone.com/s/article/000005374 to uninstall an agent that the normal uninstall cannot remove.' }}
+      Rejected: s1_forced_remove: true
+  when:
+    - s1_forced_remove is defined
+    - s1_forced_remove is not none
+    - s1_forced_remove | string | length > 0

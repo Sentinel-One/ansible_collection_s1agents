@@ -1,10 +1,10 @@
 ---
 # Writes the on-disk layout to the CI log (the installer puts the agent directly
-# in the custom install path, no subdirectory), then asserts the removal
-# behaviour: a failed graceful uninstall leaves the agent in place (ADR 0014),
-# and forced remove follows the /opt/sentinelone symlink, deletes the install
-# and the link, and leaves the canary beside it alone (TSS-25). The dump
-# commands tolerate failure.
+# in the custom install path, no subdirectory), then asserts: a failed graceful
+# uninstall fails the host with the Knowledge Base pointer and leaves the agent
+# running (ADR 0014); a graceful uninstall of a custom-path install leaves the
+# canary beside it alone (TSS-25); and install refuses a shared non-empty
+# directory. The dump commands tolerate failure.
 - name: Verify
   hosts: all
   gather_facts: false
@@ -69,7 +69,6 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_uninstall/tasks/linux.yml"
           vars:
             s1_agent_passphrase: not-used-sentinelctl-cannot-run
-            s1_forced_remove: false
 
         - name: The uninstall unexpectedly succeeded
           ansible.builtin.fail:
@@ -85,11 +84,11 @@
             cmd: mv /opt/sentinelone.aside /opt/sentinelone
           changed_when: true
 
-    - name: Assert the host failed with the forced-remove hint
+    - name: Assert the host failed with the Knowledge Base pointer
       ansible.builtin.assert:
         that:
           - s1_graceful_failure_msg is defined
-          - "'s1_forced_remove: true' in s1_graceful_failure_msg"
+          - "'community.sentinelone.com/s/article/000005374' in s1_graceful_failure_msg"
           - "'unexpectedly succeeded' not in s1_graceful_failure_msg"
 
     - name: Check the agent is still installed and running
@@ -105,54 +104,42 @@
       register: s1_sentinelctl_stat
       failed_when: not s1_sentinelctl_stat.stat.exists or s1_still_running.status.ActiveState != 'active'
 
-    # Forced remove: the target comes from the symlink, never from the variable alone.
-    - name: Look at the default install path before the forced remove
-      become: true
-      ansible.builtin.stat:
-        path: /opt/sentinelone
-        follow: false
-      register: s1_link_before
-
-    - name: Assert /opt/sentinelone is a symlink to the custom install path
-      ansible.builtin.assert:
-        that:
-          - s1_link_before.stat.islnk
-          - s1_link_before.stat.lnk_source == '/srv/s1agent'
-
-    - name: Gather the facts the uninstall role needs
-      ansible.builtin.include_role:
-        name: s1_agent_common
-
-    - name: Gather the agent info the uninstall role needs
-      ansible.builtin.include_role:
-        name: s1_agent_info
-
-    - name: Forced remove with the custom install path
+    # A real graceful uninstall of a custom-path install must not touch what is
+    # beside it. What the vendor uninstaller does to the install directory and the
+    # /opt/sentinelone link is logged, not asserted.
+    - name: Graceful uninstall of the custom-path install
       ansible.builtin.include_role:
         name: s1_agent_uninstall
       vars:
-        s1_forced_remove: true
-        s1_agent_custom_install_path: /srv/s1agent
         s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
         s1_common_skip_reboot: true
 
-    - name: Look at the install, the link and the canary after the forced remove
+    - name: Log the layout after the graceful uninstall
+      become: true
+      ansible.builtin.shell:
+        executable: /bin/bash
+        cmd: |
+          ls -la /opt /srv
+          find /srv -maxdepth 2 -printf '%u:%g %y %p\n'
+          exit 0
+      register: s1_after_uninstall_dump
+      changed_when: false
+      failed_when: false
+
+    - name: Show the layout after the graceful uninstall
+      ansible.builtin.debug:
+        msg: "{{ s1_after_uninstall_dump.stdout_lines }}"
+
+    - name: Look at the canary after the graceful uninstall
       become: true
       ansible.builtin.stat:
-        path: "{{ item }}"
-        follow: false
-      loop:
-        - /srv/s1agent
-        - /opt/sentinelone
-        - /srv/keep.txt
-      register: s1_after_forced_remove
+        path: /srv/keep.txt
+      register: s1_canary_after
 
-    - name: Assert the install and the link are gone and the canary survived
+    - name: Assert the canary beside the custom install path survived
       ansible.builtin.assert:
         that:
-          - not (s1_after_forced_remove.results | selectattr('item', 'eq', '/srv/s1agent') | first).stat.exists
-          - not (s1_after_forced_remove.results | selectattr('item', 'eq', '/opt/sentinelone') | first).stat.exists
-          - (s1_after_forced_remove.results | selectattr('item', 'eq', '/srv/keep.txt') | first).stat.exists
+          - s1_canary_after.stat.exists
 
     # Install must refuse a shared, non-empty custom install path before it
     # changes anything on the endpoint.
