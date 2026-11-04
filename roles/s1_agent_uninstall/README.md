@@ -29,6 +29,8 @@ This is mandatory and is the API token[^1] associated with the user which will r
 s1_forced_remove: false
 ```
 
+On Linux the default is a **graceful uninstall** through `sentinelctl control uninstall`, authorised by the endpoint's passphrase. If it fails (most often a wrong or stale passphrase) the host fails with a message that says so, and the agent stays installed. The role never falls back to a forced remove on its own ([ADR 0014](../../docs/adr/0014-no-automatic-forced-remove.md)). Set `s1_forced_remove: true` to delete the agent's files, service and package records directly as root. On Windows a failed uninstall is retried with the agent's own uninstaller and the passphrase, which is not destructive.
+
 ### Variables from dependencies
 
 No additional variables must be defined. However, the [s1_agent_common](../s1_agent_common/) role defines common variables including working directories.
@@ -80,7 +82,7 @@ s1_validate_certs: true
         name: s1_agent_uninstall
 ```
 
-This is mostly useful when cleaning up a corrupted install.
+This is mostly useful when cleaning up a corrupted install, or after a graceful uninstall has failed and you have decided a forced remove is what you want.
 
 ## License
 

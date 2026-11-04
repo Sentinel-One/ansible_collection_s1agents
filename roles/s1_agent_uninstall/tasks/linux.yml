@@ -17,20 +17,16 @@
       until: s1_sentinelctl_uninstall.rc == 0
       changed_when: "'Successfully uninstalled agent' in s1_sentinelctl_uninstall.stdout"
   rescue:
-    - name: Include tasks to clean up a failed uninstall | Linux
-      ansible.builtin.include_tasks:
-        file: "{{ loop_cleanup_failed }}"
-      with_first_found:
-        - files:
-            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
-            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
-            - "{{ ansible_distribution | lower }}_forced_remove.yml"
-            - "{{ ansible_os_family | lower }}_forced_remove.yml"
-            - "{{ ansible_system | lower }}_forced_remove.yml"
-            - unsupported.yml
-      loop_control:
-        loop_var: loop_cleanup_failed
-        label: "{{ loop_cleanup_failed | basename }}"
+    # A failed graceful uninstall never escalates to forced remove: that is an
+    # unrequested root delete (ADR 0014). The agent stays installed.
+    - name: Fail the host and point at forced remove | Linux
+      ansible.builtin.fail:
+        msg: >-
+          The graceful uninstall of the SentinelOne agent failed on
+          {{ inventory_hostname }}. The most common cause is a wrong or stale
+          passphrase. The agent is still installed. To remove it without the
+          agent's own uninstaller (deleting its files, service and package
+          records as root), rerun with s1_forced_remove: true.
 
 - name: Include tasks to forcibly remove the SeintinelOne agent | Linux
   ansible.builtin.include_tasks:

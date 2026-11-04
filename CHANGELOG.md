@@ -4,6 +4,14 @@
 
 ### Breaking changes
 
+- **A failed Linux graceful uninstall no longer escalates to a forced
+  remove.** `s1_agent_uninstall` used to rescue any failure of
+  `sentinelctl control uninstall` (typically a wrong or stale passphrase) by
+  deleting the agent's files, service and package records as root. The host
+  now fails with a message that names the likely cause and says to rerun with
+  `s1_forced_remove: true`, and the agent stays installed. Anyone relying on
+  the escalation to clean up broken agents must set `s1_forced_remove: true`.
+  Windows is unchanged. See [ADR 0014](./docs/adr/0014-no-automatic-forced-remove.md).
 - **Windows installs and upgrades to Agent 26.2 or newer now fail on Windows
   8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and Windows 10 1507 / 1511.** SentinelOne dropped these operating systems effective with Agent
   26.2, and the installer refuses to run on them. `s1_agent_install` and

@@ -102,7 +102,10 @@ recommended path for versions that ship signed RPMs.
 
 **Custom install path** (`s1_agent_custom_install_path`): An operator-chosen
 directory that the Linux agent installs into instead of `/opt/sentinelone`. The
-installer leaves `/opt/sentinelone` as a symlink to it. _Avoid_: install
+installer leaves `/opt/sentinelone` as a symlink to it. The agent is installed
+directly in that directory (`bin/`, `configuration/` and the rest sit under it,
+with no subdirectory), so it must be a dedicated directory, never a shared one
+such as `/srv` or a home directory. _Avoid_: install
 location, data path (the Windows `INSTALL_PATH_DATA` property is a different
 setting).
 
