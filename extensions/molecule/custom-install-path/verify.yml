@@ -49,32 +49,47 @@
         msg: "{{ s1_layout_dump.stdout_lines + s1_layout_dump.stderr_lines }}"
 
     # A failed graceful uninstall must fail the host and leave the agent
-    # installed and running (ADR 0014). Runs the role's Linux tasks directly
-    # (tasks_from) because main.yml always re-fetches the real passphrase.
-    - name: Graceful uninstall with a wrong passphrase must fail the host
+    # installed and running (ADR 0014). The failure is forced by moving the
+    # /opt/sentinelone link aside so sentinelctl cannot run, because the test
+    # site's agent accepts any passphrase on uninstall, so a wrong passphrase
+    # would not fail. The role's Linux tasks run directly (tasks_from) because
+    # main.yml always re-fetches the real passphrase.
+    - name: Move the default install path link aside so sentinelctl cannot run
+      become: true
+      ansible.builtin.command:
+        cmd: mv /opt/sentinelone /opt/sentinelone.aside
+      changed_when: true
+
+    - name: Graceful uninstall that cannot run must fail the host
       block:
-        - name: Include s1_agent_uninstall with a deliberately wrong passphrase
+        - name: Include s1_agent_uninstall while sentinelctl is unavailable
           ansible.builtin.include_role:
             name: s1_agent_uninstall
             tasks_from: linux
           vars:
-            s1_agent_passphrase: deliberately-wrong-passphrase
+            s1_agent_passphrase: not-used-sentinelctl-cannot-run
             s1_forced_remove: false
 
         - name: The uninstall unexpectedly succeeded
           ansible.builtin.fail:
-            msg: A wrong passphrase must not uninstall the agent.
+            msg: A graceful uninstall that cannot run must not succeed.
       rescue:
         - name: Record the failure message
           ansible.builtin.set_fact:
-            s1_wrong_passphrase_msg: "{{ ansible_failed_result.msg | default('') }}"
+            s1_graceful_failure_msg: "{{ ansible_failed_result.msg | default('') }}"
+      always:
+        - name: Put the default install path link back
+          become: true
+          ansible.builtin.command:
+            cmd: mv /opt/sentinelone.aside /opt/sentinelone
+          changed_when: true
 
     - name: Assert the host failed with the forced-remove hint
       ansible.builtin.assert:
         that:
-          - s1_wrong_passphrase_msg is defined
-          - "'s1_forced_remove: true' in s1_wrong_passphrase_msg"
-          - "'unexpectedly succeeded' not in s1_wrong_passphrase_msg"
+          - s1_graceful_failure_msg is defined
+          - "'s1_forced_remove: true' in s1_graceful_failure_msg"
+          - "'unexpectedly succeeded' not in s1_graceful_failure_msg"
 
     - name: Check the agent is still installed and running
       become: true
