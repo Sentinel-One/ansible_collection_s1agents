@@ -143,13 +143,19 @@
 
     # Install must refuse a shared, non-empty custom install path before it
     # changes anything on the endpoint.
-    - name: Create a shared directory that holds a file
+    - name: Create a shared directory
+      become: true
+      ansible.builtin.file:
+        path: /srv/shared-dir
+        state: directory
+        mode: "0755"
+
+    - name: Put a file in the shared directory
       become: true
       ansible.builtin.copy:
         content: "not an agent install\n"
         dest: /srv/shared-dir/file.txt
         mode: "0644"
-        directory_mode: "0755"
 
     - name: Install into the shared directory must be refused
       block:
