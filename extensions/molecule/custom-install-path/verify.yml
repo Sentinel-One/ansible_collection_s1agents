@@ -52,8 +52,8 @@
     # installed and running (ADR 0014). The failure is forced by moving the
     # /opt/sentinelone link aside so sentinelctl cannot run, because the test
     # site's agent accepts any passphrase on uninstall, so a wrong passphrase
-    # would not fail. The role's Linux tasks run directly (tasks_from) because
-    # main.yml always re-fetches the real passphrase.
+    # would not fail. The role's Linux tasks run directly because main.yml always
+    # re-fetches the real passphrase.
     - name: Move the default install path link aside so sentinelctl cannot run
       become: true
       ansible.builtin.command:
@@ -62,10 +62,11 @@
 
     - name: Graceful uninstall that cannot run must fail the host
       block:
-        - name: Include s1_agent_uninstall while sentinelctl is unavailable
-          ansible.builtin.include_role:
-            name: s1_agent_uninstall
-            tasks_from: linux
+        # Included by path, not include_role: the role's dependencies (s1_agent_info)
+        # also call sentinelctl and would fail before the graceful uninstall runs.
+        - name: Include the Linux uninstall tasks while sentinelctl is unavailable
+          ansible.builtin.include_tasks:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_uninstall/tasks/linux.yml"
           vars:
             s1_agent_passphrase: not-used-sentinelctl-cannot-run
             s1_forced_remove: false
