@@ -137,3 +137,49 @@
           - not (s1_after_forced_remove.results | selectattr('item', 'eq', '/srv/s1agent') | first).stat.exists
           - not (s1_after_forced_remove.results | selectattr('item', 'eq', '/opt/sentinelone') | first).stat.exists
           - (s1_after_forced_remove.results | selectattr('item', 'eq', '/srv/keep.txt') | first).stat.exists
+
+    # Install must refuse a shared, non-empty custom install path before it
+    # changes anything on the endpoint.
+    - name: Create a shared directory that holds a file
+      become: true
+      ansible.builtin.copy:
+        content: "not an agent install\n"
+        dest: /srv/shared-dir/file.txt
+        mode: "0644"
+        directory_mode: "0755"
+
+    - name: Install into the shared directory must be refused
+      block:
+        - name: Include s1_agent_install with a non-empty custom install path
+          ansible.builtin.include_role:
+            name: s1_agent_install
+          vars:
+            s1_agent_custom_install_path: /srv/shared-dir
+            s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+
+        - name: The install unexpectedly succeeded
+          ansible.builtin.fail:
+            msg: Install into a non-empty shared directory must be refused.
+      rescue:
+        - name: Record the refusal message
+          ansible.builtin.set_fact:
+            s1_shared_dir_msg: "{{ ansible_failed_result.msg | default('') }}"
+
+    - name: Look at the shared directory after the refused install
+      become: true
+      ansible.builtin.stat:
+        path: /srv/shared-dir/bin
+      register: s1_shared_dir_bin
+
+    - name: Assert the install was refused with the dedicated-directory message
+      ansible.builtin.assert:
+        that:
+          - s1_shared_dir_msg is defined
+          - "'dedicated directory' in s1_shared_dir_msg"
+          - not s1_shared_dir_bin.stat.exists
+
+    - name: Remove the shared directory
+      become: true
+      ansible.builtin.file:
+        path: /srv/shared-dir
+        state: absent

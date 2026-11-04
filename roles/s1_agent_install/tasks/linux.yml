@@ -50,6 +50,50 @@
       - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
     fail_msg: System Instability Detected
 
+# The installer puts the agent directly in the custom install path (no
+# subdirectory), so a shared directory such as /srv or a home directory would
+# become the agent's install directory, and a forced remove would later delete
+# it. Refuse before anything on the endpoint changes. An existing agent install
+# is fine (reruns stay idempotent).
+- name: Look at the custom install path | Linux
+  ansible.builtin.stat:
+    path: "{{ s1_agent_custom_install_path }}"
+  become: true
+  register: s1_custom_path_stat
+  when:
+    - s1_agent_custom_install_path is defined
+    - s1_agent_custom_install_path is not none
+    - s1_agent_custom_install_path | string | length > 0
+
+- name: Look inside the custom install path | Linux
+  ansible.builtin.find:
+    paths: "{{ s1_agent_custom_install_path }}"
+    file_type: any
+    hidden: true
+    recurse: false
+  become: true
+  register: s1_custom_path_contents
+  when: s1_custom_path_stat.stat.isdir | default(false)
+
+- name: Look for an existing agent install in the custom install path | Linux
+  ansible.builtin.stat:
+    path: "{{ s1_agent_custom_install_path }}/bin/sentinelctl"
+  become: true
+  register: s1_custom_path_marker
+  when: s1_custom_path_stat.stat.isdir | default(false)
+
+- name: Assert the custom install path is a dedicated directory | Linux
+  ansible.builtin.assert:
+    that:
+      - s1_custom_path_contents.matched == 0 or s1_custom_path_marker.stat.exists
+    fail_msg: >-
+      s1_agent_custom_install_path {{ s1_agent_custom_install_path }} already
+      exists, is not empty, and is not a SentinelOne agent install. The agent
+      is installed directly in that directory, so use a dedicated directory
+      (for example /opt/sentinelone-agent), never a shared one such as /srv or
+      a home directory.
+  when: s1_custom_path_contents is not skipped
+
 - name: Create working directory | Linux
   ansible.builtin.include_role:
     name: s1_agent_common

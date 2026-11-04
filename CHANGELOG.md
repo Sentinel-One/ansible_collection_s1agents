@@ -4,6 +4,12 @@
 
 ### Breaking changes
 
+- **Linux installs refuse an existing, non-empty `s1_agent_custom_install_path`
+  that is not already an agent install.** The installer puts the agent directly
+  in that directory, so a shared directory such as `/srv` would become the
+  agent's install directory. `s1_agent_install` now fails the host before
+  changing anything and asks for a dedicated directory. Reruns over an existing
+  agent install are unaffected.
 - **A failed Linux graceful uninstall no longer escalates to a forced
   remove.** `s1_agent_uninstall` used to rescue any failure of
   `sentinelctl control uninstall` (typically a wrong or stale passphrase) by
