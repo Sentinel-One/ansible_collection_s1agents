@@ -26,6 +26,52 @@
     - /lib/systemd/system/sentinelone.service
     - /etc/init.d/sentineld
 
+# Where the agent really lives comes from the endpoint, never from
+# s1_agent_custom_install_path alone (TSS-25). The custom path is deleted only
+# when the default path is a symlink whose target holds the agent's sentinelctl.
+# The variable is a consistency check on that, not a source of the delete path.
+- name: Look at the default install path | Linux
+  ansible.builtin.stat:
+    path: "{{ s1_agent_default_install_path }}"
+    follow: false
+  become: true
+  register: s1_default_path_stat
+
+- name: Look for the agent marker in the symlink target | Linux
+  ansible.builtin.stat:
+    path: "{{ s1_default_path_stat.stat.lnk_source }}/bin/sentinelctl"
+    follow: false
+  become: true
+  register: s1_symlink_marker_stat
+  when:
+    - s1_default_path_stat.stat.islnk | default(false)
+    - s1_default_path_stat.stat.lnk_source is defined
+
+- name: Decide whether a custom install path is safe to delete | Linux
+  ansible.builtin.set_fact:
+    s1_custom_target: "{{ s1_default_path_stat.stat.lnk_source | regex_replace('/+$', '') }}"
+    s1_custom_target_ok: >-
+      {{ (s1_default_path_stat.stat.islnk | default(false))
+         and (s1_symlink_marker_stat.stat.exists | default(false))
+         and (s1_symlink_marker_stat.stat.isreg | default(false))
+         and ((s1_agent_custom_install_path | default('') | string | length == 0)
+              or (s1_agent_custom_install_path | regex_replace('/+$', '')
+                  == s1_default_path_stat.stat.lnk_source | regex_replace('/+$', ''))) }}
+  when: s1_default_path_stat.stat.lnk_source is defined
+
+- name: Skip the custom install path | Linux
+  ansible.builtin.debug:
+    msg: >-
+      WARNING: not deleting the custom install path
+      {{ s1_agent_custom_install_path }}. {{ s1_default_path_stat.stat.path }}
+      is not a symlink to a directory that holds the agent's sentinelctl, or it
+      points somewhere other than s1_agent_custom_install_path. Only the default
+      path is removed.
+  when:
+    - s1_agent_custom_install_path is defined
+    - s1_agent_custom_install_path | default('') | string | length > 0
+    - not (s1_custom_target_ok | default(false) | bool)
+
 - name: Unmount SentinelOne directories | Linux
   ansible.posix.mount:
     path: "{{ item }}"
@@ -36,14 +82,31 @@
     - "{{ s1_agent_default_install_path }}/cgroups/memory"
     - "{{ s1_agent_default_install_path }}/rpm_mount"
 
-- name: Remove SentinelOne directory | Linux
-  ansible.builtin.file:
+# /proc/mounts lists the real path, so a custom install's mounts are unmounted
+# at the symlink target too, before anything is deleted.
+- name: Unmount SentinelOne directories at the custom install path | Linux
+  ansible.posix.mount:
     path: "{{ item }}"
-    state: absent
+    state: unmounted
   become: true
   with_items:
-    - "{{ s1_agent_custom_install_path | default(s1_agent_default_install_path) }}"
-    - "{{ s1_agent_default_install_path }}"
+    - "{{ s1_custom_target }}/mount"
+    - "{{ s1_custom_target }}/cgroups/memory"
+    - "{{ s1_custom_target }}/rpm_mount"
+  when: s1_custom_target_ok | default(false) | bool
+
+- name: Remove the custom install path found through the symlink | Linux
+  ansible.builtin.file:
+    path: "{{ s1_custom_target }}"
+    state: absent
+  become: true
+  when: s1_custom_target_ok | default(false) | bool
+
+- name: Remove the default SentinelOne directory or symlink | Linux
+  ansible.builtin.file:
+    path: "{{ s1_agent_default_install_path }}"
+    state: absent
+  become: true
 
 - name: Remove the sentinelone user | Linux
   ansible.builtin.user:
