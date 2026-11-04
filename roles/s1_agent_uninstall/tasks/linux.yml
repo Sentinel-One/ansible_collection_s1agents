@@ -5,7 +5,7 @@
 # the endpoint's passphrase. There is no forced remove: from agent 25.1 the
 # kernel can protect the agent (BPF with LSM), which blocks deleting its
 # service and files, and an unrequested root delete was a route to TSS-25.
-# See docs/adr/0014-no-automatic-forced-remove.md.
+# See docs/adr/0014-remove-linux-forced-remove.md.
 - name: Uninstall SentinelOne Agent using sentinelctl commands
   block:
     - name: Uninstall SentinelOne agent | Linux

@@ -58,6 +58,7 @@
 - name: Look at the custom install path | Linux
   ansible.builtin.stat:
     path: "{{ s1_agent_custom_install_path }}"
+    follow: true
   become: true
   register: s1_custom_path_stat
   when:
@@ -91,7 +92,8 @@
       exists, is not empty, and is not a SentinelOne agent install. The agent
       is installed directly in that directory, so use a dedicated directory
       (for example /opt/sentinelone-agent), never a shared one such as /srv or
-      a home directory.
+      a home directory. If it holds the leftovers of an earlier install that
+      failed part way, empty it and run again.
   when: s1_custom_path_contents is not skipped
 
 - name: Create working directory | Linux

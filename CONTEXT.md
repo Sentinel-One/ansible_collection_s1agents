@@ -111,16 +111,9 @@ setting).
 
 ### Removal
 
-**Graceful uninstall**: Removing the agent through its own uninstaller, which is
-authorised by the endpoint's passphrase. The only Linux removal: there is no
-forced remove, because agent 25.1 and newer can be protected by the kernel
-(BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md).
-_Avoid_: forced remove, forced uninstall, cleanup.
+**Graceful uninstall**: Removing the agent through its own uninstaller, which is authorised by the endpoint's passphrase. The only Linux removal: there is no forced remove, because agent 25.1 and newer can be protected by the kernel (BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md). _Avoid_: forced remove, forced uninstall, cleanup.
 
-**Windows uninstall.exe fallback** (`s1_windows_use_uninstall_exe`): On Windows,
-removing the agent with its own `uninstall.exe` and the passphrase instead of
-the MSI package. Runs on request, and as the retry when the MSI uninstall fails.
-Not destructive.
+**Windows uninstall.exe fallback** (`s1_windows_use_uninstall_exe`): On Windows, removing the agent with its own `uninstall.exe` and the passphrase instead of the MSI package. Runs on request, and as the retry when the MSI uninstall fails. Not destructive.
 
 ### Secrets & tokens
 
