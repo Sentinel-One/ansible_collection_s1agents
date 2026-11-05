@@ -44,6 +44,6 @@ The `sentinelone.s1agents` collection manages the SentinelOne agent lifecycle on
 
 ## Agent docs
 
-- Domain: `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+- Domain: `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
 - Issues and PRDs: local Markdown in `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
 - Triage labels: `docs/agents/triage-labels.md`.
