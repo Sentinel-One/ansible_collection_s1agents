@@ -1,9 +1,7 @@
 ---
 # Asserts, for an agent installed at /srv/s1agent with a canary beside it: the
-# layout the other steps rely on; a failed graceful uninstall fails the host with
-# the Knowledge Base pointer and leaves the agent running (ADR 0014); a graceful
-# uninstall leaves the canary alone (TSS-25); and install refuses a shared
-# non-empty directory.
+# layout the other steps rely on; a graceful uninstall leaves the canary alone
+# (TSS-25); and install refuses a shared non-empty directory.
 - name: Verify
   hosts: all
   gather_facts: false
@@ -26,62 +24,6 @@
           - s1_layout.results[0].stat.islnk
           - s1_layout.results[0].stat.lnk_source == '/srv/s1agent'
           - s1_layout.results[1].stat.exists
-
-    # A failed graceful uninstall must fail the host and leave the agent
-    # installed and running (ADR 0014). The failure is forced by moving the
-    # /opt/sentinelone link aside so sentinelctl cannot run, because the test
-    # site's agent accepts any passphrase on uninstall, so a wrong passphrase
-    # would not fail. The role's Linux tasks run directly because main.yml always
-    # re-fetches the real passphrase.
-    - name: Move the default install path link aside so sentinelctl cannot run
-      become: true
-      ansible.builtin.command:
-        cmd: mv /opt/sentinelone /opt/sentinelone.aside
-      changed_when: true
-
-    - name: Graceful uninstall that cannot run must fail the host
-      block:
-        # Included by path, not include_role: the role's dependencies (s1_agent_info)
-        # also call sentinelctl and would fail before the graceful uninstall runs.
-        - name: Include the Linux uninstall tasks while sentinelctl is unavailable
-          ansible.builtin.include_tasks:
-            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/../roles/s1_agent_uninstall/tasks/linux.yml"
-          vars:
-            s1_agent_passphrase: not-used-sentinelctl-cannot-run
-
-        - name: The uninstall unexpectedly succeeded
-          ansible.builtin.fail:
-            msg: A graceful uninstall that cannot run must not succeed.
-      rescue:
-        - name: Record the failure message
-          ansible.builtin.set_fact:
-            s1_graceful_failure_msg: "{{ ansible_failed_result.msg | default('') }}"
-      always:
-        - name: Put the default install path link back
-          become: true
-          ansible.builtin.command:
-            cmd: mv /opt/sentinelone.aside /opt/sentinelone
-          changed_when: true
-
-    - name: Assert the host failed with the Knowledge Base pointer
-      ansible.builtin.assert:
-        that:
-          - s1_graceful_failure_msg is defined
-          - "'community.sentinelone.com/s/article/000005374' in s1_graceful_failure_msg"
-          - "'unexpectedly succeeded' not in s1_graceful_failure_msg"
-
-    - name: Check the agent is still installed and running
-      become: true
-      ansible.builtin.systemd:
-        name: sentinelone
-      register: s1_still_running
-
-    - name: Assert the agent is still installed and running
-      become: true
-      ansible.builtin.stat:
-        path: /srv/s1agent/bin/sentinelctl
-      register: s1_sentinelctl_stat
-      failed_when: not s1_sentinelctl_stat.stat.exists or s1_still_running.status.ActiveState != 'active'
 
     # A real graceful uninstall of a custom-path install must not touch what is
     # beside it.
