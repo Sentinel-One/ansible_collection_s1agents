@@ -131,11 +131,8 @@
               s1_agent_site_token must decode to JSON with url and site_key.
               Rejected: (value not shown)
 
-# Ansible has no deprecation mechanism for variables, so a removed option would
-# be silently ignored. s1_forced_remove is removed on Linux (agent 25.1+ can be
-# kernel-protected, so deleting the agent is not possible; see ADR 0014) and
-# renamed on Windows. Fail before any change when it is set to true. A false
-# value is the old default and harmless.
+# Ansible cannot deprecate a variable, so a removed option would be silently
+# ignored. Fail before any change when s1_forced_remove is true (ADR 0014).
 - name: Validate s1_forced_remove is not set
   ansible.builtin.assert:
     that:

@@ -82,7 +82,7 @@ Set a customer specific identifier for the host, depending on the platform this 
 s1_agent_custom_install_path: /some/alternate/install/location
 ```
 
-Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable. On Linux the agent is installed directly in this directory (with `/opt/sentinelone` left as a symlink to it), so it must be a **dedicated directory**. The install fails before changing the endpoint if the path already exists, is not empty, and is not already an agent install; set it to a new or empty directory, never a shared one such as `/srv` or a home directory.
+Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable. On Linux it must be a dedicated directory: install fails if it exists, is not empty, and is not already an agent install.
 
 ```yaml
 s1_agent_management_proxy: http://proxy.local:8080

@@ -1,52 +1,31 @@
 ---
-# Writes the on-disk layout to the CI log (the installer puts the agent directly
-# in the custom install path, no subdirectory), then asserts: a failed graceful
-# uninstall fails the host with the Knowledge Base pointer and leaves the agent
-# running (ADR 0014); a graceful uninstall of a custom-path install leaves the
-# canary beside it alone (TSS-25); and install refuses a shared non-empty
-# directory. The dump commands tolerate failure.
+# Asserts, for an agent installed at /srv/s1agent with a canary beside it: the
+# layout the other steps rely on; a failed graceful uninstall fails the host with
+# the Knowledge Base pointer and leaves the agent running (ADR 0014); a graceful
+# uninstall leaves the canary alone (TSS-25); and install refuses a shared
+# non-empty directory.
 - name: Verify
   hosts: all
   gather_facts: false
   tasks:
-    - name: Dump the custom install path layout
+    # The steps below rely on this: /opt/sentinelone leads to the install, and
+    # the agent is directly in it (no subdirectory).
+    - name: Look at the default install path and the agent binary
       become: true
-      ansible.builtin.shell:
-        executable: /bin/bash
-        cmd: |
-          set -o pipefail
-          echo "--- readlink -f /opt/sentinelone"
-          readlink -f /opt/sentinelone
-          echo "--- stat /opt/sentinelone (no dereference)"
-          stat /opt/sentinelone
-          echo "--- stat -L /opt/sentinelone (dereferenced)"
-          stat -L /opt/sentinelone
-          echo "--- ls -la /opt"
-          ls -la /opt
-          echo "--- find /srv -maxdepth 3 (owner:group type path)"
-          find /srv -maxdepth 3 -printf '%u:%g %y %p\n'
-          echo "--- canary /srv/keep.txt"
-          ls -l /srv/keep.txt
-          echo "--- sentinelctl status"
-          /opt/sentinelone/bin/sentinelctl status
-          echo "--- sentinelctl config"
-          /opt/sentinelone/bin/sentinelctl config
-          echo "--- sentinelctl version"
-          /opt/sentinelone/bin/sentinelctl version
-          echo "--- sentinel processes"
-          ps -eo user,args | grep -i '[s]entinel'
-          echo "--- mounts mentioning sentinel or /srv"
-          grep -E 'sentinel|/srv' /proc/mounts
-          echo "--- package file list under /srv or /opt (head)"
-          { rpm -ql SentinelAgent 2>/dev/null || dpkg -L sentinelagent 2>/dev/null; } | grep -E '^/(srv|opt)' | head -40
-          exit 0
-      register: s1_layout_dump
-      changed_when: false
-      failed_when: false
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        follow: false
+      loop:
+        - /opt/sentinelone
+        - /srv/s1agent/bin/sentinelctl
+      register: s1_layout
 
-    - name: Show the layout dump
-      ansible.builtin.debug:
-        msg: "{{ s1_layout_dump.stdout_lines + s1_layout_dump.stderr_lines }}"
+    - name: Assert the layout
+      ansible.builtin.assert:
+        that:
+          - s1_layout.results[0].stat.islnk
+          - s1_layout.results[0].stat.lnk_source == '/srv/s1agent'
+          - s1_layout.results[1].stat.exists
 
     # A failed graceful uninstall must fail the host and leave the agent
     # installed and running (ADR 0014). The failure is forced by moving the
@@ -105,30 +84,13 @@
       failed_when: not s1_sentinelctl_stat.stat.exists or s1_still_running.status.ActiveState != 'active'
 
     # A real graceful uninstall of a custom-path install must not touch what is
-    # beside it. What the vendor uninstaller does to the install directory and the
-    # /opt/sentinelone link is logged, not asserted.
+    # beside it.
     - name: Graceful uninstall of the custom-path install
       ansible.builtin.include_role:
         name: s1_agent_uninstall
       vars:
         s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
         s1_common_skip_reboot: true
-
-    - name: Log the layout after the graceful uninstall
-      become: true
-      ansible.builtin.shell:
-        executable: /bin/bash
-        cmd: |
-          ls -la /opt /srv
-          find /srv -maxdepth 2 -printf '%u:%g %y %p\n'
-          exit 0
-      register: s1_after_uninstall_dump
-      changed_when: false
-      failed_when: false
-
-    - name: Show the layout after the graceful uninstall
-      ansible.builtin.debug:
-        msg: "{{ s1_after_uninstall_dump.stdout_lines }}"
 
     - name: Look at the canary after the graceful uninstall
       become: true
@@ -180,11 +142,11 @@
         path: /srv/shared-dir/bin
       register: s1_shared_dir_bin
 
-    - name: Assert the install was refused with the dedicated-directory message
+    - name: Assert the install was refused
       ansible.builtin.assert:
         that:
           - s1_shared_dir_msg is defined
-          - "'dedicated directory' in s1_shared_dir_msg"
+          - "'is not a SentinelOne agent install' in s1_shared_dir_msg"
           - not s1_shared_dir_bin.stat.exists
 
     - name: Remove the shared directory

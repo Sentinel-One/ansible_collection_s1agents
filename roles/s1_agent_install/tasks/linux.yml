@@ -50,11 +50,8 @@
       - "'FUNCTION TRACING IS CORRUPTED' not in s1_dmesg_raw.stdout"
     fail_msg: System Instability Detected
 
-# The installer puts the agent directly in the custom install path (no
-# subdirectory), so a shared directory such as /srv or a home directory would
-# become the agent's install directory and the agent could later be removed with
-# it. Refuse before anything on the endpoint changes. An existing agent install
-# is fine (reruns stay idempotent).
+# Refuse before anything on the endpoint changes. An existing agent install is
+# accepted so reruns stay idempotent.
 - name: Look at the custom install path | Linux
   ansible.builtin.stat:
     path: "{{ s1_agent_custom_install_path }}"
@@ -89,11 +86,7 @@
       - s1_custom_path_contents.matched == 0 or s1_custom_path_marker.stat.exists
     fail_msg: >-
       s1_agent_custom_install_path {{ s1_agent_custom_install_path }} already
-      exists, is not empty, and is not a SentinelOne agent install. The agent
-      is installed directly in that directory, so use a dedicated directory
-      (for example /opt/sentinelone-agent), never a shared one such as /srv or
-      a home directory. If it holds the leftovers of an earlier install that
-      failed part way, empty it and run again.
+      exists, is not empty, and is not a SentinelOne agent install.
   when: s1_custom_path_contents is not skipped
 
 - name: Create working directory | Linux

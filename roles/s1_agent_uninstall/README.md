@@ -29,9 +29,9 @@ This is mandatory and is the API token[^1] associated with the user which will r
 s1_windows_use_uninstall_exe: false
 ```
 
-Windows only. By default the agent is uninstalled through its MSI package by product GUID, and if that fails the role retries with the agent's own `uninstall.exe` and the passphrase. Set this to `true` to skip the MSI uninstall and use `uninstall.exe` directly. It was called `s1_forced_remove` before; the old name is rejected with a message naming the new one.
+Windows only. Uninstall with the agent's own `uninstall.exe` instead of the MSI package. This is also the retry when the MSI uninstall fails.
 
-On Linux the agent is removed with `sentinelctl control uninstall`, authorised by the endpoint's passphrase. There is no forced remove: agent 25.1 and newer can be protected by the kernel (BPF with LSM), which blocks deleting the agent, and `s1_forced_remove: true` is rejected ([ADR 0014](../../docs/adr/0014-remove-linux-forced-remove.md)). If the uninstall fails on either OS, the host fails; see the Knowledge Base article [uninstalling the agent when the normal uninstall fails](https://community.sentinelone.com/s/article/000005374).
+If the uninstall fails, the host fails; see the Knowledge Base article [uninstalling the agent when the normal uninstall fails](https://community.sentinelone.com/s/article/000005374).
 
 ### Variables from dependencies
 

@@ -100,20 +100,13 @@ download checksum + the rpm header/payload digest.
 `s1_install_gpg_signed_rpm: true`) with full GPG signature verification. The
 recommended path for versions that ship signed RPMs.
 
-**Custom install path** (`s1_agent_custom_install_path`): An operator-chosen
-directory that the Linux agent installs into instead of `/opt/sentinelone`. The
-installer leaves `/opt/sentinelone` as a symlink to it. The agent is installed
-directly in that directory (`bin/`, `configuration/` and the rest sit under it,
-with no subdirectory), so it must be a dedicated directory, never a shared one
-such as `/srv` or a home directory. _Avoid_: install
-location, data path (the Windows `INSTALL_PATH_DATA` property is a different
-setting).
+**Custom install path** (`s1_agent_custom_install_path`): An operator-chosen directory that the Linux agent installs into instead of `/opt/sentinelone`, directly with no subdirectory. The installer leaves `/opt/sentinelone` as a symlink to it. It must be a dedicated directory, never a shared one such as `/srv` or a home directory. _Avoid_: install location, data path (the Windows `INSTALL_PATH_DATA` property is a different setting).
 
 ### Removal
 
-**Graceful uninstall**: Removing the agent through its own uninstaller, which is authorised by the endpoint's passphrase. The only Linux removal: there is no forced remove, because agent 25.1 and newer can be protected by the kernel (BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md). _Avoid_: forced remove, forced uninstall, cleanup.
+**Graceful uninstall**: Removing the agent through its own uninstaller, authorised by the endpoint's passphrase. The only Linux removal: there is no forced remove, because agent 25.1 and newer can be protected by the kernel (BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md). _Avoid_: forced remove, forced uninstall, cleanup.
 
-**Windows uninstall.exe fallback** (`s1_windows_use_uninstall_exe`): On Windows, removing the agent with its own `uninstall.exe` and the passphrase instead of the MSI package. Runs on request, and as the retry when the MSI uninstall fails. Not destructive.
+**Windows uninstall.exe fallback** (`s1_windows_use_uninstall_exe`): Removing the agent with its own `uninstall.exe` and the passphrase instead of the MSI package, on request or as the retry when the MSI uninstall fails.
 
 ### Secrets & tokens
 
