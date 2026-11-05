@@ -10,5 +10,6 @@
 
 ## Consequences
 
-- Breaking for anyone who relied on the escalation or on `s1_forced_remove: true` to clean up broken or pre-25.1 agents. Central validation rejects the old variable, because Ansible cannot deprecate one and it would otherwise be ignored silently.
-- Windows keeps its second uninstall mechanism (the agent's own `uninstall.exe`), which is not destructive and not affected by kernel protection. Only the variable name changes.
+- Breaking for anyone who relied on the escalation or on `s1_forced_remove: true` to clean up broken or pre-25.1 agents. Central validation fails the host before any change when `s1_forced_remove` is set to `true`, naming the removal and the KB article, because Ansible cannot deprecate a variable and the option would otherwise be ignored silently.
+- Windows keeps its second uninstall mechanism (the agent's own `uninstall.exe` with the passphrase), which is not destructive and is not affected by kernel protection. The variable is renamed `s1_windows_use_uninstall_exe`, and `s1_forced_remove` is rejected there too, with a message naming the new variable.
+- A failed uninstall on either OS fails the host with a pointer to the KB article.
