@@ -24,6 +24,14 @@ on:
         required: false
         type: string
         default: ssh
+      windows_use_uninstall_exe:
+        description: >-
+          Windows only. Sets s1_windows_use_uninstall_exe for the scenario, so a
+          scenario that uninstalls can be run a second time through the agent's
+          own uninstall.exe.
+        required: false
+        type: boolean
+        default: false
     secrets:
       S1_AGENT_SITE_TOKEN:
         required: true
@@ -35,7 +43,7 @@ permissions:
 
 jobs:
   molecule:
-    name: "${{ inputs.scenario }} - ${{ inputs.platform_preset }} (${{ inputs.connection }}, libvirt)"
+    name: "${{ inputs.scenario }} - ${{ inputs.platform_preset }}${{ inputs.windows_use_uninstall_exe && ' + uninstall.exe' || '' }} (${{ inputs.connection }}, libvirt)"
     runs-on: ubuntu-24.04
     env:
       ANSIBLE_FORCE_COLOR: "1" # allows ansible colors to be passed to GitHub Actions
@@ -51,6 +59,7 @@ jobs:
       MOLECULE_SCENARIO: ${{ inputs.scenario }}
       PLATFORM_PRESET: ${{ inputs.platform_preset }}
       CONNECTION: ${{ inputs.connection }}
+      S1_WINDOWS_USE_UNINSTALL_EXE: ${{ inputs.windows_use_uninstall_exe }}
     steps:
       - name: Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

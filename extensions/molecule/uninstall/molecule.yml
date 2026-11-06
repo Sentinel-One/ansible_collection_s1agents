@@ -61,6 +61,7 @@ provisioner:
         ansible_connection: ssh
         ansible_shell_type: cmd
         ansible_win_async_startup_timeout: 60
+        s1_windows_use_uninstall_exe: ${S1_WINDOWS_USE_UNINSTALL_EXE:-false}
       Darwin:
   playbooks:
     cleanup: ../common/templates/cleanup-uninstall-agent.yml
