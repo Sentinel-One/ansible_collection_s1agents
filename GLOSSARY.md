@@ -136,11 +136,7 @@ play author, so unvalidated operator inputs become a real hardening obligation
 for this collection as a vendor — see
 [ADR 0001](./docs/adr/0001-trust-model.md).
 
-**Management Console trust**: The Management Console is part of the trusted
-control plane, as operator variables are: its API responses are trusted as much
-as the play author, because a console can already run scripts on every agent it
-manages. See [ADR 0001](./docs/adr/0001-trust-model.md). _Avoid_: treating a
-hostile console as an attacker model for this collection.
+**Management Console trust**: The Management Console is part of the trusted control plane, as operator variables are: its API responses are trusted as much as the play author, because a console can already run scripts on every agent it manages. See [ADR 0001](./docs/adr/0001-trust-model.md). _Avoid_: treating a hostile console as an attacker model for this collection.
 
 **Endpoint local-user boundary**: The one privilege boundary that is real
 regardless of trust model: the play runs as `root`/`SYSTEM`, so secrets on argv
