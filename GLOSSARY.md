@@ -132,9 +132,8 @@ privilege boundary.
 
 **AWX/survey model**: Deployment under AWX/AAP where lower-privileged users
 supply variables via job-template surveys. Here the variable-setter is _not_ the
-play author, so unvalidated operator inputs become a real hardening obligation
-for this collection as a vendor — see
-[ADR 0001](./docs/adr/0001-trust-model.md).
+play author, so the collection validates operator inputs as defense in depth —
+see [ADR 0001](./docs/adr/0001-trust-model.md).
 
 **Management Console trust**: The Management Console is part of the trusted control plane, as operator variables are: its API responses are trusted as much as the play author, because a console can already run scripts on every agent it manages. See [ADR 0001](./docs/adr/0001-trust-model.md). _Avoid_: treating a hostile console as an attacker model for this collection.
 

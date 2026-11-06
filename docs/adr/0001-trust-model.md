@@ -1,4 +1,4 @@
-# Trust model: trusted-CLI by default, AWX/survey as the hardening driver
+# Trust model: trusted-CLI by default, AWX/survey as the defense-in-depth driver
 
 Ansible treats operator-supplied variables as part of the trusted control plane,
 so in the default CLI deployment "inject via host*var" crosses no privilege
@@ -8,7 +8,7 @@ collection consumed downstream*, sometimes under AWX/AAP where lower-privileged
 users supply variables via job-template surveys — there the variable-setter is
 not the play author. We therefore right-size the "variable injection" findings
 (MSI properties, rpm basename, custom-install-path delete) out of Critical/High
-to Low/Medium **vendor hardening** obligations, and fix them by validating +
+to Low/Medium **defense-in-depth** findings, and fix them by validating +
 quoting rather than treating them as standing RCEs.
 
 ## Consequences
