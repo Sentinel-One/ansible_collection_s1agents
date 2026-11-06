@@ -127,7 +127,7 @@ must never reach a process command line — see
 
 **Trusted-CLI model**: The default Ansible deployment, where whoever sets a
 variable (inventory, `group_vars`, `-e`) is the play author. Operator variables
-are part of the trusted control plane, so "inject via host_var" crosses no
+are part of the trusted control plane, so "inject via `host_var`" crosses no
 privilege boundary.
 
 **AWX/survey model**: Deployment under AWX/AAP where lower-privileged users

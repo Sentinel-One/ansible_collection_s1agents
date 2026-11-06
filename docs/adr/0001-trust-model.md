@@ -1,10 +1,10 @@
 # Trust model: trusted-CLI by default, AWX/survey as the defense-in-depth driver
 
 Ansible treats operator-supplied variables as part of the trusted control plane,
-so in the default CLI deployment "inject via host*var" crosses no privilege
+so in the default CLI deployment "inject via `host_var`" crosses no privilege
 boundary (anyone who can set a variable can already run arbitrary modules). We
-nonetheless validate and quote operator inputs because this is a \_published
-collection consumed downstream*, sometimes under AWX/AAP where lower-privileged
+nonetheless validate and quote operator inputs because this is a _published
+collection consumed downstream_, sometimes under AWX/AAP where lower-privileged
 users supply variables via job-template surveys — there the variable-setter is
 not the play author. We therefore right-size the "variable injection" findings
 (MSI properties, rpm basename, custom-install-path delete) out of Critical/High
