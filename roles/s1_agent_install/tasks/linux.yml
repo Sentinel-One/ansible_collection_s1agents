@@ -141,7 +141,13 @@
     - name: Check if SentinelOne RPM package is installed | Linux
       block:
         - name: Check if SentinelOne RPM package is installed | Linux
-          ansible.builtin.command: rpm -q --qf "%{VERSION}\n" '{{ s1_package_name }}' # noqa command-instead-of-module
+          ansible.builtin.command: # noqa command-instead-of-module
+            argv:
+              - rpm
+              - -q
+              - --qf
+              - "%{VERSION}\n"
+              - "{{ s1_package_name }}"
           register: s1_rpm_query
           failed_when:
             - s1_rpm_query is failed
