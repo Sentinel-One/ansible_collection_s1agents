@@ -1,5 +1,0 @@
----
-# vars file for s1_agent_uninstall
-
-# Default install location for SentinelOne agent
-s1_agent_default_install_path: /opt/sentinelone
