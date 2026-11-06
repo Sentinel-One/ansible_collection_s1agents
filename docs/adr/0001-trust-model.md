@@ -1,14 +1,14 @@
-# Trust model: trusted-CLI by default, AWX/survey as the hardening driver
+# Trust model: trusted-CLI by default, AWX/survey as the defense-in-depth driver
 
 Ansible treats operator-supplied variables as part of the trusted control plane,
-so in the default CLI deployment "inject via host*var" crosses no privilege
+so in the default CLI deployment "inject via `host_var`" crosses no privilege
 boundary (anyone who can set a variable can already run arbitrary modules). We
-nonetheless validate and quote operator inputs because this is a \_published
-collection consumed downstream*, sometimes under AWX/AAP where lower-privileged
+nonetheless validate and quote operator inputs because this is a _published
+collection consumed downstream_, sometimes under AWX/AAP where lower-privileged
 users supply variables via job-template surveys — there the variable-setter is
 not the play author. We therefore right-size the "variable injection" findings
 (MSI properties, rpm basename, custom-install-path delete) out of Critical/High
-to Low/Medium **vendor hardening** obligations, and fix them by validating +
+to Low/Medium **defense-in-depth** findings, and fix them by validating +
 quoting rather than treating them as standing RCEs.
 
 ## Consequences
@@ -24,3 +24,5 @@ quoting rather than treating them as standing RCEs.
   supplied. Those findings (the `/tmp` race, passphrase on argv) are fixed
   unconditionally, not right-sized. See [ADR 0003](./0003-passphrase-off-argv.md)
   and [ADR 0004](./0004-tempfile-work-dirs.md).
+- Fields from Management Console API responses (package `fileName`, `link`, `sha1`) are still shape-checked and kept off command strings, but as hygiene, not as a boundary. Findings that assume a hostile console are right-sized the same way.
+- We do not set the machine-wide `TransformsSecure` Installer policy, even though scanners recommend it against MSI `TRANSFORMS=` injection. It only controls where Windows Installer caches a transform; it does not stop msiexec loading one named on the command line. It would also change Installer behaviour for every other product on the endpoint and contend with customer Group Policy. The defence against injected MSI properties is strict validation of every value the collection puts on the installer command line.

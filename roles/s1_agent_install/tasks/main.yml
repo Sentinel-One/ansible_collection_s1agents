@@ -25,16 +25,16 @@
     loop_var: loop_vars
     label: '{{ loop_vars | basename }}'
 
-- name: Assert that s1_agent_site_token is valid
+# Presence only. The token's shape and payload are validated centrally in
+# s1_agent_common (validate_inputs.yml), which skips an unset token.
+- name: Assert that s1_agent_site_token is set
   ansible.builtin.assert:
     that:
       - s1_agent_site_token is defined
       - s1_agent_site_token is not none
       - s1_agent_site_token | length > 0
-      - (s1_agent_site_token | b64decode | from_json).site_key is defined
-      - (s1_agent_site_token | b64decode | from_json).url is defined
-    fail_msg: s1_agent_site_token is not valid
-    success_msg: s1_agent_site_token is valid
+    fail_msg: s1_agent_site_token is required
+    success_msg: s1_agent_site_token is set
 
 - name: Assert requested agent version is below the Windows version ceiling
   ansible.builtin.include_role:

@@ -43,7 +43,7 @@ permissions:
 
 jobs:
   molecule:
-    name: "${{ matrix.scenario }} - ${{ matrix.platform.preset }}"
+    name: "${{ matrix.scenario }} - ${{ matrix.platform.preset }}${{ matrix.platform.uninstall_exe && ' + uninstall.exe' || '' }}"
     # Fork pull requests are gated out so they never receive secrets by any
     # automatic path. No pull_request_target anywhere - see ADR 0010.
     if: >-
@@ -61,10 +61,16 @@ jobs:
             group: Linux
           - preset: windows
             group: Windows
+          # Same scenario again, through the agent's own uninstall.exe
+          # (s1_windows_use_uninstall_exe: true) instead of the MSI package.
+          - preset: windows
+            group: Windows
+            uninstall_exe: true
     uses: ./.github/workflows/run-molecule.yml
     with:
       scenario: ${{ matrix.scenario }}
       platform_preset: ${{ matrix.platform.preset }}
       inventory_group: ${{ matrix.platform.group }}
       connection: ssh
+      windows_use_uninstall_exe: ${{ matrix.platform.uninstall_exe || false }}
     secrets: inherit

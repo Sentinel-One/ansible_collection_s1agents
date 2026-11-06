@@ -26,8 +26,12 @@ This is mandatory and is the API token[^1] associated with the user which will r
 [^1]: See the SentinelOne KnowledgeBase article [Generating API Tokens](https://community.sentinelone.com/s/article/000005262).
 
 ```yaml
-s1_forced_remove: false
+s1_windows_use_uninstall_exe: false
 ```
+
+Windows only. Uninstall with the agent's own `uninstall.exe` instead of the MSI package. This is also the retry when the MSI uninstall fails.
+
+If the uninstall fails, the host fails; see the Knowledge Base article [uninstalling the agent when the normal uninstall fails](https://community.sentinelone.com/s/article/000005374).
 
 ### Variables from dependencies
 
@@ -44,7 +48,7 @@ s1_validate_certs: true
 ## Dependencies
 
 - [s1_agent_info](../s1_agent_info/) role: Gathers basic information about the SentinelOne agent.
-- [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console. Note: this dependency does not exist for Linux agents when `s1_forced_remove` is `true`.
+- [s1_mgmt_get_passphrase](../s1_mgmt_get_passphrase/) role: retrieves the agent's unique passphrase from the management console.
 - [s1_agent_common](../s1_agent_common/README.md) role: configures common variables for all roles in the collection
 - [ansible.windows](https://docs.ansible.com/ansible/latest/collections/ansible/windows/index.html)
 - [ansible.posix](https://docs.ansible.com/ansible/latest/collections/ansible/posix/index.html)
@@ -66,21 +70,19 @@ s1_validate_certs: true
         name: s1_agent_uninstall
 ```
 
-### Uninstall the SentinelOne agent using Linux OS commands
+### Uninstall the SentinelOne agent on Windows with its own uninstall.exe
 
 ```yaml
 ---
-- name: Uninstall the SentinelOne agent
-  hosts: all
+- name: Uninstall the SentinelOne agent with uninstall.exe
+  hosts: windows
   vars:
-    s1_forced_remove: true
+    s1_windows_use_uninstall_exe: true
   tasks:
     - name: Include s1_agent_uninstall
       ansible.builtin.include_role:
         name: s1_agent_uninstall
 ```
-
-This is mostly useful when cleaning up a corrupted install.
 
 ## License
 

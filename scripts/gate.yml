@@ -61,6 +61,8 @@
   platforms: [rocky8, opensuse15]
 - scenario: uuid
   platforms: [rocky8, ubuntu2204, opensuse15, windows]
+- scenario: custom-install-path
+  platforms: [rocky8, ubuntu2204]
 - scenario: windows-legacy-plus
   platforms: [windowslegacyplus]
 - scenario: windows-tier-matrix

@@ -4,6 +4,9 @@
 
 ### Breaking changes
 
+- **A Windows uninstall now fails when the agent's own `uninstall.exe` cannot be located.** After a failed MSI uninstall, or with `s1_windows_use_uninstall_exe: true`, a missing service registry key used to skip the retry and report success without removing anything.
+- **Linux installs refuse an existing, non-empty `s1_agent_custom_install_path` that is not already an agent install.** The installer puts the agent directly in that directory, so a shared directory such as `/srv` would become the agent's install directory. `s1_agent_install` now fails the host before changing anything and asks for a dedicated directory. Reruns over an existing agent install are unaffected.
+- **Forced remove is removed on Linux.** A failed `sentinelctl control uninstall` used to be followed by a root delete of the agent's files, and `s1_forced_remove: true` ran that delete on request. Agent 25.1 and newer is protected by the kernel (BPF with LSM), so the delete fails on a healthy agent, and it could delete `s1_agent_custom_install_path`. A failed uninstall now fails the host and points to [KB 000005374](https://community.sentinelone.com/s/article/000005374), as it does on Windows. `s1_forced_remove: true` now fails the host. On Windows the option is renamed `s1_windows_use_uninstall_exe`.
 - **Windows installs and upgrades to Agent 26.2 or newer now fail on Windows
   8.1 64-bit, Server / Storage Server 2012 R2 64-bit, and Windows 10 1507 / 1511.** SentinelOne dropped these operating systems effective with Agent
   26.2, and the installer refuses to run on them. `s1_agent_install` and

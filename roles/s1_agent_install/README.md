@@ -13,11 +13,11 @@ Inventory hosts on which the agent is being installed must be running on a suppo
 
 ### Windows hosts that Agent 26.2 no longer supports
 
-Installing Agent 26.2 or newer on Windows 8.1 64-bit, Server / Storage Server 2012 R2 64-bit, Windows 10 1507 or Windows 10 1511 fails that host before anything is downloaded, because SentinelOne dropped these operating systems effective with 26.2 and the installer refuses to run on them. Other hosts in the play continue. If `s1_agent_version` is not set, these hosts are pinned to the last supported release (26.1.2.177). The host stays in the Modern tier; see `s1_windows_version_ceiling` in [CONTEXT.md](../../CONTEXT.md) (Version ceiling).
+Installing Agent 26.2 or newer on Windows 8.1 64-bit, Server / Storage Server 2012 R2 64-bit, Windows 10 1507 or Windows 10 1511 fails that host before anything is downloaded, because SentinelOne dropped these operating systems effective with 26.2 and the installer refuses to run on them. Other hosts in the play continue. If `s1_agent_version` is not set, these hosts are pinned to the last supported release (26.1.2.177). The host stays in the Modern tier; see `s1_windows_version_ceiling` in [GLOSSARY.md](../../GLOSSARY.md) (Version ceiling).
 
 ### Windows Legacy Plus hosts require PowerShell 4.0+
 
-Installing on a Windows "Legacy Plus" host (see `s1_windows_tier` in [CONTEXT.md](../../CONTEXT.md)) requires PowerShell 4.0 or newer. `ansible.windows.win_package` unconditionally computes an installer checksum via `Get-FileHash`, which does not exist before PowerShell 4 - every `ansible.windows` release from 2.8.0 onward includes this behavior. The role fails before ever reaching `win_package`.
+Installing on a Windows "Legacy Plus" host (see `s1_windows_tier` in [GLOSSARY.md](../../GLOSSARY.md)) requires PowerShell 4.0 or newer. `ansible.windows.win_package` unconditionally computes an installer checksum via `Get-FileHash`, which does not exist before PowerShell 4 - every `ansible.windows` release from 2.8.0 onward includes this behavior. The role fails before ever reaching `win_package`.
 
 Windows Server editions (Server 2008 R2 SP1, Server 2012) can be upgraded to PowerShell 4.0+ via an official Microsoft Windows Management Framework (WMF) update.
 
@@ -82,7 +82,7 @@ Set a customer specific identifier for the host, depending on the platform this 
 s1_agent_custom_install_path: /some/alternate/install/location
 ```
 
-Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable.
+Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable. On Linux it must be a dedicated directory: install fails if it exists, is not empty, and is not already an agent install.
 
 ```yaml
 s1_agent_management_proxy: http://proxy.local:8080

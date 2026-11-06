@@ -1,0 +1,29 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Create the canary file beside the custom install path
+      become: true
+      block:
+        - name: Ensure /srv exists
+          ansible.builtin.file:
+            path: /srv
+            state: directory
+            mode: "0755"
+
+        - name: Place the canary file at /srv/keep.txt
+          ansible.builtin.copy:
+            content: "canary - must survive install and uninstall\n"
+            dest: /srv/keep.txt
+            mode: "0644"
+
+    - name: Include s1_agent_install with a custom install path
+      ansible.builtin.include_role:
+        name: s1_agent_install
+      vars:
+        s1_agent_custom_install_path: /srv/s1agent
+        s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+
+    - name: Flush handlers
+      ansible.builtin.meta: flush_handlers

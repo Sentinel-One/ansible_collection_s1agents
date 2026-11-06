@@ -1,7 +1,7 @@
 ---
 # Classify the host into a Windows support tier (s1_windows_tier: legacy |
 # legacy_plus | modern) and normalize OS bitness (s1_os_bitness: 64-bit |
-# 32-bit) from a locale-independent signal. See CONTEXT.md (### Windows
+# 32-bit) from a locale-independent signal. See GLOSSARY.md (### Windows
 # support tiers) and docs/adr/0008-windows-support-tier-routing.md.
 #
 # Molecule's fact-mocked tier cases pre-set s1_os_bitness via set_fact before

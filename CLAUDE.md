@@ -41,9 +41,10 @@ The `sentinelone.s1agents` collection manages the SentinelOne agent lifecycle on
 - **Linux 2-step upgrade:** an agent older than 22.2.2.2 cannot go directly to 22.3 or later. See `playbooks/example_upgrade_linux_with_gpg_signed_package.yml`.
 - **Secrets:** do not commit `s1_api_token` or site tokens. Pass them through vault or the environment.
 - **Markdown:** do not hard-wrap prose. Prettier does not format YAML. ansible-lint owns YAML.
+- **Markdown underscores:** put identifiers that contain `_` (`host_var`, `s1_agent_src`) in a code span. Prettier reads a bare `_` as emphasis and rewrites the text (`host_var` became `host*var`).
 
 ## Agent docs
 
-- Domain: `CONTEXT.md` and `docs/adr/`. See `docs/agents/domain.md`.
+- Domain: `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
 - Issues and PRDs: local Markdown in `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
 - Triage labels: `docs/agents/triage-labels.md`.

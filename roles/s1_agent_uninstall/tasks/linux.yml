@@ -1,9 +1,9 @@
 ---
 # tasks file for s1_agent_uninstall
 
+# The only Linux removal is the agent's own graceful uninstall; there is no forced
+# remove (ADR 0014).
 - name: Uninstall SentinelOne Agent using sentinelctl commands
-  when:
-    - not s1_forced_remove | default('false') | bool
   block:
     - name: Uninstall SentinelOne agent | Linux
       ansible.builtin.command:
@@ -17,33 +17,11 @@
       until: s1_sentinelctl_uninstall.rc == 0
       changed_when: "'Successfully uninstalled agent' in s1_sentinelctl_uninstall.stdout"
   rescue:
-    - name: Include tasks to clean up a failed uninstall | Linux
-      ansible.builtin.include_tasks:
-        file: "{{ loop_cleanup_failed }}"
-      with_first_found:
-        - files:
-            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
-            - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
-            - "{{ ansible_distribution | lower }}_forced_remove.yml"
-            - "{{ ansible_os_family | lower }}_forced_remove.yml"
-            - "{{ ansible_system | lower }}_forced_remove.yml"
-            - unsupported.yml
-      loop_control:
-        loop_var: loop_cleanup_failed
-        label: "{{ loop_cleanup_failed | basename }}"
-
-- name: Include tasks to forcibly remove the SeintinelOne agent | Linux
-  ansible.builtin.include_tasks:
-    file: "{{ loop_forced_remove }}"
-  with_first_found:
-    - files:
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}_forced_remove.yml"
-        - "{{ ansible_distribution | lower }}_{{ ansible_distribution_major_version }}_forced_remove.yml"
-        - "{{ ansible_distribution | lower }}_forced_remove.yml"
-        - "{{ ansible_os_family | lower }}_forced_remove.yml"
-        - "{{ ansible_system | lower }}_forced_remove.yml"
-        - unsupported.yml
-  loop_control:
-    loop_var: loop_forced_remove
-    label: "{{ loop_forced_remove | basename }}"
-  when: s1_forced_remove | default('false') | bool
+    - name: Fail the host and point at the Knowledge Base | Linux
+      ansible.builtin.fail:
+        msg: >-
+          The graceful uninstall of the SentinelOne agent failed on
+          {{ inventory_hostname }}. The most common cause is a wrong or stale
+          passphrase. The agent is still installed. See the Knowledge Base
+          article on uninstalling the agent when the normal uninstall fails:
+          https://community.sentinelone.com/s/article/000005374

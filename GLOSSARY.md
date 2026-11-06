@@ -100,6 +100,14 @@ download checksum + the rpm header/payload digest.
 `s1_install_gpg_signed_rpm: true`) with full GPG signature verification. The
 recommended path for versions that ship signed RPMs.
 
+**Custom install path** (`s1_agent_custom_install_path`): An operator-chosen directory that the Linux agent installs into instead of `/opt/sentinelone`, directly with no subdirectory. The installer leaves `/opt/sentinelone` as a symlink to it. It must be a dedicated directory, never a shared one such as `/srv` or a home directory. _Avoid_: install location, data path (the Windows `INSTALL_PATH_DATA` property is a different setting).
+
+### Removal
+
+**Graceful uninstall**: Removing the agent through its own uninstaller, authorised by the endpoint's passphrase. The only Linux removal: there is no forced remove, because agent 25.1 and newer can be protected by the kernel (BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md). _Avoid_: forced remove, forced uninstall, cleanup.
+
+**Windows uninstall.exe fallback** (`s1_windows_use_uninstall_exe`): Removing the agent with its own `uninstall.exe` and the passphrase instead of the MSI package, on request or as the retry when the MSI uninstall fails.
+
 ### Secrets & tokens
 
 **Site token** (`s1_agent_site_token`): Base64 registration token (decodes to
@@ -119,14 +127,15 @@ must never reach a process command line — see
 
 **Trusted-CLI model**: The default Ansible deployment, where whoever sets a
 variable (inventory, `group_vars`, `-e`) is the play author. Operator variables
-are part of the trusted control plane, so "inject via host_var" crosses no
+are part of the trusted control plane, so "inject via `host_var`" crosses no
 privilege boundary.
 
 **AWX/survey model**: Deployment under AWX/AAP where lower-privileged users
 supply variables via job-template surveys. Here the variable-setter is _not_ the
-play author, so unvalidated operator inputs become a real hardening obligation
-for this collection as a vendor — see
-[ADR 0001](./docs/adr/0001-trust-model.md).
+play author, so the collection validates operator inputs as defense in depth —
+see [ADR 0001](./docs/adr/0001-trust-model.md).
+
+**Management Console trust**: The Management Console is part of the trusted control plane, as operator variables are: its API responses are trusted as much as the play author, because a console can already run scripts on every agent it manages. See [ADR 0001](./docs/adr/0001-trust-model.md). _Avoid_: treating a hostile console as an attacker model for this collection.
 
 **Endpoint local-user boundary**: The one privilege boundary that is real
 regardless of trust model: the play runs as `root`/`SYSTEM`, so secrets on argv

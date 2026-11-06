@@ -1,0 +1,98 @@
+---
+# Asserts, for an agent installed at /srv/s1agent with a canary beside it: the
+# layout the other steps rely on; a graceful uninstall leaves the canary alone
+# (TSS-25); and install refuses a shared non-empty directory.
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    # The steps below rely on this: /opt/sentinelone leads to the install, and
+    # the agent is directly in it (no subdirectory).
+    - name: Look at the default install path and the agent binary
+      become: true
+      ansible.builtin.stat:
+        path: "{{ item }}"
+        follow: false
+      loop:
+        - /opt/sentinelone
+        - /srv/s1agent/bin/sentinelctl
+      register: s1_layout
+
+    - name: Assert the layout
+      ansible.builtin.assert:
+        that:
+          - s1_layout.results[0].stat.islnk
+          - s1_layout.results[0].stat.lnk_source == '/srv/s1agent'
+          - s1_layout.results[1].stat.exists
+
+    # A real graceful uninstall of a custom-path install must not touch what is
+    # beside it.
+    - name: Graceful uninstall of the custom-path install
+      ansible.builtin.include_role:
+        name: s1_agent_uninstall
+      vars:
+        s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+        s1_common_skip_reboot: true
+
+    - name: Look at the canary after the graceful uninstall
+      become: true
+      ansible.builtin.stat:
+        path: /srv/keep.txt
+      register: s1_canary_after
+
+    - name: Assert the canary beside the custom install path survived
+      ansible.builtin.assert:
+        that:
+          - s1_canary_after.stat.exists
+
+    # Install must refuse a shared, non-empty custom install path before it
+    # changes anything on the endpoint.
+    - name: Create a shared directory
+      become: true
+      ansible.builtin.file:
+        path: /srv/shared-dir
+        state: directory
+        mode: "0755"
+
+    - name: Put a file in the shared directory
+      become: true
+      ansible.builtin.copy:
+        content: "not an agent install\n"
+        dest: /srv/shared-dir/file.txt
+        mode: "0644"
+
+    - name: Install into the shared directory must be refused
+      block:
+        - name: Include s1_agent_install with a non-empty custom install path
+          ansible.builtin.include_role:
+            name: s1_agent_install
+          vars:
+            s1_agent_custom_install_path: /srv/shared-dir
+            s1_reboot_handler_name: Reboot Node | {{ ansible_os_family }} | Unit Testing
+
+        - name: The install unexpectedly succeeded
+          ansible.builtin.fail:
+            msg: Install into a non-empty shared directory must be refused.
+      rescue:
+        - name: Record the refusal message
+          ansible.builtin.set_fact:
+            s1_shared_dir_msg: "{{ ansible_failed_result.msg | default('') }}"
+
+    - name: Look at the shared directory after the refused install
+      become: true
+      ansible.builtin.stat:
+        path: /srv/shared-dir/bin
+      register: s1_shared_dir_bin
+
+    - name: Assert the install was refused
+      ansible.builtin.assert:
+        that:
+          - s1_shared_dir_msg is defined
+          - "'is not a SentinelOne agent install' in s1_shared_dir_msg"
+          - not s1_shared_dir_bin.stat.exists
+
+    - name: Remove the shared directory
+      become: true
+      ansible.builtin.file:
+        path: /srv/shared-dir
+        state: absent
