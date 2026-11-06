@@ -7,6 +7,15 @@
     name: ImagePath
   register: s1_image_path
 
+# Without the service's registry key the agent's own uninstall.exe cannot be
+# located. Fail, so a failed MSI uninstall is not reported as success.
+- name: Fail when the agent's uninstall.exe cannot be located | Windows
+  ansible.builtin.fail:
+    msg: >-
+      The SentinelOne agent's service registry key was not found on
+      {{ inventory_hostname }}, so its own uninstall.exe cannot be located.
+  when: not s1_image_path.exists | bool
+
 - name: Uninstall SentinelOne agent | Windows
   ansible.windows.win_package:
     creates_service: "{{ s1_service_name }}"
@@ -22,5 +31,4 @@
   become: true
   no_log: true
   register: s1_uninstall_log
-  when: s1_image_path.exists | bool
   notify: "{{ s1_reboot_handler_name }}"
