@@ -9,6 +9,7 @@ All tools run from the repo-local `.venv`. Do not activate it. uv is the install
 - `.venv/bin/ansible-lint` — Ansible rules (`production` profile) and yamllint. CI's required Lint job runs this.
 - `.venv/bin/pre-commit run --all-files` — prettier (Markdown and JSON only) and the trufflehog secret scan. The git hooks are not installed. Run it on demand.
 - `uv run scripts/test_molecule.py` — unit tests for `scripts/molecule.py`.
+- `uv run scripts/test_push_hook.py` — tests the trufflehog scan range in `.claude/hooks/lint-before-push.sh`.
 - `.venv/bin/python scripts/molecule.py gate` — runs every scenario in `scripts/gate.yml`.
 - `.venv/bin/python scripts/molecule.py test <scenario> [--platform <preset>]` — runs one scenario. Presets are in `PRESETS` in `scripts/molecule.py`. Without `--platform`, the run uses the pin in `PINNED_PLATFORMS`, else `linux` (rocky8).
 - `ansible-galaxy collection build` — builds `sentinelone-s1agents-<version>.tar.gz`.

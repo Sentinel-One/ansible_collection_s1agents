@@ -72,11 +72,18 @@ prerequisite. The mirror has no tag past `v3.1.0` (then `v4.0.0-alpha.*`), so
 when bumping. Pinning restores identical formatting across machines, which the
 local install could not guarantee.
 
-## Amendment: trufflehog flags
+## Amendment: trufflehog scans staged changes at commit and the unpushed range at push
 
-The trufflehog hook runs with `--since-commit HEAD --no-update --only-verified
---fail`. `--no-update` skips the self-update check, which fails behind a
-TLS-inspecting proxy. `--only-verified` drops unverified ("unknown") findings, so
-only live credentials fail the scan. The pre-push gate in
-`.claude/hooks/lint-before-push.sh` runs this same hook, so its flags live only
-in `.pre-commit-config.yaml`.
+The two scans have different jobs, so they use different commands.
+
+- **Commit time** (`.pre-commit-config.yaml`): `--since-commit HEAD
+--no-update --only-verified --fail` scans the staged changes about to be
+  committed. `--no-update` skips the self-update check, which fails behind a
+  TLS-inspecting proxy. `--only-verified` drops unverified ("unknown") findings,
+  so only live credentials fail the scan.
+- **Push time** (`.claude/hooks/lint-before-push.sh`): the same flags, but with
+  `--since-commit` set to the merge-base with the upstream (else `origin/main`),
+  so it scans the commits being pushed. The commit-time command cannot do this:
+  once work is committed, `--since-commit HEAD` has nothing to scan, so the push
+  gate would pass even with a committed secret. With no remote ref, the hook
+  scans the full history. Keep the shared flags aligned between the two.
