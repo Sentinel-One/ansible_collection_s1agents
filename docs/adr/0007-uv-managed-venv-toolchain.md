@@ -38,9 +38,9 @@ on any machine and removes every hardcoded personal env name.
 - `pre-commit` remains the orthogonal hook runner (prettier + trufflehog per
   [ADR 0006](./0006-linting-toolchain.md)) but is installed **into the same
   `.venv`**, so there is one PATH for every tool.
-- Three prerequisites live outside pip and must be installed per machine: **uv**
-  (the installer), **trufflehog** (the secret-scan binary) and **prettier**
-  (`brew install prettier`; see the amendment in
+- Two prerequisites live outside pip and must be installed per machine: **uv**
+  (the installer) and **trufflehog** (the secret-scan binary). prettier is
+  provisioned by `pre-commit` itself (see the amendments in
   [ADR 0006](./0006-linting-toolchain.md)).
 - `scripts/molecule.py` no longer sets `PYENV_VERSION`; it prepends `.venv/bin` to
   `PATH` so molecule and the `ansible-playbook`/`ansible` it spawns all resolve to
