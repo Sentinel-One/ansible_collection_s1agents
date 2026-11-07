@@ -4,7 +4,7 @@
 
 All tools run from the repo-local `.venv`. Do not activate it. uv is the installer only, not uv project mode (ADR 0007).
 
-- Bootstrap: `uv venv --python 3.12 && uv pip install -r requirements-dev.txt`, then `.venv/bin/ansible-galaxy collection install -r requirements.yml` and `.venv/bin/pre-commit install-hooks`. Install `uv`, `trufflehog` and `prettier` (`brew install prettier`) once per machine.
+- Bootstrap: `uv venv --python 3.12 && uv pip install -r requirements-dev.txt`, then `.venv/bin/ansible-galaxy collection install -r requirements.yml` and `.venv/bin/pre-commit install-hooks`. Install `uv` and `trufflehog` once per machine. `pre-commit install-hooks` provisions prettier itself.
 - `uv run scripts/smoke_check.py` — checks that `requirements-dev.txt` installs and each tool runs. It uses a temporary venv and does not change `.venv`.
 - `.venv/bin/ansible-lint` — Ansible rules (`production` profile) and yamllint. CI's required Lint job runs this.
 - `.venv/bin/pre-commit run --all-files` — prettier (Markdown and JSON only) and the trufflehog secret scan. The git hooks are not installed. Run it on demand.

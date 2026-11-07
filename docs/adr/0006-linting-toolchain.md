@@ -4,8 +4,9 @@ The collection needs consistent formatting for its docs and JSON, correctness
 checks for its Ansible content, and a guard against committed secrets — without
 depending on a licensed meta-linter to bundle those tools together. We assign
 each concern to the narrowest tool that owns it and orchestrate them with the
-`pre-commit` framework. trufflehog and prettier run as locally installed
-binaries (`language: system`), installed once per machine.
+`pre-commit` framework. trufflehog runs as a locally installed binary
+(`language: system`), installed once per machine; prettier is provisioned by
+`pre-commit` (see the amendments below).
 
 - **prettier** formats **Markdown and JSON only** (`proseWrap: always`). All
   YAML is excluded via `.prettierignore` so prettier never competes with
@@ -38,9 +39,9 @@ was used before. Editor integration lives in `.vscode/settings.json`
   [ADR 0007](./0007-uv-managed-venv-toolchain.md)), so every tool here runs as
   `.venv/bin/<tool>` with no personal environment setup required.
 
-## Amendment: prettier is a local install
+## Amendment: prettier is a local install (superseded)
 
-The prettier hook originally used `mirrors-prettier`, so `pre-commit` would
+_Superseded by the next amendment; kept for the reasoning._ The prettier hook originally used `mirrors-prettier`, so `pre-commit` would
 download Node and prettier itself. That download goes to the npm registry, and
 behind a TLS-inspecting proxy it fails with `ECONNRESET` whenever proxy auth has
 lapsed, which blocked `pre-commit run --all-files` entirely (including the
@@ -59,3 +60,23 @@ to a repo whose toolchain is otherwise uv-only, ADR 0007).
   pinned 3.5.3 is not needed to reproduce the repo's formatting).
 - The hook fails with ``Executable `prettier` not found`` if it is not
   installed.
+
+## Amendment: prettier is back on mirrors-prettier
+
+The local-install workaround is reverted. The proxy problem it addressed no
+longer blocks `pre-commit` from downloading Node and prettier, so the hook is
+again the `mirrors-prettier` hook, and there is no per-machine prettier
+prerequisite. The mirror has no tag past `v3.1.0` (then `v4.0.0-alpha.*`), so
+`rev` pins only the hook definition; the prettier that runs is pinned by
+`additional_dependencies` (`prettier@3.5.3`). Keep the two in mind separately
+when bumping. Pinning restores identical formatting across machines, which the
+local install could not guarantee.
+
+## Amendment: trufflehog flags
+
+The trufflehog hook runs with `--since-commit HEAD --no-update --only-verified
+--fail`. `--no-update` skips the self-update check, which fails behind a
+TLS-inspecting proxy. `--only-verified` drops unverified ("unknown") findings, so
+only live credentials fail the scan. The pre-push gate in
+`.claude/hooks/lint-before-push.sh` runs this same hook, so its flags live only
+in `.pre-commit-config.yaml`.

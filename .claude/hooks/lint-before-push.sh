@@ -4,6 +4,10 @@
 # edit hook (lint-after-edit.sh) only sees Write/Edit, so files rewritten from
 # Bash would otherwise reach CI unlinted. Prettier is left out: it rewrites
 # files rather than checking them. See docs/adr/0006-linting-toolchain.md.
+#
+# The trufflehog scan runs via the pre-commit hook. Change its flags in
+# .pre-commit-config.yaml, not here. This catches commits that skipped any
+# commit-time scan (--no-verify, another machine).
 
 cmd=$(/usr/bin/python3 -c 'import sys, json; print(json.load(sys.stdin).get("tool_input", {}).get("command", ""))' 2>/dev/null)
 

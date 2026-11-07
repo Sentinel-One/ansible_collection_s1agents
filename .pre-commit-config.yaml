@@ -1,6 +1,5 @@
 # Linting is split by domain (see docs/adr/0006-linting-toolchain.md):
-#   - prettier    -> Markdown + JSON formatting (YAML is excluded, see .prettierignore);
-#                    uses the locally installed prettier (brew install prettier)
+#   - prettier    -> Markdown + JSON formatting (YAML is excluded, see .prettierignore)
 #   - trufflehog  -> committed-secret scanning (uses the locally installed binary)
 #   - ansible-lint -> YAML/playbook correctness; run separately, see CLAUDE.md
 #
@@ -8,19 +7,23 @@
 #   pre-commit run --all-files
 ---
 repos:
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    # The mirror has no tag past v3.1.0 (then v4 alphas). rev pins the hook
+    # definition only; the prettier that runs is additional_dependencies.
+    rev: "v3.1.0"
+    hooks:
+      - id: prettier
+        # pre-commit provisions its own Node runtime for this hook.
+        types_or: [markdown, json]
+        additional_dependencies:
+          - prettier@3.5.3
+
   - repo: local
     hooks:
-      # Local install rather than the mirrors-prettier hook: that one downloads
-      # Node and prettier from the npm registry, which fails behind a
-      # TLS-inspecting proxy. Flags match what that hook ran.
-      - id: prettier
-        name: prettier (Markdown + JSON)
-        entry: prettier --write --list-different --ignore-unknown
-        language: system
-        types_or: [markdown, json]
-
       - id: trufflehog
         name: trufflehog secret scan
-        entry: trufflehog git file://. --since-commit HEAD --results=verified,unknown --fail
+        # --no-update skips the self-update check, which fails behind a
+        # TLS-inspecting proxy.
+        entry: trufflehog git file://. --since-commit HEAD --no-update --only-verified --fail
         language: system
         pass_filenames: false
