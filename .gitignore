@@ -142,3 +142,10 @@ SECURITY_TRIAGE.md
 # Cache recreated by a locally-installed trunk daemon; not part of this project's
 # toolchain (linting is prettier + ansible-lint + trufflehog, see docs/adr/0006).
 .trunk/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*
