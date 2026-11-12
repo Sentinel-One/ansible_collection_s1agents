@@ -47,11 +47,11 @@ The `sentinelone.s1agents` collection manages the SentinelOne agent lifecycle on
 ## Agent docs
 
 - Domain: `GLOSSARY.md` and `docs/adr/`. See `docs/agents/domain.md`.
-- Issues and PRDs: local Markdown in `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+- Issues and PRDs: Beads (`bd` CLI, database under `.beads/`). See `docs/agents/issue-tracker.md`.
 - Triage labels: `docs/agents/triage-labels.md`.
 
-
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:1105d646 -->
+
 ## Beads Issue Tracker
 
 This project uses **bd (beads)** for issue tracking. Run `bd prime` to see full workflow context and commands.
@@ -89,6 +89,7 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
 4. **Handle git/sync by active profile**:
+
    ```bash
    # Conservative/minimal/default: report status and proposed commands; wait for approval.
    git status
@@ -98,9 +99,11 @@ This protocol applies when ending a Beads implementation workflow. It is subordi
    git push
    git status
    ```
+
 5. **Hand off** - Summarize changes, validation, issue status, and any blocked sync/commit/push step
 
 **Critical rules:**
+
 - Explicit user or orchestrator instructions override this Beads block.
 - Do not commit or push without clear authority from the active profile or the current user request.
 - If a required sync or push is blocked, stop and report the exact command and error.
