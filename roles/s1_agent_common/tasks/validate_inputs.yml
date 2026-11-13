@@ -147,3 +147,17 @@
     - s1_forced_remove is defined
     - s1_forced_remove is not none
     - s1_forced_remove | string | length > 0
+
+# The bool filter turns any unrecognized text into false, so a typo would leave
+# installation telemetry on without a word. Accept exactly the values bool reads.
+- name: Validate s1_disable_install_telemetry is a boolean
+  ansible.builtin.assert:
+    that:
+      - (s1_disable_install_telemetry | string | lower) in ['true', 'false', 'yes', 'no', 'on', 'off', '1', '0']
+    fail_msg: >-
+      s1_disable_install_telemetry must be a boolean (true or false).
+      Rejected: s1_disable_install_telemetry: {{ s1_disable_install_telemetry }}
+  when:
+    - s1_disable_install_telemetry is defined
+    - s1_disable_install_telemetry is not none
+    - s1_disable_install_telemetry | string | length > 0

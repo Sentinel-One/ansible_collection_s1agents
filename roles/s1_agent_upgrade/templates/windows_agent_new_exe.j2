@@ -23,4 +23,12 @@
 {%- if s1_no_initial_install is defined and s1_no_initial_install | bool -%}
 {{- install_arguments.append( '--no_initial_installation' ) -}}
 {%- endif -%}
+{#- Configure Optional Agent Arguments '-a' option; only the telemetry opt-out is passed on upgrade -#}
+{%- set agent_optional_params = [] -%}
+{%- if s1_disable_install_telemetry is defined and s1_disable_install_telemetry | bool -%}
+{{- agent_optional_params.append( 'INSTALLATION_TELEMETRY=FALSE' ) -}}
+{%- endif -%}
+{%- if agent_optional_params | length -%}
+{{- install_arguments.append( '-a="' + agent_optional_params | join(' ') + '"' ) -}}
+{%- endif -%}
 {{- install_arguments | join(' ') -}}

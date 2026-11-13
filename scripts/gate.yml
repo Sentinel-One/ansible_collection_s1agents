@@ -35,6 +35,10 @@
 #   roles/s1_agent_common/tasks/validate_inputs.yml, one per closed bypass.
 #   See extensions/molecule/input-validation and ADR 0001.
 #
+# windows-install-args (VM-less, default driver) — renders the four Windows
+#   installer-argument templates and asserts the exact argument strings. See
+#   extensions/molecule/windows-install-args.
+#
 # Consolidated matrix (18 runs vs 38 exhaustive).  Several scenarios are
 # fully exercised as sub-steps of a more comprehensive scenario and are
 # omitted from the default gate to reduce wall-clock time.
@@ -68,4 +72,6 @@
 - scenario: windows-tier-matrix
   platforms: [none]
 - scenario: input-validation
+  platforms: [none]
+- scenario: windows-install-args
   platforms: [none]

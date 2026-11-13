@@ -280,6 +280,32 @@ s1_input_cases:
     inputs: { s1_forced_remove: false }
     expect: accept
 
+  # --- s1_disable_install_telemetry ---
+  - case: telemetry_non_boolean_string
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: maybe }
+    expect: reject
+  - case: telemetry_non_boolean_number
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: 2 }
+    expect: reject
+  - case: telemetry_typo_string
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: ture }
+    expect: reject
+  - case: telemetry_true
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: true }
+    expect: accept
+  - case: telemetry_false
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: false }
+    expect: accept
+  - case: telemetry_true_string
+    os_family: Windows
+    inputs: { s1_disable_install_telemetry: 'true' }
+    expect: accept
+
   # --- nothing set ---
   - case: all_unset_linux
     os_family: RedHat

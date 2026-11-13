@@ -17,6 +17,7 @@
     s1_agent_package_name: "{{ s1_input_case.inputs.s1_agent_package_name | default('') }}"
     s1_agent_site_token: "{{ s1_input_case.inputs.s1_agent_site_token | default('') }}"
     s1_forced_remove: "{{ s1_input_case.inputs.s1_forced_remove | default('') }}"
+    s1_disable_install_telemetry: "{{ s1_input_case.inputs.s1_disable_install_telemetry | default('') }}"
 
 - name: "Run validate_inputs.yml: {{ s1_input_case.case }}"
   block:

@@ -90,6 +90,10 @@ because the latter maps to `Win32_OperatingSystem.OSArchitecture`, which is
 _localized_ (`64 bits` on French, `64-Bit` on German) and so unsafe as a
 filename or comparison key. _Avoid_: `ansible_architecture` for Windows routing.
 
+### Windows installer
+
+**Installation telemetry**: Usage data the Windows installer sends while it installs or upgrades the agent. It is off by opt-out: `s1_disable_install_telemetry: true` passes `INSTALLATION_TELEMETRY=FALSE` on install and upgrade, for `.exe` (inside the `-a` optional-parameters argument) and MSI packages, on every Windows tier. Unrelated to agent telemetry sent to the Management Console. See [KB 000005517](https://community.sentinelone.com/s/article/000005517). _Avoid_: calling it agent telemetry or a "privacy mode".
+
 ### Install paths (Linux)
 
 **Unsigned RPM branch**: The default Linux RPM install path (`rpm` command,

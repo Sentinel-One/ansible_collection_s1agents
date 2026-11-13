@@ -23,6 +23,10 @@
   upgrade path additionally uses the GPG-signed branch. A signed pre-23.3
   package can still be fresh-installed via the GPG-signed branch.
 
+### Added
+
+- **Windows installation telemetry opt-out.** Set `s1_disable_install_telemetry: true` to pass `INSTALLATION_TELEMETRY=FALSE` to the installer on install and upgrade, for both `.exe` and MSI packages and on all Windows tiers. The default is unchanged. A non-boolean value fails input validation. Upgrading with the `.exe` package is unverified until a CI VM run shows the installer accepts the flag.
+
 ### Security
 
 - **Tempfile work directories (issue 01).** Agent packages are now staged in an

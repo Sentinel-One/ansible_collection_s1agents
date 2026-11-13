@@ -1,0 +1,37 @@
+---
+# VM-less scenario: renders the four Windows installer-argument templates
+# (install and upgrade, .exe and MSI) on the runner and asserts the exact
+# argument strings, with no guest and no console secrets. Whether the
+# installer itself accepts those arguments is proven only by CI VM runs.
+
+dependency:
+  name: galaxy
+  options:
+    requirements-file: ../requirements.yml
+
+driver:
+  name: default
+  options:
+    managed: false
+    ansible_connection_options:
+      ansible_connection: local
+
+platforms:
+  - name: windows-install-args
+    groups:
+      - all
+
+provisioner:
+  name: ansible
+  config_options:
+    defaults:
+      gathering: explicit
+      fact_caching: jsonfile
+      fact_caching_connection: /tmp/s1_fact_cache
+      fact_caching_timeout: 900
+      retry_files_enabled: false
+  env:
+    ANSIBLE_ROLES_PATH: ../../../roles
+
+verifier:
+  name: ansible

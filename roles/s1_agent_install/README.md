@@ -132,6 +132,12 @@ When set to true set the installer packages VDI flag to true and install the Sen
 Note: See [https://community.sentinelone.com/s/article/000005519](https://community.sentinelone.com/s/article/000005519.).
 Note: See [https://community.sentinelone.com/s/article/000005519(https://community.sentinelone.com/s/article/000005519).
 
+```yaml
+s1_disable_install_telemetry: false
+```
+
+When set to true, pass `INSTALLATION_TELEMETRY=FALSE` to the installer so it does not send installation telemetry, for example in an air-gapped network. Applies to both `.exe` and MSI packages, on every Windows support tier. Must be a boolean; any other value fails input validation. Note: See [https://community.sentinelone.com/s/article/000005517](https://community.sentinelone.com/s/article/000005517).
+
 ### Variables from dependencies
 
 No additional variables must be defined. However, the [s1_agent_common](../s1_agent_common/) role defines common variables including working directories and the [s1_agent_download](../s1_agent_download/) role determines which agent versions are downloaded.

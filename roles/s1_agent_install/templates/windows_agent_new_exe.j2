@@ -26,6 +26,9 @@
 {%- if s1_agent_custom_install_path is defined and s1_agent_custom_install_path is not none and s1_agent_custom_install_path | length > 0 -%}
 {{- agent_optional_params.append( 'INSTALL_PATH_DATA="""' + s1_agent_custom_install_path + '"""' ) -}}
 {%- endif -%}
+{%- if s1_disable_install_telemetry is defined and s1_disable_install_telemetry | bool -%}
+{{- agent_optional_params.append( 'INSTALLATION_TELEMETRY=FALSE' ) -}}
+{%- endif -%}
 {#- pass in Optional Agent Arguments -#}
 {%- if agent_optional_params | length -%}
 {{- install_arguments.append( '-a="' + agent_optional_params | join(' ') + '"' ) -}}
