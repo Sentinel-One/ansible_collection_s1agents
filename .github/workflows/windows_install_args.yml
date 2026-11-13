@@ -7,11 +7,13 @@ on:
     branches:
       - "release/**"
     paths:
-      - "roles/s1_agent_common/tasks/validate_inputs.yml"
+      - "roles/s1_agent_common/**"
+      - "roles/s1_agent_install/**"
+      - "roles/s1_agent_upgrade/**"
       - "extensions/molecule/windows-install-args/**"
       - "extensions/molecule/common/templates/tasks/render_windows_install_args_case.yml"
       - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
-      - ".github/workflows/input_validation.yml"
+      - ".github/workflows/windows_install_args.yml"
       - ".github/actions/ci-setup/action.yml"
       - "requirements.yml"
       - "requirements-dev.txt"
@@ -23,11 +25,13 @@ on:
       - synchronize
       - ready_for_review
     paths:
-      - "roles/s1_agent_common/tasks/validate_inputs.yml"
+      - "roles/s1_agent_common/**"
+      - "roles/s1_agent_install/**"
+      - "roles/s1_agent_upgrade/**"
       - "extensions/molecule/windows-install-args/**"
       - "extensions/molecule/common/templates/tasks/render_windows_install_args_case.yml"
       - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
-      - ".github/workflows/input_validation.yml"
+      - ".github/workflows/windows_install_args.yml"
       - ".github/actions/ci-setup/action.yml"
       - "requirements.yml"
       - "requirements-dev.txt"

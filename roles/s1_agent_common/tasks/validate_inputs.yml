@@ -12,14 +12,14 @@
   vars:
     s1_proxy_value: "{{ lookup('ansible.builtin.vars', item) | string }}"
     s1_proxy_host_form: '^(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?$'
-    s1_proxy_windows_mode: >-
+    s1_proxy_is_windows_keyword_form: >-
       {{ ansible_os_family == 'Windows' and
          (s1_proxy_value in ['auto', 'system']
           or s1_proxy_value is match('^user,[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?$')
           or (item == 's1_agent_dv_proxy' and s1_proxy_value == 'single')) }}
   ansible.builtin.assert:
     that:
-      - s1_proxy_value is match(s1_proxy_host_form) or s1_proxy_windows_mode | bool
+      - s1_proxy_value is match(s1_proxy_host_form) or s1_proxy_is_windows_keyword_form | bool
       # 'single' reuses the management proxy, so it means nothing there
       - not (ansible_os_family == 'Windows' and item == 's1_agent_management_proxy' and s1_proxy_value == 'single')
       - s1_proxy_value is not search('[;|&`$"=\s]')

@@ -26,11 +26,12 @@
          | selectattr('drive_letter', 'defined')
          | selectattr('drive_letter', 'equalto', s1_data_drive_letter) | list }}
     s1_data_drive: "{{ s1_data_drive_volumes | first | default({}) }}"
+    s1_data_drive_min_free_bytes: 4294967296  # 4 GB
   ansible.builtin.assert:
     that:
       - s1_data_drive_volumes | length > 0
       - (s1_data_drive.file_system | default('') | upper) == 'NTFS'
-      - (s1_data_drive.size_remaining | default(0) | int) >= 4294967296
+      - (s1_data_drive.size_remaining | default(0) | int) >= s1_data_drive_min_free_bytes | int
     fail_msg: >-
       The data path drive {{ s1_data_drive_letter }}: ({{ s1_agent_custom_install_path }})
       must exist, be NTFS, and have at least 4GB free when it is not the
