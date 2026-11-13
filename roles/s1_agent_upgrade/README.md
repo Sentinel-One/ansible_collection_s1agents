@@ -74,6 +74,14 @@ s1_install_msi: false
 
 Download an MSI package instead of a SentinelOneInstaller package (the default).
 
+### Windows options
+
+```yaml
+s1_disable_install_telemetry: false
+```
+
+When set to true, pass `INSTALLATION_TELEMETRY=FALSE` to the installer so it does not send installation telemetry. Applies to both `.exe` and MSI packages, on every Windows support tier. Must be a boolean; any other value fails input validation. On the `.exe` package the flag is the only optional parameter the upgrade passes, and the installer's acceptance of it on upgrade is not yet verified by a CI VM run. Note: See [https://community.sentinelone.com/s/article/000005517](https://community.sentinelone.com/s/article/000005517).
+
 ### Windows: SentinelOneInstaller specific options
 
 ```yaml

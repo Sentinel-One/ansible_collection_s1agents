@@ -3,15 +3,31 @@
 # so runs without the variable set (e.g. info/uuid-only runs) are unaffected.
 # See docs/adr/0001-trust-model.md.
 
-# One rule set for every proxy URL, so the two can't drift apart.
+# One rule set for every proxy URL, so the two can't drift apart. On Windows
+# the installer also takes the modes auto, system and user,<host>[:port]
+# (KB 000005517), and the Deep Visibility proxy takes single (reuse the
+# management proxy). Linux accepts the host and URL forms only. The shape is
+# anchored at both ends so 'user,host' is not read as the host 'user'.
 - name: Validate proxy shape
+  vars:
+    s1_proxy_value: "{{ lookup('ansible.builtin.vars', item) | string }}"
+    s1_proxy_host_form: '^(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?$'
+    s1_proxy_is_windows_keyword_form: >-
+      {{ ansible_os_family == 'Windows' and
+         (s1_proxy_value in ['auto', 'system']
+          or s1_proxy_value is match('^user,[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?$')
+          or (item == 's1_agent_dv_proxy' and s1_proxy_value == 'single')) }}
   ansible.builtin.assert:
     that:
-      - lookup('ansible.builtin.vars', item) is match('(https?://)?[A-Za-z0-9][A-Za-z0-9._-]*(:[0-9]{1,5})?')
-      - lookup('ansible.builtin.vars', item) is not search('[;|&`$"=\s]')
+      - s1_proxy_value is match(s1_proxy_host_form) or s1_proxy_is_windows_keyword_form | bool
+      # 'single' reuses the management proxy, so it means nothing there
+      - not (ansible_os_family == 'Windows' and item == 's1_agent_management_proxy' and s1_proxy_value == 'single')
+      - s1_proxy_value is not search('[;|&`$"=\s]')
     fail_msg: >-
       {{ item }} must be a URL or host:port with no shell metacharacters,
-      quotes, '=', or whitespace. Rejected: {{ lookup('ansible.builtin.vars', item) }}
+      quotes, '=', or whitespace. On Windows it may also be auto, system, or
+      user,fallback[:port], and s1_agent_dv_proxy may be single.
+      Rejected: {{ lookup('ansible.builtin.vars', item) }}
   loop:
     - s1_agent_management_proxy
     - s1_agent_dv_proxy
@@ -59,10 +75,14 @@
       # No '..' and no '.' component (C:\. is the drive root)
       - s1_agent_custom_install_path is not search('\.\.')
       - s1_agent_custom_install_path is not search('\\\\\.(\\\\|$)')
+      # KB 000005516: 150 characters or less, English (printable ASCII) only
+      - s1_agent_custom_install_path | length <= 150
+      - s1_agent_custom_install_path is match('^[\x20-\x7e]+$')
     fail_msg: >-
       s1_agent_custom_install_path must be a drive-letter path (e.g. C:\S1Data)
-      with at least one directory below the drive root, no '.' or '..'
-      components, no quotes, and no whitespace. Rejected: {{ s1_agent_custom_install_path }}
+      of at most 150 printable ASCII characters, with at least one directory
+      below the drive root, no '.' or '..' components, no quotes, and no
+      whitespace. Rejected: {{ s1_agent_custom_install_path }}
   when:
     - ansible_os_family == 'Windows'
     - s1_agent_custom_install_path is defined
@@ -147,3 +167,17 @@
     - s1_forced_remove is defined
     - s1_forced_remove is not none
     - s1_forced_remove | string | length > 0
+
+# The bool filter turns any unrecognized text into false, so a typo would leave
+# installation telemetry on without a word. Accept exactly the values bool reads.
+- name: Validate s1_disable_install_telemetry is a boolean
+  ansible.builtin.assert:
+    that:
+      - (s1_disable_install_telemetry | string | lower) in ['true', 'false', 'yes', 'no', 'on', 'off', '1', '0']
+    fail_msg: >-
+      s1_disable_install_telemetry must be a boolean (true or false).
+      Rejected: s1_disable_install_telemetry: {{ s1_disable_install_telemetry }}
+  when:
+    - s1_disable_install_telemetry is defined
+    - s1_disable_install_telemetry is not none
+    - s1_disable_install_telemetry | string | length > 0

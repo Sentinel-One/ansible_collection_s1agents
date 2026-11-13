@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Deployed via IT
+# Uses the absolute path to the IT-pinned binary so a different trufflehog
+# earlier in $PATH (e.g. a user's own Homebrew install) can't get used instead.
+
+set -u
+
+TRUFFLEHOG_BIN="/usr/local/bin/trufflehog"
+
+# --- Chain to the repo-local hook, with git's original environment -----------
+# core.hooksPath points here, so git never runs the repo's own
+# .git/hooks/pre-commit. Run it first. --git-common-dir resolves to the main
+# repo's .git from a linked worktree, where hooks live. The -ef check stops this
+# script from calling itself if the repo's hooks dir is this one.
+common_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null \
+  || git rev-parse --git-common-dir)
+repo_hook="${common_dir}/hooks/pre-commit"
+if [ -x "$repo_hook" ] && ! [ "$repo_hook" -ef "$0" ]; then
+  "$repo_hook" "$@" || exit $?
+fi
+
+# --- Scan the staged diff -----------------------------------------------------
+# stdin mode never opens the repo, so it cannot overwrite the index through an
+# inherited GIT_INDEX_FILE (the worktree empty-commit bug).
+output=$(git diff --staged | "$TRUFFLEHOG_BIN" stdin \
+  --verifier github=https://ghe.eng.sentinelone.tech/api/v3 \
+  --custom-verifiers-only \
+  --no-update --json 2>/dev/null)
+
+if echo "$output" | grep -q '"Verified":true'; then
+  echo "$output"
+  echo "BLOCKED: verified live secret detected in staged changes."
+  exit 1
+fi
+
+if echo "$output" | grep -q '"VerificationError"'; then
+  echo "$output"
+  echo "BLOCKED: could not confirm whether a potential secret is live (verification endpoint unreachable, e.g. off VPN). Connect to the S1 network and retry."
+  exit 1
+fi
+
+exit 0

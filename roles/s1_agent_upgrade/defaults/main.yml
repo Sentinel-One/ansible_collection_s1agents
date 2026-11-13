@@ -12,3 +12,10 @@ s1_api_token: "{{ undef(hint='You must specify your SentinelOne API Token') }}"
 
 # Version of the agent package defined by s1_agent_src.
 # s1_agent_version:
+
+# If true, pass INSTALLATION_TELEMETRY=FALSE to the installer so it does not send installation telemetry.
+# Must be a boolean. Applies to both .exe and MSI packages.
+# Note: See https://community.sentinelone.com/s/article/000005517
+# Default: false
+# Windows Only
+# s1_disable_install_telemetry: false
