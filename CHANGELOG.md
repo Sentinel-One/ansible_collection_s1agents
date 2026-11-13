@@ -23,6 +23,10 @@
   upgrade path additionally uses the GPG-signed branch. A signed pre-23.3
   package can still be fresh-installed via the GPG-signed branch.
 
+### Changed
+
+- **Windows proxy and data path validation follows the installer KB.** On Windows, `s1_agent_management_proxy` and `s1_agent_dv_proxy` also accept `auto`, `system` and `user,<fallback>[:<port>]`, and `s1_agent_dv_proxy` accepts `single`. Linux proxy handling is unchanged, except that the shape check now matches the whole value, so a value such as `host,x` is rejected. A Windows `s1_agent_custom_install_path` over 150 characters or with non-ASCII characters is rejected. Install fails early when the data path drive is not the system drive and does not exist, is not NTFS, or has less than 4 GB free.
+
 ### Security
 
 - **Tempfile work directories (issue 01).** Agent packages are now staged in an

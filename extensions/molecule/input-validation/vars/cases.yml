@@ -289,3 +289,95 @@ s1_input_cases:
     os_family: Windows
     inputs: {}
     expect: accept
+
+  # --- Windows proxy modes and data path limits (KB 000005517, 000005516) ---
+  - case: win_mgmt_proxy_auto
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'auto' }
+    expect: accept
+  - case: win_dv_proxy_auto
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'auto' }
+    expect: accept
+  - case: win_mgmt_proxy_system
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'system' }
+    expect: accept
+  - case: win_dv_proxy_system
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'system' }
+    expect: accept
+  - case: win_mgmt_proxy_user_fallback_example_com
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'user,fallback.example.com' }
+    expect: accept
+  - case: win_dv_proxy_user_fallback_example_com
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'user,fallback.example.com' }
+    expect: accept
+  - case: linux_mgmt_proxy_user_fallback_example_com
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: 'user,fallback.example.com' }
+    expect: reject
+  - case: win_mgmt_proxy_user_fallback_example_com_3128
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'user,fallback.example.com:3128' }
+    expect: accept
+  - case: win_dv_proxy_user_fallback_example_com_3128
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'user,fallback.example.com:3128' }
+    expect: accept
+  - case: linux_mgmt_proxy_user_fallback_example_com_3128
+    os_family: RedHat
+    inputs: { s1_agent_management_proxy: 'user,fallback.example.com:3128' }
+    expect: reject
+  - case: win_dv_proxy_single
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'single' }
+    expect: accept
+  - case: win_mgmt_proxy_single
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'single' }
+    expect: reject
+  - case: win_mgmt_proxy_user_metachar
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'user,host;id' }
+    expect: reject
+  - case: win_mgmt_proxy_user_no_fallback
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'user,' }
+    expect: reject
+  - case: win_mgmt_proxy_auto_trailing
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'auto,evil' }
+    expect: reject
+  - case: win_mgmt_proxy_auto_quote
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'auto"' }
+    expect: reject
+  - case: win_dv_proxy_url
+    os_family: Windows
+    inputs: { s1_agent_dv_proxy: 'http://proxy.example.com:8080' }
+    expect: accept
+  - case: win_mgmt_proxy_host_port
+    os_family: Windows
+    inputs: { s1_agent_management_proxy: 'proxy.example.com:3128' }
+    expect: accept
+  - case: windows_path_150_chars
+    os_family: Windows
+    # yamllint disable-line rule:line-length
+    inputs: { s1_agent_custom_install_path: 'C:\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
+    expect: accept
+  - case: windows_path_151_chars
+    os_family: Windows
+    # yamllint disable-line rule:line-length
+    inputs: { s1_agent_custom_install_path: 'C:\aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }
+    expect: reject
+  - case: windows_path_non_ascii
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\S1Données' }
+    expect: reject
+  - case: windows_path_non_ascii_cjk
+    os_family: Windows
+    inputs: { s1_agent_custom_install_path: 'C:\数据' }
+    expect: reject
