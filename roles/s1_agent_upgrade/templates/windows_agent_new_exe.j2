@@ -1,5 +1,5 @@
 
-{#- Do not add --rebopt_on_need - Ansible will loose access to the host and mark it as failed -#}
+{#- Do not add --reboot_on_need - Ansible will loose access to the host and mark it as failed -#}
 {%- set install_arguments = [] -%}
 {#- set silent install -#}
 {{- install_arguments.append( '-q' ) -}}
