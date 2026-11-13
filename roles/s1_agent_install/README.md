@@ -82,19 +82,19 @@ Set a customer specific identifier for the host, depending on the platform this 
 s1_agent_custom_install_path: /some/alternate/install/location
 ```
 
-Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable. On Linux it must be a dedicated directory: install fails if it exists, is not empty, and is not already an agent install.
+Install the SentinelOne Agent to a custom location. Review the Knowledge Base for known limitations before setting this variable. On Linux it must be a dedicated directory: install fails if it exists, is not empty, and is not already an agent install. On Windows this is the data path (`INSTALL_PATH_DATA`): at most 150 printable ASCII characters. When its drive is not the system drive, install first checks that the drive exists, is NTFS and has 4 GB free. It does not check that the drive is fixed rather than removable.
 
 ```yaml
 s1_agent_management_proxy: http://proxy.local:8080
 ```
 
-If a proxy is required for agent egress traffic to reach the management console, set it here, otherwise leave it undefined.
+If a proxy is required for agent egress traffic to reach the management console, set it here, otherwise leave it undefined. On Windows the installer modes `auto`, `system` and `user,<fallback>[:<port>]` are also accepted.
 
 ```yaml
 s1_agent_dv_proxy: http://proxy.local:8080
 ```
 
-If a proxy is required for agent deep visibility egrees traffic to reach the management console, set it here, otherwise leave it undefined.
+If a proxy is required for agent deep visibility egrees traffic to reach the management console, set it here, otherwise leave it undefined. On Windows the same modes as the management proxy are accepted, plus `single` to reuse the management proxy.
 
 ### Linux only options
 

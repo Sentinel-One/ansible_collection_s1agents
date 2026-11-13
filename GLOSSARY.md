@@ -106,6 +106,10 @@ recommended path for versions that ship signed RPMs.
 
 **Custom install path** (`s1_agent_custom_install_path`): An operator-chosen directory that the Linux agent installs into instead of `/opt/sentinelone`, directly with no subdirectory. The installer leaves `/opt/sentinelone` as a symlink to it. It must be a dedicated directory, never a shared one such as `/srv` or a home directory. _Avoid_: install location, data path (the Windows `INSTALL_PATH_DATA` property is a different setting).
 
+### Windows data path
+
+**Windows data path** (`s1_agent_custom_install_path` on Windows, installer property `INSTALL_PATH_DATA`): An operator-chosen `drive:\path` where the Windows agent keeps its database, logs and process dumps instead of under `C:\ProgramData\Sentinel`. The agent executables still install on the system drive. Per the Windows installer KB it must be at most 150 characters of English (printable ASCII), on a fixed NTFS drive, and the drive needs at least 4 GB free unless it is the system drive. The collection checks the length and characters in `validate_inputs.yml`, and the drive (exists, NTFS, 4 GB free) before install. It cannot tell a fixed drive from removable media. _Avoid_: custom install path (the Linux term, where the agent itself moves), data directory.
+
 ### Removal
 
 **Graceful uninstall**: Removing the agent through its own uninstaller, authorised by the endpoint's passphrase. The only Linux removal: there is no forced remove, because agent 25.1 and newer can be protected by the kernel (BPF with LSM). See [ADR 0014](./docs/adr/0014-remove-linux-forced-remove.md). _Avoid_: forced remove, forced uninstall, cleanup.
