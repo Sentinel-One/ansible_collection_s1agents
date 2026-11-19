@@ -1,0 +1,21 @@
+---
+- name: Converge
+  hosts: all
+  gather_facts: false
+  tasks:
+    # Templates are rendered directly rather than through include_role, which
+    # would pull in s1_agent_common and its fact gathering. Each case passes
+    # only the variables it names as template_vars, so "unset" really is
+    # undefined.
+    - name: Render every template for each case
+      ansible.builtin.include_tasks:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/molecule/common/templates/tasks/render_windows_install_args_case.yml"
+      loop:
+        - { case: flag_unset, vars: {} }
+        - { case: flag_false, vars: { s1_disable_install_telemetry: false } }
+        - { case: flag_true, vars: { s1_disable_install_telemetry: true } }
+        - { case: flag_true_string, vars: { s1_disable_install_telemetry: "true" } }
+        - { case: flag_true_with_vdi, vars: { s1_disable_install_telemetry: true, s1_enable_vdi: true } }
+      loop_control:
+        loop_var: s1_render_case
+        label: "{{ s1_render_case.case }}"

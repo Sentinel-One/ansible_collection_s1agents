@@ -1,0 +1,62 @@
+name: Windows Install Args
+
+# VM-less, secret-less render test for the Windows install and upgrade
+# templates (installer arguments); a plain job like the Windows Tier Matrix
+# workflow.
+on:
+  push:
+    branches:
+      - "release/**"
+    paths:
+      - "roles/s1_agent_common/**"
+      - "roles/s1_agent_install/**"
+      - "roles/s1_agent_upgrade/**"
+      - "extensions/molecule/windows-install-args/**"
+      - "extensions/molecule/common/templates/tasks/render_windows_install_args_case.yml"
+      - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
+      - ".github/workflows/windows_install_args.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - ready_for_review
+    paths:
+      - "roles/s1_agent_common/**"
+      - "roles/s1_agent_install/**"
+      - "roles/s1_agent_upgrade/**"
+      - "extensions/molecule/windows-install-args/**"
+      - "extensions/molecule/common/templates/tasks/render_windows_install_args_case.yml"
+      - "extensions/molecule/common/templates/tasks/resolve_input_validation_case.yml"
+      - ".github/workflows/windows_install_args.yml"
+      - ".github/actions/ci-setup/action.yml"
+      - "requirements.yml"
+      - "requirements-dev.txt"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  molecule:
+    name: windows-install-args
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up environment
+        uses: ./.github/actions/ci-setup
+        with:
+          enable_kvm: "false"
+
+      - name: Molecule test
+        working-directory: extensions
+        run: molecule test -s windows-install-args

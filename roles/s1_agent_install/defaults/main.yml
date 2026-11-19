@@ -56,6 +56,13 @@ s1_agent_site_token: "{{ undef(hint='You must specify your agent Site Token') }}
 # Windows Only
 # s1_enable_vdi: false
 
+# If true, pass INSTALLATION_TELEMETRY=FALSE to the installer so it does not send installation telemetry
+# (for example in an air-gapped network). Must be a boolean.
+# Note: See https://community.sentinelone.com/s/article/000005517
+# Default: false
+# Windows Only
+# s1_disable_install_telemetry: false
+
 # If there is a proxy server between the Agent and the Management, enter the proxy URL (or IP address) and the proxy port.
 # By default, proxy settings are taken from the default_* variables, if they are not defined they are ignored.
 s1_agent_management_proxy: "{{ default_proxy | default(None) }}"

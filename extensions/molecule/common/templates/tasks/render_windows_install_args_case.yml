@@ -1,0 +1,19 @@
+---
+- name: "Render one case: {{ s1_render_case.case }}"
+  ansible.builtin.set_fact:
+    s1_molecule_render: >-
+      {{ s1_molecule_render | default({}) | combine({
+           s1_render_case.case ~ '/' ~ s1_render_template.name:
+             lookup('ansible.builtin.template',
+                    lookup('env', 'MOLECULE_PROJECT_DIRECTORY') ~ '/../roles/' ~ s1_render_template.role ~ '/templates/' ~ s1_render_template.file,
+                    template_vars=({'s1_agent_site_token': 'TOK'} | combine(s1_render_case.vars)))
+         }) }}
+    cacheable: true
+  loop:
+    - { name: install_exe, role: s1_agent_install, file: windows_agent_new_exe.j2 }
+    - { name: install_msi, role: s1_agent_install, file: windows_agent_msi.j2 }
+    - { name: upgrade_exe, role: s1_agent_upgrade, file: windows_agent_new_exe.j2 }
+    - { name: upgrade_msi, role: s1_agent_upgrade, file: windows_agent_msi.j2 }
+  loop_control:
+    loop_var: s1_render_template
+    label: "{{ s1_render_case.case }}/{{ s1_render_template.name }}"

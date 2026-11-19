@@ -90,6 +90,10 @@ because the latter maps to `Win32_OperatingSystem.OSArchitecture`, which is
 _localized_ (`64 bits` on French, `64-Bit` on German) and so unsafe as a
 filename or comparison key. _Avoid_: `ansible_architecture` for Windows routing.
 
+### Windows installer
+
+**Installation telemetry**: Usage data the Windows installer sends while it installs or upgrades the agent. It is off by opt-out: `s1_disable_install_telemetry: true` passes `INSTALLATION_TELEMETRY=FALSE` on install and upgrade, for `.exe` (inside the `-a` optional-parameters argument) and MSI packages, on every Windows tier. Unrelated to agent telemetry sent to the Management Console. See [KB 000005517](https://community.sentinelone.com/s/article/000005517). _Avoid_: calling it agent telemetry or a "privacy mode".
+
 ### Install paths (Linux)
 
 **Unsigned RPM branch**: The default Linux RPM install path (`rpm` command,
@@ -101,6 +105,10 @@ download checksum + the rpm header/payload digest.
 recommended path for versions that ship signed RPMs.
 
 **Custom install path** (`s1_agent_custom_install_path`): An operator-chosen directory that the Linux agent installs into instead of `/opt/sentinelone`, directly with no subdirectory. The installer leaves `/opt/sentinelone` as a symlink to it. It must be a dedicated directory, never a shared one such as `/srv` or a home directory. _Avoid_: install location, data path (the Windows `INSTALL_PATH_DATA` property is a different setting).
+
+### Windows data path
+
+**Windows data path** (`s1_agent_custom_install_path` on Windows, installer property `INSTALL_PATH_DATA`): An operator-chosen `drive:\path` where the Windows agent keeps its database, logs and process dumps instead of under `C:\ProgramData\Sentinel`. The agent executables still install on the system drive. Per the Windows installer KB it must be at most 150 characters of English (printable ASCII), on a fixed NTFS drive, and the drive needs at least 4 GB free unless it is the system drive. The collection checks the length and characters in `validate_inputs.yml`, and the drive (exists, NTFS, 4 GB free) before install. It cannot tell a fixed drive from removable media. _Avoid_: custom install path (the Linux term, where the agent itself moves), data directory.
 
 ### Removal
 

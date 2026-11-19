@@ -18,4 +18,7 @@
 {%- if s1_agent_custom_install_path is defined and s1_agent_custom_install_path is not none and s1_agent_custom_install_path | length > 0 -%}
 {{- install_arguments.append( 'INSTALL_PATH_DATA="' + s1_agent_custom_install_path + '"' ) -}}
 {%- endif -%}
+{%- if s1_disable_install_telemetry is defined and s1_disable_install_telemetry | bool -%}
+{{- install_arguments.append( 'INSTALLATION_TELEMETRY=FALSE' ) -}}
+{%- endif -%}
 {{- install_arguments | join(' ') -}}

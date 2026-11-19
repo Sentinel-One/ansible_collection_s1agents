@@ -1,0 +1,36 @@
+---
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    # Expected strings are literals, written by hand from the installer
+    # documentation (KB 000005517), not built the way the templates build them.
+    - name: Assert unset and false render the arguments the templates produced before the flag existed
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_render[item ~ '/install_exe'] == '-q -t TOK'
+          - s1_molecule_render[item ~ '/install_msi'] == 'SITE_TOKEN=TOK'
+          - s1_molecule_render[item ~ '/upgrade_exe'] == '-q'
+          - s1_molecule_render[item ~ '/upgrade_msi'] == ''
+        fail_msg: "Case {{ item }} rendered {{ s1_molecule_render | string }}"
+        quiet: true
+      loop: [flag_unset, flag_false]
+
+    - name: Assert true adds INSTALLATION_TELEMETRY=FALSE to all four templates and nothing else
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_render[item ~ '/install_exe'] == '-q -t TOK -a="INSTALLATION_TELEMETRY=FALSE"'
+          - s1_molecule_render[item ~ '/install_msi'] == 'SITE_TOKEN=TOK INSTALLATION_TELEMETRY=FALSE'
+          - s1_molecule_render[item ~ '/upgrade_exe'] == '-q -a="INSTALLATION_TELEMETRY=FALSE"'
+          - s1_molecule_render[item ~ '/upgrade_msi'] == 'INSTALLATION_TELEMETRY=FALSE'
+        fail_msg: "Case {{ item }} rendered {{ s1_molecule_render | string }}"
+        quiet: true
+      loop: [flag_true, flag_true_string]
+
+    - name: Assert the flag shares the -a block with other optional parameters
+      ansible.builtin.assert:
+        that:
+          - s1_molecule_render['flag_true_with_vdi/install_exe'] == '-q -t TOK -a="VDI=true INSTALLATION_TELEMETRY=FALSE"'
+          - s1_molecule_render['flag_true_with_vdi/install_msi'] == 'SITE_TOKEN=TOK VDI=true INSTALLATION_TELEMETRY=FALSE'
+        fail_msg: "{{ s1_molecule_render | string }}"
+        quiet: true

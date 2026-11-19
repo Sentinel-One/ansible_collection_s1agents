@@ -22,6 +22,9 @@
     # yamllint disable-line rule:line-length
     fail_msg: The SentinelOne Agent requires 2GB of free space on the Windows partition. Review https://community.sentinelone.com/s/article/000004969
 
+- name: Check the custom data path drive | Windows
+  ansible.builtin.include_tasks: windows_data_drive.yml
+
 - name: Assert memory meets requirements | Windows
   ansible.builtin.assert:
     that:
